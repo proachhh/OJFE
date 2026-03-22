@@ -30,6 +30,11 @@
           {{$t('m.OI_Rank')}}
         </Menu-item>
       </Submenu>
+      <!-- 新增aiChat按钮 -->
+      <Menu-item name="/chat">
+        <Icon type="chatbubble-working"></Icon>
+        {{$t('m.AI_Chat')}}
+      </Menu-item>
       <Submenu name="about">
         <template slot="title">
           <Icon type="information-circled"></Icon>

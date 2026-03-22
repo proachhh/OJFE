@@ -151,6 +151,7 @@ export const m = {
   Rank: '排名',
   ACM_Rank: 'ACM 排名',
   OI_Rank: 'OI 排名',
+  AI_Chat: 'AI 助手',
   About: '关于',
   Judger: '评分器',
   FAQ: '常见问题',

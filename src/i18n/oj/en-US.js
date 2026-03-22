@@ -151,6 +151,7 @@ export const m = {
   Rank: 'Rank',
   ACM_Rank: 'ACM Rank',
   OI_Rank: 'OI Rank',
+  AI_Chat: 'AI Chat',
   About: 'About',
   Judger: 'Judger',
   FAQ: 'FAQ',
