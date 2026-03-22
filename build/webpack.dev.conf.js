@@ -18,6 +18,16 @@ module.exports = merge(baseWebpackConfig, {
   },
   // cheap-module-eval-source-map is faster for development
   devtool: '#cheap-module-eval-source-map',
+  devServer: {
+    historyApiFallback: true,
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:8001',   // 你的测试后端地址
+        changeOrigin: true,
+        logLevel: 'debug'                 // 可选，便于调试
+      }
+    }
+  },
   plugins: [
     new webpack.DefinePlugin({
       'process.env': config.dev.env
