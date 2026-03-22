@@ -6,6 +6,7 @@ import FAQ from './help/FAQ.vue'
 import NotFound from './general/404.vue'
 import Home from './general/Home.vue'
 import Announcements from './general/Announcements.vue'
+import Chat from './chat/Chat.vue'
 
 // Grouping Components in the Same Chunk
 const SubmissionList = () => import(/* webpackChunkName: "submission" */ '@oj/views/submission/SubmissionList.vue')
@@ -19,13 +20,19 @@ const ResetPassword = () => import(/* webpackChunkName: "password" */ '@oj/views
 
 const Problem = () => import(/* webpackChunkName: "Problem" */ '@oj/views/problem/Problem.vue')
 
+// 使用动态导入方式加载Chat组件
+// 这是一种代码分割的技术，可以实现组件的懒加载
+// 当路由导航到需要该组件的页面时，才会加载对应的JavaScript代码
+const Chat = () => import(/* webpackChunkName: "chat" */ '@oj/views/chat/Chat.vue')
+
 export {
   Home, NotFound, Announcements,
   Logout, UserHome, About, FAQ,
   ProblemList, Problem,
   ACMRank, OIRank,
   SubmissionList, SubmissionDetails,
-  ApplyResetPassword, ResetPassword
+  ApplyResetPassword, ResetPassword,
+  Chat
 }
 /* 组件导出分为两类, 一类常用的直接导出，另一类诸如Login, Logout等用懒加载,懒加载不在此处导出
  *   在对应的route内加载

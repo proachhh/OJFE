@@ -177,5 +177,12 @@ export default [
     path: '*',
     meta: {title: '404'},
     component: NotFound
+  },
+
+  // Aichat
+  {
+  path: '/chat',
+  name: 'chat',
+  component: () => import('@oj/views/chat/Chat.vue')
   }
 ]

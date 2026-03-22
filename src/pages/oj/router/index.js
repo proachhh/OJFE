@@ -5,6 +5,7 @@ import storage from '@/utils/storage'
 import {STORAGE_KEY} from '@/utils/constants'
 import {sync} from 'vuex-router-sync'
 import {types, default as store} from '../../../store'
+import { Chat } from '../views' // 导入Chat组件
 
 Vue.use(VueRouter)
 
