@@ -1,9 +1,10 @@
 <template>
   <div class="chat-container">
     <h2>星火大模型助手</h2>
+    <button @click="clearMessages" v-if="messages.length > 0">清空</button>
     <div class="message-list" ref="messageList">
       <div v-for="(msg, idx) in messages" :key="idx" :class="msg.role">
-        <strong>{{ msg.role === 'user' ? '我' : 'AI' }}：</strong>
+        <strong>{{ msg.role === 'user' ? '我' : msg.role === 'loading' ? 'AI' : 'AI' }}：</strong>
         {{ msg.content }}
       </div>
     </div>
@@ -30,7 +31,11 @@ export default {
       this.messages.push({ role: 'user', content: text });
       this.inputText = '';
       this.sending = true;
+
+      const loadingIndex = this.messages.length;
+      this.messages.push({ role: 'loading', content: 'AI正在思考...' });
       this.scrollToBottom();
+
       try {
         const response = await fetch('/api/spark/chat/', {
           method: 'POST',
@@ -38,6 +43,8 @@ export default {
           body: JSON.stringify({ message: text })
         });
         const data = await response.json();
+        this.messages.splice(loadingIndex, 1);
+
         if (data.answer) {
           this.messages.push({ role: 'assistant', content: data.answer });
         } else {
@@ -45,10 +52,16 @@ export default {
         }
       } catch (error) {
         console.error('请求失败:', error);
+        this.messages.splice(loadingIndex, 1);
         this.messages.push({ role: 'assistant', content: '网络错误，请稍后重试。' });
       } finally {
         this.sending = false;
         this.scrollToBottom();
+      }
+    },
+    clearMessages() {
+      if (confirm('确定清空对话？')) {
+        this.messages = [];
       }
     },
     scrollToBottom() {
@@ -78,7 +91,7 @@ export default {
   padding: 10px;
   border-radius: 4px;
 }
-.user, .assistant {
+.user, .assistant, .loading {
   margin: 8px 0;
   padding: 8px;
   border-radius: 8px;
@@ -89,6 +102,10 @@ export default {
 }
 .assistant {
   background: #f1f8e9;
+}
+.loading {
+  background: #fff3e0;
+  font-style: italic;
 }
 .input-area {
   display: flex;

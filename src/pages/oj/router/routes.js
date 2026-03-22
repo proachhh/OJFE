@@ -181,8 +181,9 @@ export default [
 
   // Aichat
   {
-  path: '/chat',
-  name: 'chat',
-  component: () => import('@oj/views/chat/Chat.vue')
+    path: '/chat',
+    name: 'chat',
+    meta: {title: 'AI Chat'},
+    component: () => import('@oj/views/chat/Chat.vue')
   }
 ]
