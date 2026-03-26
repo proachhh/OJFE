@@ -185,5 +185,13 @@ export default [
     name: 'chat',
     meta: {title: 'AI Chat'},
     component: () => import('@oj/views/chat/Chat.vue')
+  },  
+
+  //recommend
+  {
+    path: '/learning-report',
+    name: 'learning-report',
+    meta: {title: 'Learning Report'},
+    component: () => import('../views/recommend/LearningReport.vue')
   }
 ]
