@@ -9,8 +9,15 @@
       </div>
       <div v-if="recommendations.length">
         <el-table :data="recommendations" style="width: 100%">
+	  <el-table-column prop="_id" label="题号"></el-table-column>
           <el-table-column prop="title" label="题目"></el-table-column>
-          <el-table-column prop="difficulty" label="难度"></el-table-column>
+	  <el-table-column label="难度">
+  	    <template slot-scope="scope">
+    		<Tag :color="getDifficultyColor(scope.row.difficulty)">
+        	  {{ $t('m.' + scope.row.difficulty) }}
+    		</Tag>
+  	    </template>
+          </el-table-column>
           <el-table-column prop="tags" label="知识点">
             <template slot-scope="scope">
               {{ scope.row.tags.join(', ') }}
@@ -18,7 +25,7 @@
           </el-table-column>
           <el-table-column label="操作">
             <template slot-scope="scope">
-              <el-button type="text" @click="goToProblem(scope.row.id)">开始做题</el-button>
+              <el-button type="text" @click="goToProblem(scope.row._id)">开始做题</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -88,14 +95,14 @@ export default {
   },
   methods: {
     fetchStats() {
-      axios.get('/api/learning-stats/')
+      axios.get('/learning-stats/')
         .then(res => {
           this.stats = res.data
         })
         .catch(err => console.error(err))
     },
     fetchRecommendations() {
-      axios.get('/api/recommend/')
+      axios.get('/recommend/')
         .then(res => {
           this.recommendations = res.data.recommendations
         })
@@ -103,6 +110,12 @@ export default {
     },
     goToProblem(id) {
       window.location.href = `/problem/${id}`
+    },
+    getDifficultyColor(level) {
+      if (level === 'Low') return 'green'
+      if (level === 'Mid') return 'blue'
+      if (level === 'High') return 'yellow'
+      return ''
     }
   }
 }
