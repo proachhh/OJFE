@@ -258,5 +258,22 @@ export const m = {
   UserHomeserSubmissions: '提交次數',
   UserHomeScore: '分數',
   List_Solved_Problems: '已完成題目的列表',
-  UserHomeIntro: '這個使用者尚未解題...'
+  UserHomeIntro: '這個使用者尚未解題...',
+  // LearningReport.vue
+  Learning_Report: '學習報告',
+  Recommended_For_You: '為你推薦',
+  Problem_ID: '題號',
+  Problem: '題目',
+  Difficulty: '難度',
+  Knowledge_Points: '知識點',
+  Operation: '操作',
+  Start_Solving: '開始解題',
+  No_Recommendations: '暫無推薦題目，繼續刷題吧！',
+  Total_Submissions: '總提交次數',
+  _Total_Accepted: '總正確次數',
+  Accuracy: '正確率',
+  Knowledge_Mastery: '知識點掌握情況',
+  Knowledge_Point: '知識點',
+  Submission_Count: '提交次數',
+  Accepted_Count: '正確次數'
 }

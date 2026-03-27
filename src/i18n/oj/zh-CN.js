@@ -258,5 +258,22 @@ export const m = {
   UserHomeserSubmissions: '提交次数',
   UserHomeScore: '分数',
   List_Solved_Problems: '已解决问题的列表',
-  UserHomeIntro: '这个家伙太懒了，还没有做题呢...'
+  UserHomeIntro: '这个家伙太懒了，还没有做题呢...',
+  // LearningReport.vue
+  Learning_Report: '学习报告',
+  Recommended_For_You: '为你推荐',
+  Problem_ID: '题号',
+  Problem: '题目',
+  Difficulty: '难度',
+  Knowledge_Points: '知识点',
+  Operation: '操作',
+  Start_Solving: '开始做题',
+  No_Recommendations: '暂无推荐题目，继续刷题吧！',
+  Total_Submissions: '总提交次数',
+  _Total_Accepted: '总正确次数',
+  Accuracy: '正确率',
+  Knowledge_Mastery: '知识点掌握情况',
+  Knowledge_Point: '知识点',
+  Submission_Count: '提交次数',
+  Accepted_Count: '正确次数'
 }

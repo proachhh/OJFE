@@ -1,36 +1,36 @@
 <template>
   <div class="learning-report">
-    <h2>学习报告</h2>
+    <h2>{{$t('m.Learning_Report')}}</h2>
 
     <!-- 推荐题目区域 -->
     <el-card class="box-card">
       <div slot="header" class="clearfix">
-        <span>为你推荐</span>
+        <span>{{$t('m.Recommended_For_You')}}</span>
       </div>
       <div v-if="recommendations.length">
         <el-table :data="recommendations" style="width: 100%">
-	  <el-table-column prop="_id" label="题号"></el-table-column>
-          <el-table-column prop="title" label="题目"></el-table-column>
-	  <el-table-column label="难度">
-  	    <template slot-scope="scope">
-    		<Tag :color="getDifficultyColor(scope.row.difficulty)">
-        	  {{ $t('m.' + scope.row.difficulty) }}
-    		</Tag>
-  	    </template>
+          <el-table-column prop="_id" :label="$t('m.Problem_ID')"></el-table-column>
+          <el-table-column prop="title" :label="$t('m.Problem')"></el-table-column>
+          <el-table-column :label="$t('m.Difficulty')">
+            <template slot-scope="scope">
+              <Tag :color="getDifficultyColor(scope.row.difficulty)">
+                {{ $t('m.' + scope.row.difficulty) }}
+              </Tag>
+            </template>
           </el-table-column>
-          <el-table-column prop="tags" label="知识点">
+          <el-table-column prop="tags" :label="$t('m.Knowledge_Points')">
             <template slot-scope="scope">
               {{ scope.row.tags.join(', ') }}
             </template>
           </el-table-column>
-          <el-table-column label="操作">
+          <el-table-column :label="$t('m.Operation')">
             <template slot-scope="scope">
-              <el-button type="text" @click="goToProblem(scope.row._id)">开始做题</el-button>
+              <el-button type="text" @click="goToProblem(scope.row._id)">{{$t('m.Start_Solving')}}</el-button>
             </template>
           </el-table-column>
         </el-table>
       </div>
-      <div v-else>暂无推荐题目，继续刷题吧！</div>
+      <div v-else>{{$t('m.No_Recommendations')}}</div>
     </el-card>
 
     <!-- 整体学习概览 -->
@@ -38,19 +38,19 @@
       <el-col :span="8">
         <el-card shadow="hover">
           <div class="stat-value">{{ stats.total_submissions }}</div>
-          <div class="stat-label">总提交次数</div>
+          <div class="stat-label">{{$t('m.Total_Submissions')}}</div>
         </el-card>
       </el-col>
       <el-col :span="8">
         <el-card shadow="hover">
           <div class="stat-value">{{ stats.total_ac }}</div>
-          <div class="stat-label">总正确次数</div>
+          <div class="stat-label">{{$t('m_Total_Accepted')}}</div>
         </el-card>
       </el-col>
       <el-col :span="8">
         <el-card shadow="hover">
           <div class="stat-value">{{ stats.accuracy }}%</div>
-          <div class="stat-label">正确率</div>
+          <div class="stat-label">{{$t('m.Accuracy')}}</div>
         </el-card>
       </el-col>
     </el-row>
@@ -58,13 +58,13 @@
     <!-- 知识点掌握表格 -->
     <el-card class="box-card">
       <div slot="header" class="clearfix">
-        <span>知识点掌握情况</span>
+        <span>{{$t('m.Knowledge_Mastery')}}</span>
       </div>
       <el-table :data="stats.tags" style="width: 100%">
-        <el-table-column prop="tag_name" label="知识点"></el-table-column>
-        <el-table-column prop="total" label="提交次数"></el-table-column>
-        <el-table-column prop="ac" label="正确次数"></el-table-column>
-        <el-table-column prop="accuracy" label="正确率">
+        <el-table-column prop="tag_name" :label="$t('m.Knowledge_Point')"></el-table-column>
+        <el-table-column prop="total" :label="$t('m.Submission_Count')"></el-table-column>
+        <el-table-column prop="ac" :label="$t('m.Accepted_Count')"></el-table-column>
+        <el-table-column prop="accuracy" :label="$t('m.Accuracy')">
           <template slot-scope="scope">
             {{ scope.row.accuracy }}%
           </template>

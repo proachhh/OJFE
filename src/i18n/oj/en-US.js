@@ -258,5 +258,22 @@ export const m = {
   UserHomeserSubmissions: 'Submissions',
   UserHomeScore: 'Score',
   List_Solved_Problems: 'List of solved problems',
-  UserHomeIntro: 'The guy is so lazy that has not solved any problem yet.'
+  UserHomeIntro: 'The guy is so lazy that has not solved any problem yet.',
+  // LearningReport.vue
+  Learning_Report: 'Learning Report',
+  Recommended_For_You: 'Recommended for You',
+  Problem_ID: 'Problem ID',
+  Problem: 'Problem',
+  Difficulty: 'Difficulty',
+  Knowledge_Points: 'Knowledge Points',
+  Operation: 'Operation',
+  Start_Solving: 'Start Solving',
+  No_Recommendations: 'No recommendations yet, keep practicing!',
+  Total_Submissions: 'Total Submissions',
+  _Total_Accepted: 'Total Accepted',
+  Accuracy: 'Accuracy',
+  Knowledge_Mastery: 'Knowledge Mastery',
+  Knowledge_Point: 'Knowledge Point',
+  Submission_Count: 'Submission Count',
+  Accepted_Count: 'Accepted Count'
 }
