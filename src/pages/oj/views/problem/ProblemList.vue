@@ -246,7 +246,7 @@
               render: (h, params) => {
                 let tags = []
                 params.row.tags.forEach(tag => {
-                  tags.push(h('Tag', {}, tag))
+                  tags.push(h('Tag', {}, this.$t('m.tag.' + tag, tag)))
                 })
                 return h('div', {
                   style: {

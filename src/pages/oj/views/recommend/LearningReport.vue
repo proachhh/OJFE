@@ -50,7 +50,7 @@
               </el-table-column>
               <el-table-column :label="$t('m.Recommendation_Reason')" min-width="120">
                 <template slot-scope="scope">
-                  {{$t('m.Based_On_Weak_Point', { tag: scope.row.tags[0] || $t('m.Popular') })}}
+                  {{$t('m.Based_On_Weak_Point', { tag: scope.row.tags[0] ? this.$t('m.tag.' + scope.row.tags[0], scope.row.tags[0]) : $t('m.Popular') })}}
                 </template>
               </el-table-column>
               <el-table-column :label="$t('m.Operation')" width="100">
@@ -83,7 +83,7 @@
       <el-table :data="stats.tags" style="width: 100%">
         <el-table-column :label="$t('m.Knowledge_Point')">
             <template slot-scope="scope">
-                  {{ scope.row.tag_name }}
+                  {{ this.$t('m.tag.' + scope.row.tag_name, scope.row.tag_name) }}
             </template>
         </el-table-column>
         <el-table-column prop="total" :label="$t('m.Submission_Count')"></el-table-column>
@@ -121,7 +121,7 @@ export default {
   methods: {
     translateTags(tags) {
         if (!tags || tags.length === 0) return ''
-        return tags.join(', ')
+        return tags.map(tag => this.$t('m.tag.' + tag, tag)).join(', ')
     },
     fetchStats() {
       axios.get('/learning-stats/')
@@ -159,7 +159,7 @@ export default {
       const chart = echarts.init(document.getElementById('radar-chart'))
       chart.setOption({
         radar: {
-          indicator: this.stats.tags.map(tag => ({ name: tag.tag_name, max: 100 })),
+          indicator: this.stats.tags.map(tag => ({ name: this.$t('m.tag.' + tag.tag_name, tag.tag_name), max: 100 })),
           shape: 'circle',
           name: {
             textStyle: {

@@ -1,4 +1,25 @@
 export const m = {
+  tag: {
+    'Prefix Sum': 'Prefix Sum',
+    'Math': 'Math',
+    'Dynamic Programming': 'Dynamic Programming',
+    'DFS': 'DFS',
+    'Enumeration': 'Enumeration',
+    'Recursion': 'Recursion',
+    'Logic': 'Logic',
+    'Heap': 'Heap',
+    'Simulation': 'Simulation',
+    'Greedy': 'Greedy',
+    'String': 'String',
+    'Matrix': 'Matrix',
+    'Geometry': 'Geometry',
+    'Array': 'Array',
+    'Graph': 'Graph',
+    'Implementation': 'Implementation',
+    'Inversion': 'Inversion',
+    'Binary Tree': 'Binary Tree',
+    'LCM': 'LCM'
+  },
   // 404.vue
   Go_Home: 'Go Home',
   // Problem.vue

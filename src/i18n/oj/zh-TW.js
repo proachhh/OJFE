@@ -1,6 +1,27 @@
 export const m = {
+  tag: {
+    'Prefix Sum': '前綴和',
+    'Math': '數學',
+    'Dynamic Programming': '動態規劃',
+    'DFS': '深度優先搜索',
+    'Enumeration': '枚舉',
+    'Recursion': '遞歸',
+    'Logic': '邏輯',
+    'Heap': '堆',
+    'Simulation': '模擬',
+    'Greedy': '貪心',
+    'String': '字符串',
+    'Matrix': '矩陣',
+    'Geometry': '幾何',
+    'Array': '數組',
+    'Graph': '圖論',
+    'Implementation': '實現',
+    'Inversion': '逆序對',
+    'Binary Tree': '二叉樹',
+    'LCM': '最小公倍數'
+  },
   // 404.vue
-  Go_Home: '回到首頁',
+  Go_Home: '返回首頁',
   // Problem.vue
   Description: '題目描述',
   Input: '輸入',

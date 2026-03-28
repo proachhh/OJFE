@@ -148,7 +148,6 @@
             <p>{{$t('m.Memory_Limit')}}</p>
             <p>{{problem.memory_limit}}MB</p></li>
           <li>
-          <li>
             <p>{{$t('m.IOMode')}}</p>
             <p>{{problem.io_mode.io_mode}}</p>
           </li>
@@ -168,7 +167,7 @@
               <Poptip trigger="hover" placement="left-end">
                 <a>{{$t('m.Show')}}</a>
                 <div slot="content">
-                  <Tag v-for="tag in problem.tags" :key="tag">{{tag}}</Tag>
+                  <Tag v-for="tag in problem.tags" :key="tag">{{$t('m.tag.' + tag, tag)}}</Tag>
                 </div>
               </Poptip>
             </p>
