@@ -115,6 +115,10 @@ export default {
     this.fetchRecommendations()
   },
   methods: {
+    translateTags(tags) {
+        if (!tags || tags.length === 0) return ''
+        return tags.map(tag => this.$t(`tag.${tag}`, tag)).join(', ')
+    },
     fetchStats() {
       axios.get('/learning-stats/')
         .then(res => {
