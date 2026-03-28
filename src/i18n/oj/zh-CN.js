@@ -301,5 +301,19 @@ export const m = {
   Based_On_Weak_Point: '基于您薄弱知识点 {tag} 推荐',
   Popular: '热门',
   Knowledge_Mastery_Radar: '知识点掌握雷达图',
-  Knowledge_Mastery_Details: '知识点掌握详情'
+  Knowledge_Mastery_Details: '知识点掌握详情',
+  Beat_Percent: '击败了全站{percent}%的用户',
+  Learning_Trend: '学习趋势（最近7天正确率）',
+  Learning_Advice: '学习建议',
+  Recent_Submissions: '最近提交',
+  Result: '结果',
+  Correct: '正确',
+  Wrong: '错误',
+  Time: '时间',
+  Weakness_Advice_Excellent: '太棒了！你已掌握所有知识点，继续保持！',
+  Weakness_Advice_No_Practice: '您还未练习过「{tag}」相关的题目，建议开始练习。',
+  Weakness_Advice_Need_Improve: '您对「{tag}」的正确率仅为 {accuracy}%，建议加强练习。',
+  Problem_ID_Not_Exist_Message: '如果发现以下题目ID不存在，<br> 请点击按钮。',
+  Regenerate_Button: '重新生成',
+  Update_Successfully: '更新成功'
 }

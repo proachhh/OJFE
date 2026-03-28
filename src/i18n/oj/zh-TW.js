@@ -301,5 +301,19 @@ export const m = {
   Based_On_Weak_Point: '基於您薄弱知識點 {tag} 推薦',
   Popular: '熱門',
   Knowledge_Mastery_Radar: '知識點掌握雷達圖',
-  Knowledge_Mastery_Details: '知識點掌握詳情'
+  Knowledge_Mastery_Details: '知識點掌握詳情',
+  Beat_Percent: '擊敗了全站{percent}%的用戶',
+  Learning_Trend: '學習趨勢（最近7天正確率）',
+  Learning_Advice: '學習建議',
+  Recent_Submissions: '最近提交',
+  Result: '結果',
+  Correct: '正確',
+  Wrong: '錯誤',
+  Time: '時間',
+  Weakness_Advice_Excellent: '太棒了！你已掌握所有知識點，繼續保持！',
+  Weakness_Advice_No_Practice: '您還未練習過「{tag}」相關的題目，建議開始練習。',
+  Weakness_Advice_Need_Improve: '您對「{tag}」的正確率僅為 {accuracy}%，建議加強練習。',
+  Problem_ID_Not_Exist_Message: '如果發現以下題目ID不存在，<br> 請點擊按鈕。',
+  Regenerate_Button: '重新生成',
+  Update_Successfully: '更新成功'
 }

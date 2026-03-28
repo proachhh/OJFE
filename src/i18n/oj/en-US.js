@@ -301,5 +301,19 @@ export const m = {
   Based_On_Weak_Point: 'Recommended based on your weak point: {tag}',
   Popular: 'Popular',
   Knowledge_Mastery_Radar: 'Knowledge Mastery Radar',
-  Knowledge_Mastery_Details: 'Knowledge Mastery Details'
+  Knowledge_Mastery_Details: 'Knowledge Mastery Details',
+  Beat_Percent: 'Beat {percent}% of all users',
+  Learning_Trend: 'Learning Trend (Last 7 Days Accuracy)',
+  Learning_Advice: 'Learning Advice',
+  Recent_Submissions: 'Recent Submissions',
+  Result: 'Result',
+  Correct: 'Correct',
+  Wrong: 'Wrong',
+  Time: 'Time',
+  Weakness_Advice_Excellent: 'Excellent! You have mastered all knowledge points, keep it up!',
+  Weakness_Advice_No_Practice: 'You have not practiced problems related to "{tag}" yet, start practicing now.',
+  Weakness_Advice_Need_Improve: 'Your accuracy for "{tag}" is only {accuracy}%, need more practice.',
+  Problem_ID_Not_Exist_Message: 'If you find the following problem id does not exist,<br> try to click the button.',
+  Regenerate_Button: 'regenerate',
+  Update_Successfully: 'Update successfully'
 }

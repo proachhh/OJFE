@@ -33,8 +33,8 @@
             <Poptip v-if="refreshVisible" trigger="hover" placement="right-start">
               <Icon type="ios-help-outline"></Icon>
               <div slot="content">
-                <p>If you find the following problem id does not exist,<br> try to click the button.</p>
-                <Button type="info" @click="freshProblemDisplayID">regenerate</Button>
+                <p>{{$t('m.Problem_ID_Not_Exist_Message')}}</p>
+                <Button type="info" @click="freshProblemDisplayID">{{$t('m.Regenerate_Button')}}</Button>
               </div>
             </Poptip>
           </div>
@@ -108,7 +108,7 @@
       },
       freshProblemDisplayID () {
         api.freshDisplayID().then(res => {
-          this.$success('Update successfully')
+          this.$success(this.$t('m.Update_Successfully'))
           this.init()
         })
       }

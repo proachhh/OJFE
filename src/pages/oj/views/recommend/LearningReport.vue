@@ -1,31 +1,31 @@
 <template>
   <div class="learning-report">
-    <h2>学习报告</h2>
+    <h2>{{$t('m.Learning_Report')}}</h2>
 
     <!-- 整体概览卡片（四列） -->
     <el-row :gutter="20" class="stats-cards">
       <el-col :span="6">
         <el-card shadow="hover">
           <div class="stat-value">{{ stats.total_submissions }}</div>
-          <div class="stat-label">总提交次数</div>
+          <div class="stat-label">{{$t('m.Total_Submissions')}}</div>
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card shadow="hover">
           <div class="stat-value">{{ stats.total_ac }}</div>
-          <div class="stat-label">总正确次数</div>
+          <div class="stat-label">{{$t('m.Total_Accepted')}}</div>
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card shadow="hover">
           <div class="stat-value">{{ stats.accuracy }}%</div>
-          <div class="stat-label">正确率</div>
+          <div class="stat-label">{{$t('m.Accuracy')}}</div>
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card shadow="hover">
           <div class="stat-value">{{ stats.beat_percent }}%</div>
-          <div class="stat-label">击败了全站{{ stats.beat_percent }}%的用户</div>
+          <div class="stat-label">{{$t('m.Beat_Percent', { percent: stats.beat_percent })}}</div>
         </el-card>
       </el-col>
     </el-row>
@@ -36,32 +36,32 @@
       <el-col :span="14">
         <el-card class="box-card">
           <div slot="header" class="clearfix">
-            <span>为你推荐</span>
+            <span>{{$t('m.Recommended_For_You')}}</span>
           </div>
           <div v-if="recommendations.length">
             <el-table :data="recommendations" style="width: 100%">
-              <el-table-column prop="_id" label="题号" width="100"></el-table-column>
-              <el-table-column prop="title" label="题目"></el-table-column>
-              <el-table-column label="难度" width="100">
+              <el-table-column prop="_id" :label="$t('m.Problem_ID')" width="100"></el-table-column>
+              <el-table-column prop="title" :label="$t('m.Problem')"></el-table-column>
+              <el-table-column :label="$t('m.Difficulty')" width="100">
                 <template slot-scope="scope">
                   <Tag :color="getDifficultyColor(scope.row.difficulty)">
                     {{ $t('m.' + scope.row.difficulty) }}
                   </Tag>
                 </template>
               </el-table-column>
-              <el-table-column label="知识点">
+              <el-table-column :label="$t('m.Knowledge_Points')">
                 <template slot-scope="scope">
                   {{ translateTags(scope.row.tags) }}
                 </template>
               </el-table-column>
-              <el-table-column label="推荐理由" min-width="150">
+              <el-table-column :label="$t('m.Recommendation_Reason')" min-width="150">
                 <template slot-scope="scope">
                   {{ scope.row.reason }}
                 </template>
               </el-table-column>
-              <el-table-column label="操作" width="100">
+              <el-table-column :label="$t('m.Operation')" width="100">
                 <template slot-scope="scope">
-                  <el-button type="text" @click="goToProblem(scope.row._id)">开始做题</el-button>
+                  <el-button type="text" @click="goToProblem(scope.row._id)">{{$t('m.Start_Solving')}}</el-button>
                 </template>
               </el-table-column>
             </el-table>
@@ -77,7 +77,7 @@
               style="margin-top: 15px; text-align: center;">
             </el-pagination>
           </div>
-          <div v-else>暂无推荐题目，继续刷题吧！</div>
+          <div v-else>{{$t('m.No_Recommendations')}}</div>
         </el-card>
       </el-col>
 
@@ -85,7 +85,7 @@
       <el-col :span="10">
         <el-card class="box-card">
           <div slot="header" class="clearfix">
-            <span>知识点掌握雷达图</span>
+            <span>{{$t('m.Knowledge_Mastery_Radar')}}</span>
           </div>
           <div id="radar-chart" style="height: 400px;"></div>
         </el-card>
@@ -95,7 +95,7 @@
     <!-- 学习趋势折线图 -->
     <el-card class="box-card" style="margin-top: 20px;">
       <div slot="header" class="clearfix">
-        <span>学习趋势（最近7天正确率）</span>
+        <span>{{$t('m.Learning_Trend')}}</span>
       </div>
       <div id="trend-chart" style="height: 300px;"></div>
     </el-card>
@@ -103,7 +103,7 @@
     <!-- 薄弱知识点建议 -->
     <el-card class="box-card" style="margin-top: 20px;">
       <div slot="header" class="clearfix">
-        <span>学习建议</span>
+        <span>{{$t('m.Learning_Advice')}}</span>
       </div>
       <div style="font-size: 16px; color: #666;">
         {{ getWeaknessAdvice() }}
@@ -113,35 +113,35 @@
     <!-- 最近提交记录 -->
     <el-card class="box-card" style="margin-top: 20px;">
       <div slot="header" class="clearfix">
-        <span>最近提交</span>
+        <span>{{$t('m.Recent_Submissions')}}</span>
       </div>
       <el-table :data="recentSubmissions" style="width: 100%">
-        <el-table-column prop="problem.title" label="题目"></el-table-column>
-        <el-table-column label="结果">
+        <el-table-column prop="problem.title" :label="$t('m.Problem')"></el-table-column>
+        <el-table-column :label="$t('m.Result')">
           <template slot-scope="scope">
             <el-tag :type="scope.row.result === 0 ? 'success' : 'danger'">
-              {{ scope.row.result === 0 ? '正确' : '错误' }}
+              {{ scope.row.result === 0 ? $t('m.Correct') : $t('m.Wrong') }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="create_time" label="时间" width="180"></el-table-column>
+        <el-table-column prop="create_time" :label="$t('m.Time')" width="180"></el-table-column>
       </el-table>
     </el-card>
 
     <!-- 知识点掌握详情表格 -->
     <el-card class="box-card" style="margin-top: 20px;">
       <div slot="header" class="clearfix">
-        <span>知识点掌握详情</span>
+        <span>{{$t('m.Knowledge_Mastery_Details')}}</span>
       </div>
       <el-table :data="stats.tags" style="width: 100%">
-        <el-table-column label="知识点">
+        <el-table-column :label="$t('m.Knowledge_Point')">
           <template slot-scope="scope">
-            {{ m.tag[scope.row.tag_name] || scope.row.tag_name }}
+            {{ this.$t('m.tag.' + scope.row.tag_name, scope.row.tag_name) }}
           </template>
         </el-table-column>
-        <el-table-column prop="total" label="提交次数"></el-table-column>
-        <el-table-column prop="ac" label="正确次数"></el-table-column>
-        <el-table-column label="正确率" width="180">
+        <el-table-column prop="total" :label="$t('m.Submission_Count')"></el-table-column>
+        <el-table-column prop="ac" :label="$t('m.Accepted_Count')"></el-table-column>
+        <el-table-column :label="$t('m.Accuracy')" width="180">
           <template slot-scope="scope">
             <el-progress :percentage="scope.row.accuracy" :color="progressColor(scope.row.accuracy)"></el-progress>
           </template>
@@ -154,12 +154,10 @@
 <script>
 import axios from 'axios'
 import echarts from 'echarts'
-import { m } from '@/i18n/oj/zh-CN.js'
 
 export default {
   data() {
     return {
-      m: m,
       stats: {
         total_submissions: 0,
         total_ac: 0,
@@ -242,7 +240,7 @@ export default {
       chart.setOption({
         radar: {
           indicator: this.stats.tags.map(tag => ({
-            name: this.m.tag[tag.tag_name] || tag.tag_name,
+            name: this.$t('m.tag.' + tag.tag_name, tag.tag_name),
             max: 100
           })),
           shape: 'circle',
@@ -255,7 +253,7 @@ export default {
         },
         series: [{
           type: 'radar',
-          data: [{ value: this.stats.tags.map(tag => tag.accuracy), name: '正确率' }],
+          data: [{ value: this.stats.tags.map(tag => tag.accuracy), name: this.$t('m.Accuracy') }],
           areaStyle: { color: 'rgba(64, 158, 255, 0.2)' },
           lineStyle: { color: '#409EFF', width: 2 },
           itemStyle: { color: '#409EFF' }
@@ -268,7 +266,7 @@ export default {
       chart.setOption({
         tooltip: { trigger: 'axis' },
         xAxis: { type: 'category', data: this.trendData.dates },
-        yAxis: { type: 'value', name: '正确率 (%)', min: 0, max: 100 },
+        yAxis: { type: 'value', name: this.$t('m.Accuracy') + ' (%)', min: 0, max: 100 },
         series: [{
           type: 'line',
           data: this.trendData.rates,
@@ -284,13 +282,20 @@ export default {
       if (!this.stats.tags.length) return ''
       const sorted = [...this.stats.tags].sort((a,b) => a.accuracy - b.accuracy)
       const weakest = sorted[0]
-      if (weakest.accuracy === 100) return '太棒了！你已掌握所有知识点，继续保持！'
-      if (weakest.total === 0) return `您还未练习过「${weakest.tag_name}」相关的题目，建议开始练习。`
-      return `您对「${weakest.tag_name}」的正确率仅为 ${weakest.accuracy}%，建议加强练习。`
+      if (weakest.accuracy === 100) {
+        return this.$t('m.Weakness_Advice_Excellent')
+      }
+      if (weakest.total === 0) {
+        return this.$t('m.Weakness_Advice_No_Practice', { tag: this.$t('m.tag.' + weakest.tag_name, weakest.tag_name) })
+      }
+      return this.$t('m.Weakness_Advice_Need_Improve', { 
+        tag: this.$t('m.tag.' + weakest.tag_name, weakest.tag_name),
+        accuracy: weakest.accuracy
+      })
     },
     translateTags(tags) {
       if (!tags || tags.length === 0) return ''
-      return tags.map(tag => this.m.tag[tag] || tag).join(', ')
+      return tags.map(tag => this.$t('m.tag.' + tag, tag)).join(', ')
     },
     getDifficultyColor(level) {
       if (level === 'Low') return 'green'
