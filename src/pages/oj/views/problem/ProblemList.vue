@@ -246,8 +246,12 @@
               render: (h, params) => {
                 let tags = []
                 params.row.tags.forEach(tag => {
+<<<<<<< HEAD
                   const translated = this.$t('m.tag.' + tag, tag)
                   tags.push(h('Tag', {}, translated))
+=======
+                  tags.push(h('Tag', {}, this.$t('m.tag.' + tag, tag)))
+>>>>>>> 5da2646d899c4c82c6c6027ce303dc7af864d0aa
                 })
                 return h('div', {
                   style: {

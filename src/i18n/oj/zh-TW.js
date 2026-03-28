@@ -1,6 +1,27 @@
 export const m = {
+  tag: {
+    'Prefix Sum': '前綴和',
+    'Math': '數學',
+    'Dynamic Programming': '動態規劃',
+    'DFS': '深度優先搜索',
+    'Enumeration': '枚舉',
+    'Recursion': '遞歸',
+    'Logic': '邏輯',
+    'Heap': '堆',
+    'Simulation': '模擬',
+    'Greedy': '貪心',
+    'String': '字符串',
+    'Matrix': '矩陣',
+    'Geometry': '幾何',
+    'Array': '數組',
+    'Graph': '圖論',
+    'Implementation': '實現',
+    'Inversion': '逆序對',
+    'Binary Tree': '二叉樹',
+    'LCM': '最小公倍數'
+  },
   // 404.vue
-  Go_Home: '回到首頁',
+  Go_Home: '返回首頁',
   // Problem.vue
   Description: '題目描述',
   Input: '輸入',
@@ -270,10 +291,15 @@ export const m = {
   Start_Solving: '開始解題',
   No_Recommendations: '暫無推薦題目，繼續刷題吧！',
   Total_Submissions: '總提交次數',
-  _Total_Accepted: '總正確次數',
+  Total_Accepted: '總正確次數',
   Accuracy: '正確率',
   Knowledge_Mastery: '知識點掌握情況',
   Knowledge_Point: '知識點',
   Submission_Count: '提交次數',
-  Accepted_Count: '正確次數'
+  Accepted_Count: '正確次數',
+  Recommendation_Reason: '推薦理由',
+  Based_On_Weak_Point: '基於您薄弱知識點 {tag} 推薦',
+  Popular: '熱門',
+  Knowledge_Mastery_Radar: '知識點掌握雷達圖',
+  Knowledge_Mastery_Details: '知識點掌握詳情'
 }
