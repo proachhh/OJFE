@@ -1,72 +1,92 @@
 <template>
   <div class="learning-report">
-    <h2>{{$t('m.Learning_Report')}}</h2>
+    <h2>学习报告</h2>
 
-    <!-- 推荐题目区域 -->
-    <el-card class="box-card">
-      <div slot="header" class="clearfix">
-        <span>{{$t('m.Recommended_For_You')}}</span>
-      </div>
-      <div v-if="recommendations.length">
-        <el-table :data="recommendations" style="width: 100%">
-          <el-table-column prop="_id" :label="$t('m.Problem_ID')"></el-table-column>
-          <el-table-column prop="title" :label="$t('m.Problem')"></el-table-column>
-          <el-table-column :label="$t('m.Difficulty')">
-            <template slot-scope="scope">
-              <Tag :color="getDifficultyColor(scope.row.difficulty)">
-                {{ $t('m.' + scope.row.difficulty) }}
-              </Tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="tags" :label="$t('m.Knowledge_Points')">
-            <template slot-scope="scope">
-              {{ scope.row.tags.join(', ') }}
-            </template>
-          </el-table-column>
-          <el-table-column :label="$t('m.Operation')">
-            <template slot-scope="scope">
-              <el-button type="text" @click="goToProblem(scope.row._id)">{{$t('m.Start_Solving')}}</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-      </div>
-      <div v-else>{{$t('m.No_Recommendations')}}</div>
-    </el-card>
-
-    <!-- 整体学习概览 -->
+    <!-- 整体概览卡片 -->
     <el-row :gutter="20" class="stats-cards">
       <el-col :span="8">
         <el-card shadow="hover">
           <div class="stat-value">{{ stats.total_submissions }}</div>
-          <div class="stat-label">{{$t('m.Total_Submissions')}}</div>
+          <div class="stat-label">总提交次数</div>
         </el-card>
       </el-col>
       <el-col :span="8">
         <el-card shadow="hover">
           <div class="stat-value">{{ stats.total_ac }}</div>
-          <div class="stat-label">{{$t('m_Total_Accepted')}}</div>
+          <div class="stat-label">总正确次数</div>
         </el-card>
       </el-col>
       <el-col :span="8">
         <el-card shadow="hover">
           <div class="stat-value">{{ stats.accuracy }}%</div>
-          <div class="stat-label">{{$t('m.Accuracy')}}</div>
+          <div class="stat-label">正确率</div>
         </el-card>
       </el-col>
     </el-row>
 
-    <!-- 知识点掌握表格 -->
-    <el-card class="box-card">
+    <!-- 两栏布局 -->
+    <el-row :gutter="20">
+      <!-- 左侧：推荐题目 -->
+      <el-col :span="14">
+        <el-card class="box-card">
+          <div slot="header" class="clearfix">
+            <span>为你推荐</span>
+          </div>
+          <div v-if="recommendations.length">
+            <el-table :data="recommendations" style="width: 100%">
+              <el-table-column prop="_id" label="题号" width="100"></el-table-column>
+              <el-table-column prop="title" label="题目"></el-table-column>
+              <el-table-column label="难度" width="100">
+                <template slot-scope="scope">
+                  <Tag :color="getDifficultyColor(scope.row.difficulty)">
+                    {{ $t('m.' + scope.row.difficulty) }}
+                  </Tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="tags" label="知识点">
+                <template slot-scope="scope">
+                  {{ scope.row.tags.join(', ') }}
+                </template>
+              </el-table-column>
+              <el-table-column label="推荐理由" min-width="120">
+                <template slot-scope="scope">
+                  基于您薄弱知识点 {{ scope.row.tags[0] || '热门' }} 推荐
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="100">
+                <template slot-scope="scope">
+                  <el-button type="text" @click="goToProblem(scope.row._id)">开始做题</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+          <div v-else>暂无推荐题目，继续刷题吧！</div>
+        </el-card>
+      </el-col>
+
+      <!-- 右侧：雷达图 -->
+      <el-col :span="10">
+        <el-card class="box-card">
+          <div slot="header" class="clearfix">
+            <span>知识点掌握雷达图</span>
+          </div>
+          <div id="radar-chart" style="height: 400px;"></div>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <!-- 知识点掌握详情表格（带进度条） -->
+    <el-card class="box-card" style="margin-top: 20px;">
       <div slot="header" class="clearfix">
-        <span>{{$t('m.Knowledge_Mastery')}}</span>
+        <span>知识点掌握详情</span>
       </div>
       <el-table :data="stats.tags" style="width: 100%">
-        <el-table-column prop="tag_name" :label="$t('m.Knowledge_Point')"></el-table-column>
-        <el-table-column prop="total" :label="$t('m.Submission_Count')"></el-table-column>
-        <el-table-column prop="ac" :label="$t('m.Accepted_Count')"></el-table-column>
-        <el-table-column prop="accuracy" :label="$t('m.Accuracy')">
+        <el-table-column prop="tag_name" label="知识点"></el-table-column>
+        <el-table-column prop="total" label="提交次数"></el-table-column>
+        <el-table-column prop="ac" label="正确次数"></el-table-column>
+        <el-table-column label="正确率" width="180">
           <template slot-scope="scope">
-            {{ scope.row.accuracy }}%
+            <el-progress :percentage="scope.row.accuracy" :color="progressColor(scope.row.accuracy)"></el-progress>
           </template>
         </el-table-column>
       </el-table>
@@ -76,6 +96,7 @@
 
 <script>
 import axios from 'axios'
+import echarts from 'echarts'
 
 export default {
   data() {
@@ -98,6 +119,9 @@ export default {
       axios.get('/learning-stats/')
         .then(res => {
           this.stats = res.data
+          this.$nextTick(() => {
+            this.drawRadar()
+          })
         })
         .catch(err => console.error(err))
     },
@@ -109,13 +133,41 @@ export default {
         .catch(err => console.error(err))
     },
     goToProblem(id) {
-      window.location.href = `/problem/${id}`
+      this.$router.push({ name: 'problem-details', params: { problemID: id } })
     },
     getDifficultyColor(level) {
       if (level === 'Low') return 'green'
       if (level === 'Mid') return 'blue'
       if (level === 'High') return 'yellow'
       return ''
+    },
+    progressColor(accuracy) {
+      if (accuracy < 30) return '#f56c6c'
+      if (accuracy < 70) return '#e6a23c'
+      return '#67c23a'
+    },
+    drawRadar() {
+      if (!this.stats.tags || this.stats.tags.length === 0) return
+      const chart = echarts.init(document.getElementById('radar-chart'))
+      chart.setOption({
+        radar: {
+          indicator: this.stats.tags.map(tag => ({ name: tag.tag_name, max: 100 })),
+          shape: 'circle',
+          name: {
+            textStyle: {
+              fontSize: 12,
+              color: '#333'
+            }
+          }
+        },
+        series: [{
+          type: 'radar',
+          data: [{ value: this.stats.tags.map(tag => tag.accuracy), name: '正确率' }],
+          areaStyle: { color: 'rgba(64, 158, 255, 0.2)' },
+          lineStyle: { color: '#409EFF', width: 2 },
+          itemStyle: { color: '#409EFF' }
+        }]
+      })
     }
   }
 }
@@ -126,7 +178,7 @@ export default {
   padding: 20px;
 }
 .stats-cards {
-  margin: 20px 0;
+  margin-bottom: 20px;
 }
 .stat-value {
   font-size: 32px;

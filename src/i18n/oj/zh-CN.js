@@ -1,4 +1,25 @@
 export const m = {
+  tag: {
+    'Prefix Sum': '前缀和',
+    'Math': '数学',
+    'Dynamic Programming': '动态规划',
+    'DFS': '深度优先搜索',
+    'Enumeration': '枚举',
+    'Recursion': '递归',
+    'Logic': '逻辑',
+    'Heap': '堆',
+    'Simulation': '模拟',
+    'Greedy': '贪心',
+    'String': '字符串',
+    'Matrix': '矩阵',
+    'Geometry': '几何',
+    'Array': '数组',
+    'Graph': '图论',
+    'Implementation': '实现',
+    'Inversion': '逆序对',
+    'Binary Tree': '二叉树',
+    'LCM': '最小公倍数'
+  },
     // 404.vue
   Go_Home: '返回主页',
   // Problem.vue
