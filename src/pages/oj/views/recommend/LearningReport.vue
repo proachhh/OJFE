@@ -45,7 +45,7 @@
               </el-table-column>
               <el-table-column prop="tags" label="知识点">
                 <template slot-scope="scope">
-                  {{ scope.row.tags.join(', ') }}
+                   {{ translateTags(scope.row.tags) }}
                 </template>
               </el-table-column>
               <el-table-column label="推荐理由" min-width="120">
@@ -81,12 +81,16 @@
         <span>知识点掌握详情</span>
       </div>
       <el-table :data="stats.tags" style="width: 100%">
-        <el-table-column prop="tag_name" label="知识点"></el-table-column>
+        <el-table-column label="知识点">
+            <template slot-scope="scope">
+                {{ $t(`tag.${scope.row.tag_name}`, scope.row.tag_name) }}
+            </template>
+        </el-table-column>
         <el-table-column prop="total" label="提交次数"></el-table-column>
         <el-table-column prop="ac" label="正确次数"></el-table-column>
         <el-table-column label="正确率" width="180">
           <template slot-scope="scope">
-            <el-progress :percentage="scope.row.accuracy" :color="progressColor(scope.row.accuracy)"></el-progress>
+             {{ $t(`tag.${scope.row.tag_name}`, scope.row.tag_name) }}
           </template>
         </el-table-column>
       </el-table>
