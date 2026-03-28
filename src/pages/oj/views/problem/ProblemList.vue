@@ -54,12 +54,12 @@
     <Panel :padding="10">
       <div slot="title" class="taglist-title">{{$t('m.Tags')}}</div>
       <Button v-for="tag in tagList"
-              :key="tag.name"
-              @click="filterByTag(tag.name)"
-              type="ghost"
-              :disabled="query.tag === tag.name"
-              shape="circle"
-              class="tag-btn">{{tag.name}}
+        :key="tag.name"
+        @click="filterByTag(tag.name)"
+        type="ghost"
+        :disabled="query.tag === tag.name"
+        shape="circle"
+        class="tag-btn">{{ $t('m.tag.' + tag.name, tag.name) }}
       </Button>
 
       <Button long id="pick-one" @click="pickone">
@@ -246,7 +246,8 @@
               render: (h, params) => {
                 let tags = []
                 params.row.tags.forEach(tag => {
-                  tags.push(h('Tag', {}, tag))
+                  const translated = this.$t('m.tag.' + tag, tag)
+                  tags.push(h('Tag', {}, translated))
                 })
                 return h('div', {
                   style: {
@@ -254,7 +255,7 @@
                   }
                 }, tags)
               }
-            })
+             })
         } else {
           this.problemTableColumns.splice(this.problemTableColumns.length - 1, 1)
         }
