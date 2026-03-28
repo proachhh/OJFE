@@ -270,10 +270,15 @@ export const m = {
   Start_Solving: 'Start Solving',
   No_Recommendations: 'No recommendations yet, keep practicing!',
   Total_Submissions: 'Total Submissions',
-  _Total_Accepted: 'Total Accepted',
+  Total_Accepted: 'Total Accepted',
   Accuracy: 'Accuracy',
   Knowledge_Mastery: 'Knowledge Mastery',
   Knowledge_Point: 'Knowledge Point',
   Submission_Count: 'Submission Count',
-  Accepted_Count: 'Accepted Count'
+  Accepted_Count: 'Accepted Count',
+  Recommendation_Reason: 'Recommendation Reason',
+  Based_On_Weak_Point: 'Recommended based on your weak point: {tag}',
+  Popular: 'Popular',
+  Knowledge_Mastery_Radar: 'Knowledge Mastery Radar',
+  Knowledge_Mastery_Details: 'Knowledge Mastery Details'
 }

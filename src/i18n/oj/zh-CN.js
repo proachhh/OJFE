@@ -291,10 +291,15 @@ export const m = {
   Start_Solving: '开始做题',
   No_Recommendations: '暂无推荐题目，继续刷题吧！',
   Total_Submissions: '总提交次数',
-  _Total_Accepted: '总正确次数',
+  Total_Accepted: '总正确次数',
   Accuracy: '正确率',
   Knowledge_Mastery: '知识点掌握情况',
   Knowledge_Point: '知识点',
   Submission_Count: '提交次数',
-  Accepted_Count: '正确次数'
+  Accepted_Count: '正确次数',
+  Recommendation_Reason: '推荐理由',
+  Based_On_Weak_Point: '基于您薄弱知识点 {tag} 推荐',
+  Popular: '热门',
+  Knowledge_Mastery_Radar: '知识点掌握雷达图',
+  Knowledge_Mastery_Details: '知识点掌握详情'
 }
