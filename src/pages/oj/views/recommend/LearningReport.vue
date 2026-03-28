@@ -43,10 +43,10 @@
                   </Tag>
                 </template>
               </el-table-column>
-              <el-table-column prop="tags" label="知识点">
-                <template slot-scope="scope">
-                   {{ translateTags(scope.row.tags) }}
-                </template>
+              <el-table-column label="知识点">
+                    <template slot-scope="scope">
+                        {{ translateTags(scope.row.tags) }}
+                    </template>
               </el-table-column>
               <el-table-column label="推荐理由" min-width="120">
                 <template slot-scope="scope">
@@ -83,7 +83,7 @@
       <el-table :data="stats.tags" style="width: 100%">
         <el-table-column label="知识点">
             <template slot-scope="scope">
-                {{ $t(`tag.${scope.row.tag_name}`, scope.row.tag_name) }}
+                  {{ $t(`m.tag.${scope.row.tag_name}`, scope.row.tag_name) }}
             </template>
         </el-table-column>
         <el-table-column prop="total" label="提交次数"></el-table-column>
@@ -121,7 +121,7 @@ export default {
   methods: {
     translateTags(tags) {
         if (!tags || tags.length === 0) return ''
-        return tags.map(tag => this.$t(`tag.${tag}`, tag)).join(', ')
+        return tags.map(tag => this.$t(`m.tag.${tag}`, tag)).join(', ')
     },
     fetchStats() {
       axios.get('/learning-stats/')
