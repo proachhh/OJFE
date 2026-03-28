@@ -53,15 +53,14 @@
     <Col :span="5">
     <Panel :padding="10">
       <div slot="title" class="taglist-title">{{$t('m.Tags')}}</div>
-      <Button v-for="tag in tagList"
-        :key="tag.name"
-        @click="filterByTag(tag.name)"
-        type="ghost"
-        :disabled="query.tag === tag.name"
-        shape="circle"
-        class="tag-btn">{{ $t('m.tag.' + tag.name, tag.name) }}
-      </Button>
-
+	<Button v-for="tag in tagList"
+        	:key="tag.name"
+        	@click="filterByTag(tag.name)"
+        	type="ghost"
+        	:disabled="query.tag === tag.name"
+        	shape="circle"
+        	class="tag-btn">{{ m.tag[tag.name] || tag.name }}
+	</Button>
       <Button long id="pick-one" @click="pickone">
         <Icon type="shuffle"></Icon>
         {{$t('m.Pick_One')}}
@@ -78,6 +77,7 @@
   import utils from '@/utils/utils'
   import { ProblemMixin } from '@oj/components/mixins'
   import Pagination from '@oj/components/Pagination'
+  import { m } from '@/i18n/oj/zh-CN.js'
 
   export default {
     name: 'ProblemList',
@@ -87,6 +87,7 @@
     },
     data () {
       return {
+	m: m,
         tagList: [],
         problemTableColumns: [
           {
@@ -238,32 +239,23 @@
         this.pushRouter()
       },
       handleTagsVisible (value) {
-        if (value) {
-          this.problemTableColumns.push(
-            {
-              title: this.$i18n.t('m.Tags'),
-              align: 'center',
-              render: (h, params) => {
-                let tags = []
-                params.row.tags.forEach(tag => {
-<<<<<<< HEAD
-                  const translated = this.$t('m.tag.' + tag, tag)
-                  tags.push(h('Tag', {}, translated))
-=======
-                  tags.push(h('Tag', {}, this.$t('m.tag.' + tag, tag)))
->>>>>>> 5da2646d899c4c82c6c6027ce303dc7af864d0aa
-                })
-                return h('div', {
-                  style: {
-                    margin: '8px 0'
-                  }
-                }, tags)
-              }
-             })
-        } else {
-          this.problemTableColumns.splice(this.problemTableColumns.length - 1, 1)
-        }
-      },
+  if (value) {
+    this.problemTableColumns.push(
+      {
+        title: this.$i18n.t('m.Tags'),
+        align: 'center',
+	render: (h, params) => {
+  let tags = []
+  params.row.tags.forEach(tag => {
+    tags.push(h('Tag', {}, m.tag[tag] || tag))
+  })
+  return h('div', { style: { margin: '8px 0' } }, tags)
+}
+      })
+  } else {
+    this.problemTableColumns.splice(this.problemTableColumns.length - 1, 1)
+  }
+},
       onReset () {
         this.$router.push({name: 'problem-list'})
       },
