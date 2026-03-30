@@ -110,24 +110,6 @@
       </div>
     </el-card>
 
-    <!-- 最近提交记录 -->
-    <el-card class="box-card" style="margin-top: 20px;">
-      <div slot="header" class="clearfix">
-        <span>{{$t('m.Recent_Submissions')}}</span>
-      </div>
-      <el-table :data="recentSubmissions" style="width: 100%">
-        <el-table-column prop="problem.title" :label="$t('m.Problem')"></el-table-column>
-        <el-table-column :label="$t('m.Result')">
-          <template slot-scope="scope">
-            <el-tag :type="scope.row.result === 0 ? 'success' : 'danger'">
-              {{ scope.row.result === 0 ? $t('m.Correct') : $t('m.Wrong') }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="create_time" :label="$t('m.Time')" width="180"></el-table-column>
-      </el-table>
-    </el-card>
-
     <!-- 知识点掌握详情表格 -->
     <el-card class="box-card" style="margin-top: 20px;">
       <div slot="header" class="clearfix">
@@ -169,7 +151,6 @@ export default {
       recommendPage: 1,
       recommendLimit: 5,
       recommendTotal: 0,
-      recentSubmissions: [],
       trendData: {
         dates: [],
         rates: []
@@ -179,7 +160,6 @@ export default {
   mounted() {
     this.fetchStats()
     this.fetchRecommendations()
-    this.fetchRecentSubmissions()
     this.fetchTrendData()
   },
   methods: {
@@ -211,22 +191,15 @@ export default {
       this.recommendPage = val
       this.fetchRecommendations()
     },
-    fetchRecentSubmissions() {
-      axios.get('/submissions/', { params: { myself: 1, limit: 5 } })
-        .then(res => {
-          this.recentSubmissions = res.data.data.results
-        })
-        .catch(err => console.error(err))
-    },
     fetchTrendData() {
-    axios.get('/learning-trend/', { params: { days: 7 } })
+      axios.get('/learning-trend/', { params: { days: 7 } })
         .then(res => {
-        const trend = res.data.trend
-        this.trendData = {
+          const trend = res.data.trend
+          this.trendData = {
             dates: trend.map(item => item.date),
             rates: trend.map(item => item.accuracy)
-        }
-        this.$nextTick(() => {
+          }
+          this.$nextTick(() => {
             this.drawTrendChart()
           })
         })
