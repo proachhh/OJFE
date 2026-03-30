@@ -51,7 +51,7 @@
               </el-table-column>
               <el-table-column :label="$t('m.Knowledge_Points')">
                 <template slot-scope="scope">
-                  {{ translateTags(scope.row.tags) }}
+                   {{ translateTag(scope.row.tag_name) }}
                 </template>
               </el-table-column>
               <el-table-column :label="$t('m.Recommendation_Reason')" min-width="150">
@@ -173,10 +173,12 @@ export default {
   },
 
   // 批量翻译标签（用于推荐卡片）
-  translateTags(tags) {
-    if (!tags || !tags.length) return '';
-    return tags.map(tag => this.translateTag(tag)).join(', ');
-  },
+  // 替换原来的 translateTags 函数
+translateTags(tags) {
+  if (!tags || !tags.length) return '';
+  // 直接使用 translateTag 处理每个标签
+  return tags.map(tag => this.translateTag(tag)).join(', ');
+},
     fetchStats() {
       axios.get('/learning-stats/')
         .then(res => {

@@ -2,7 +2,7 @@ export const m = {
   tag: {
     'Prefix Sum': '前綴和',
     'Math': '數學',
-    'Dynamic Programming': '動態規劃',
+    'DynamicProgramming': '動態規劃',
     'DFS': '深度優先搜索',
     'Enumeration': '枚舉',
     'Recursion': '遞歸',
@@ -17,7 +17,7 @@ export const m = {
     'Graph': '圖論',
     'Implementation': '實現',
     'Inversion': '逆序對',
-    'Binary Tree': '二叉樹',
+    'BinaryTree': '二叉樹',
     'LCM': '最小公倍數'
   },
   // 404.vue
