@@ -269,14 +269,6 @@ translateTags(tags) {
         }]
       })
     },
-    translateTags(tags) {
-        if (this === null) {
-    console.error('this is null in translateTags');
-    return '';
-  }
-      if (!tags || tags.length === 0) return ''
-      return tags.map(tag => this.$t('m.tag.' + tag, tag)).join(', ')
-    },
     getDifficultyColor(level) {
       if (level === 'Low') return 'green'
       if (level === 'Mid') return 'blue'
