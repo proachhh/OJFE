@@ -1,6 +1,5 @@
 export const m = {
   tag: {
-    'test': '测试',   
     'Prefix Sum': '前缀和',
     'Math': '数学',
     'Dynamic Programming': '动态规划',
