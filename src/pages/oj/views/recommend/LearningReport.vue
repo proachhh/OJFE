@@ -212,14 +212,14 @@ export default {
       this.fetchRecommendations()
     },
     fetchRecentSubmissions() {
-      axios.get('/api/submissions/', { params: { myself: 1, limit: 5 } })
+      axios.get('/submissions/', { params: { myself: 1, limit: 5 } })
         .then(res => {
           this.recentSubmissions = res.data.data.results
         })
         .catch(err => console.error(err))
     },
     fetchTrendData() {
-    axios.get('/api/learning-trend/', { params: { days: 7 } })
+    axios.get('/learning-trend/', { params: { days: 7 } })
         .then(res => {
         const trend = res.data.trend
         this.trendData = {
