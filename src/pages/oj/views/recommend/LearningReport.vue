@@ -219,20 +219,18 @@ export default {
         .catch(err => console.error(err))
     },
     fetchTrendData() {
-      // 模拟最近7天的正确率数据（可替换为真实接口）
-      const today = new Date()
-      const dates = []
-      const rates = []
-      for (let i = 6; i >= 0; i--) {
-        const d = new Date(today)
-        d.setDate(today.getDate() - i)
-        dates.push(`${d.getMonth()+1}/${d.getDate()}`)
-        rates.push(Math.floor(Math.random() * 100))
-      }
-      this.trendData = { dates, rates }
-      this.$nextTick(() => {
-        this.drawTrendChart()
-      })
+    axios.get('/learning-trend/', { params: { days: 7 } })
+        .then(res => {
+        const trend = res.data.trend
+        this.trendData = {
+            dates: trend.map(item => item.date),
+            rates: trend.map(item => item.accuracy)
+        }
+        this.$nextTick(() => {
+            this.drawTrendChart()
+          })
+        })
+        .catch(err => console.error(err))
     },
     drawRadar() {
       if (!this.stats.tags || this.stats.tags.length === 0) return
