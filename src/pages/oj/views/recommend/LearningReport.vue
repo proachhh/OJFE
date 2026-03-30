@@ -219,7 +219,7 @@ export default {
         .catch(err => console.error(err))
     },
     fetchTrendData() {
-    axios.get('/learning-trend/', { params: { days: 7 } })
+    axios.get('/api/learning-trend/', { params: { days: 7 } })
         .then(res => {
         const trend = res.data.trend
         this.trendData = {
