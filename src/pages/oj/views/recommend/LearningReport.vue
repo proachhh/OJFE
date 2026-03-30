@@ -51,7 +51,7 @@
               </el-table-column>
               <el-table-column :label="$t('m.Knowledge_Points')">
                 <template slot-scope="scope">
-                   {{ translateTag(scope.row.tag_name) }}
+                   {{ translateTags(scope.row.tags) }}
                 </template>
               </el-table-column>
               <el-table-column :label="$t('m.Recommendation_Reason')" min-width="150">
@@ -118,7 +118,7 @@
       <el-table :data="stats.tags" style="width: 100%">
         <el-table-column :label="$t('m.Knowledge_Point')">
           <template slot-scope="scope">
-             {{ translateTags(scope.row.tags) }}
+             {{ translateTag(scope.row.tag_name) }}
           </template>
         </el-table-column>
         <el-table-column prop="total" :label="$t('m.Submission_Count')"></el-table-column>

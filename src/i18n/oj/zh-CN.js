@@ -1,8 +1,9 @@
 export const m = {
   tag: {
-    'Prefix Sum': '前缀和',
+    'test': '标签测试',
+    'PrefixSum': '前缀和',
     'Math': '数学',
-    'Dynamic Programming': '动态规划',
+    'DynamicProgramming': '动态规划',
     'DFS': '深度优先搜索',
     'Enumeration': '枚举',
     'Recursion': '递归',
@@ -17,7 +18,7 @@ export const m = {
     'Graph': '图论',
     'Implementation': '实现',
     'Inversion': '逆序对',
-    'Binary Tree': '二叉树',
+    'BinaryTree': '二叉树',
     'LCM': '最小公倍数'
   },
     // 404.vue
