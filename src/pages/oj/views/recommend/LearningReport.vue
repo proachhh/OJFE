@@ -118,7 +118,7 @@
       <el-table :data="stats.tags" style="width: 100%">
         <el-table-column :label="$t('m.Knowledge_Point')">
           <template slot-scope="scope">
-            {{ this.$t('m.tag.' + scope.row.tag_name, scope.row.tag_name) }}
+             {{ translateTags(scope.row.tags) }}
           </template>
         </el-table-column>
         <el-table-column prop="total" :label="$t('m.Submission_Count')"></el-table-column>
@@ -163,6 +163,20 @@ export default {
     this.fetchTrendData()
   },
   methods: {
+     // 安全翻译标签
+  translateTag(tagName) {
+    if (!tagName) return '';
+    const key = `m.tag.${tagName}`;
+    // 尝试获取翻译，如果翻译结果等于 key 本身（说明无对应翻译），则返回原始标签名
+    const translated = this.$t(key);
+    return translated === key ? tagName : translated;
+  },
+
+  // 批量翻译标签（用于推荐卡片）
+  translateTags(tags) {
+    if (!tags || !tags.length) return '';
+    return tags.map(tag => this.translateTag(tag)).join(', ');
+  },
     fetchStats() {
       axios.get('/learning-stats/')
         .then(res => {
@@ -206,31 +220,35 @@ export default {
         .catch(err => console.error(err))
     },
     drawRadar() {
-      if (!this.stats.tags || this.stats.tags.length === 0) return
-      const chart = echarts.init(document.getElementById('radar-chart'))
-      chart.setOption({
-        radar: {
-          indicator: this.stats.tags.map(tag => ({
-            name: this.$t('m.tag.' + tag.tag_name, tag.tag_name),
-            max: 100
-          })),
-          shape: 'circle',
-          name: {
-            textStyle: {
-              fontSize: 12,
-              color: '#333'
-            }
-          }
-        },
-        series: [{
-          type: 'radar',
-          data: [{ value: this.stats.tags.map(tag => tag.accuracy), name: this.$t('m.Accuracy') }],
-          areaStyle: { color: 'rgba(64, 158, 255, 0.2)' },
-          lineStyle: { color: '#409EFF', width: 2 },
-          itemStyle: { color: '#409EFF' }
-        }]
-      })
+  // 确保 this 不为 null
+  if (!this || !this.stats || !this.stats.tags || this.stats.tags.length === 0) {
+    return;
+  }
+  
+  const chart = echarts.init(document.getElementById('radar-chart'));
+  chart.setOption({
+    radar: {
+      indicator: this.stats.tags.map(tag => ({
+        name: this.translateTag(tag.tag_name),
+        max: 100
+      })),
+      shape: 'circle',
+      name: {
+        textStyle: {
+          fontSize: 12,
+          color: '#333'
+        }
+      }
     },
+    series: [{
+      type: 'radar',
+      data: [{ value: this.stats.tags.map(tag => tag.accuracy), name: this.$t('m.Accuracy') }],
+      areaStyle: { color: 'rgba(64, 158, 255, 0.2)' },
+      lineStyle: { color: '#409EFF', width: 2 },
+      itemStyle: { color: '#409EFF' }
+    }]
+  });
+},
     drawTrendChart() {
       if (!this.trendData.dates.length) return
       const chart = echarts.init(document.getElementById('trend-chart'))
@@ -249,22 +267,11 @@ export default {
         }]
       })
     },
-    getWeaknessAdvice() {
-      if (!this.stats.tags.length) return ''
-      const sorted = [...this.stats.tags].sort((a,b) => a.accuracy - b.accuracy)
-      const weakest = sorted[0]
-      if (weakest.accuracy === 100) {
-        return this.$t('m.Weakness_Advice_Excellent')
-      }
-      if (weakest.total === 0) {
-        return this.$t('m.Weakness_Advice_No_Practice', { tag: this.$t('m.tag.' + weakest.tag_name, weakest.tag_name) })
-      }
-      return this.$t('m.Weakness_Advice_Need_Improve', { 
-        tag: this.$t('m.tag.' + weakest.tag_name, weakest.tag_name),
-        accuracy: weakest.accuracy
-      })
-    },
     translateTags(tags) {
+        if (this === null) {
+    console.error('this is null in translateTags');
+    return '';
+  }
       if (!tags || tags.length === 0) return ''
       return tags.map(tag => this.$t('m.tag.' + tag, tag)).join(', ')
     },
@@ -281,7 +288,26 @@ export default {
     },
     goToProblem(id) {
       this.$router.push({ name: 'problem-details', params: { problemID: id } })
-    }
+    },
+    getWeaknessAdvice() {
+  if (!this.stats.tags || this.stats.tags.length === 0) {
+    return this.$t('m.No_Knowledge_Data');  // 需在翻译文件中添加该字段
+  }
+  const weakest = this.stats.tags[0];  // 已按正确率升序
+  const tagDisplay = this.translateTag(weakest.tag_name);
+
+  if (weakest.total === 0) {
+    return this.$t('m.Weakness_Advice_No_Practice', { tag: tagDisplay });
+  }
+  if (weakest.accuracy === 0 && weakest.total > 0) {
+    // 可选：添加更细致的提示
+    return `「${tagDisplay}」知识点您已提交 ${weakest.total} 次，但尚未通过任何一题，建议加强练习。`;
+  }
+  if (weakest.accuracy < 100) {
+    return this.$t('m.Weakness_Advice_Need_Improve', { tag: tagDisplay, accuracy: weakest.accuracy });
+  }
+  return this.$t('m.Weakness_Advice_Excellent');
+}
   }
 }
 </script>
