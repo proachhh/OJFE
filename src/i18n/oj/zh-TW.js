@@ -1,6 +1,6 @@
 export const m = {
   tag: {
-    'Prefix Sum': '前綴和',
+    'PrefixSum': '前綴和',
     'Math': '數學',
     'DynamicProgramming': '動態規劃',
     'DFS': '深度優先搜索',

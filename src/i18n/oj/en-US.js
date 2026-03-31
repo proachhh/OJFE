@@ -1,8 +1,8 @@
 export const m = {
   tag: {
-    'Prefix Sum': 'Prefix Sum',
+    'PrefixSum': 'PrefixSum',
     'Math': 'Math',
-    'Dynamic Programming': 'Dynamic Programming',
+    'DynamicProgramming': 'DynamicProgramming',
     'DFS': 'DFS',
     'Enumeration': 'Enumeration',
     'Recursion': 'Recursion',
@@ -17,7 +17,7 @@ export const m = {
     'Graph': 'Graph',
     'Implementation': 'Implementation',
     'Inversion': 'Inversion',
-    'Binary Tree': 'Binary Tree',
+    'BinaryTree': 'BinaryTree',
     'LCM': 'LCM'
   },
   // 404.vue

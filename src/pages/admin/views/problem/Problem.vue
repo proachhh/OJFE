@@ -17,6 +17,15 @@
           </el-col>
         </el-row>
         <el-row :gutter="20">
+          <el-col :span="18">
+            <el-form-item prop="title" :label="$t('m.Title')" required>
+              <el-input :placeholder="$t('m.Title')" v-model="problem.title">
+                <el-button slot="append" icon="el-icon-magic-stick" @click="openAIGenerateDialog">AI 生成</el-button>
+              </el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
           <el-col :span="24">
             <el-form-item prop="description" :label="$t('m.Description')" required>
               <Simditor v-model="problem.description"></Simditor>
