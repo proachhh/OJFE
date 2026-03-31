@@ -82,14 +82,29 @@
       </el-col>
 
       <!-- 右侧雷达图 -->
-      <el-col :span="10">
-        <el-card class="box-card">
-          <div slot="header" class="clearfix">
-            <span>{{$t('m.Knowledge_Mastery_Radar')}}</span>
-          </div>
-          <div id="radar-chart" style="height: 400px;"></div>
-        </el-card>
-      </el-col>
+        <el-col :span="10">
+            <el-card class="box-card">
+                <div slot="header" class="clearfix">
+                <span>{{$t('m.Knowledge_Mastery_Radar')}}</span>
+                </div>
+                <div id="radar-chart" style="height: 400px;"></div>
+                <!-- 切换按钮（正确位置） -->
+                <div style="text-align: center; margin-top: 15px;">
+                <el-button-group>
+                    <el-button 
+                    :type="currentRadarType === 'knowledge' ? 'primary' : 'default'"
+                    @click="switchRadarType('knowledge')">
+                    知识点
+                    </el-button>
+                    <el-button 
+                    :type="currentRadarType === 'language' ? 'primary' : 'default'"
+                    @click="switchRadarType('language')">
+                    语言
+                    </el-button>
+                </el-button-group>
+                </div>
+            </el-card>
+        </el-col>
     </el-row>
 
     <!-- 学习趋势折线图 -->
@@ -145,7 +160,8 @@ export default {
         total_ac: 0,
         accuracy: 0,
         beat_percent: 0,
-        tags: []
+        tags: [],
+        lang_stats: []  
       },
       recommendations: [],
       recommendPage: 1,
@@ -154,7 +170,8 @@ export default {
       trendData: {
         dates: [],
         rates: []
-      }
+      },
+      currentRadarType: 'knowledge', 
     }
   },
   mounted() {
@@ -163,29 +180,33 @@ export default {
     this.fetchTrendData()
   },
   methods: {
-     // 安全翻译标签
-  translateTag(tagName) {
-    if (!tagName) return '';
-    const key = `m.tag.${tagName}`;
-    // 尝试获取翻译，如果翻译结果等于 key 本身（说明无对应翻译），则返回原始标签名
-    const translated = this.$t(key);
-    return translated === key ? tagName : translated;
-  },
-
-  // 批量翻译标签（用于推荐卡片）
-  // 替换原来的 translateTags 函数
-translateTags(tags) {
-  if (!tags || !tags.length) return '';
-  // 直接使用 translateTag 处理每个标签
-  return tags.map(tag => this.translateTag(tag)).join(', ');
-},
+    translateTag(tagName) {
+        if (!tagName) return '';
+        const key = `m.tag.${tagName}`;
+        // 尝试获取翻译，如果翻译结果等于 key 本身（说明无对应翻译），则返回原始标签名
+        const translated = this.$t(key);
+        return translated === key ? tagName : translated;
+    },
+    translateTags(tags) {
+    if (!tags || !tags.length) return '';
+    // 直接使用 translateTag 处理每个标签
+    return tags.map(tag => this.translateTag(tag)).join(', ');
+    },
+    switchRadarType(type) {
+        if (this.currentRadarType === type) return;
+        this.currentRadarType = type;
+        this.$nextTick(() => {
+            this.drawRadar();
+        });
+    },
     fetchStats() {
       axios.get('/learning-stats/')
         .then(res => {
           this.stats = res.data
+          if (!this.stats.lang_stats) this.stats.lang_stats = [];
           this.$nextTick(() => {
-            this.drawRadar()
-          })
+            this.drawRadar();
+          });
         })
         .catch(err => console.error(err))
     },
@@ -222,35 +243,49 @@ translateTags(tags) {
         .catch(err => console.error(err))
     },
     drawRadar() {
-  // 确保 this 不为 null
-  if (!this || !this.stats || !this.stats.tags || this.stats.tags.length === 0) {
-    return;
-  }
-  
-  const chart = echarts.init(document.getElementById('radar-chart'));
-  chart.setOption({
-    radar: {
-      indicator: this.stats.tags.map(tag => ({
-        name: this.translateTag(tag.tag_name),
-        max: 100
-      })),
-      shape: 'circle',
-      name: {
-        textStyle: {
-          fontSize: 12,
-          color: '#333'
+        let radarData = [];
+        let indicator = [];
+
+        if (this.currentRadarType === 'knowledge') {
+            radarData = this.stats.tags || [];
+            indicator = radarData.map(tag => ({
+            name: this.translateTag(tag.tag_name),  // 使用翻译函数
+            max: 100
+            }));
+        } else {
+            radarData = this.stats.lang_stats || [];
+            indicator = radarData.map(lang => ({
+            name: lang.lang_name,   // 语言名称直接显示（如 C++、Python）
+            max: 100
+            }));
         }
-      }
+
+        // 无数据时清空图表并返回
+        if (!radarData.length) {
+            const chart = echarts.init(document.getElementById('radar-chart'));
+            chart.clear();
+            return;
+        }
+
+        const chart = echarts.init(document.getElementById('radar-chart'));
+        chart.setOption({
+            radar: {
+            indicator: indicator,
+            shape: 'circle',
+            name: { textStyle: { fontSize: 12, color: '#333' } }
+            },
+            series: [{
+            type: 'radar',
+            data: [{
+                value: radarData.map(item => item.accuracy),
+                name: this.currentRadarType === 'knowledge' ? this.$t('m.Accuracy') : '正确率'
+            }],
+            areaStyle: { color: 'rgba(64, 158, 255, 0.2)' },
+            lineStyle: { color: '#409EFF', width: 2 },
+            itemStyle: { color: '#409EFF' }
+            }]
+        });
     },
-    series: [{
-      type: 'radar',
-      data: [{ value: this.stats.tags.map(tag => tag.accuracy), name: this.$t('m.Accuracy') }],
-      areaStyle: { color: 'rgba(64, 158, 255, 0.2)' },
-      lineStyle: { color: '#409EFF', width: 2 },
-      itemStyle: { color: '#409EFF' }
-    }]
-  });
-},
     drawTrendChart() {
       if (!this.trendData.dates.length) return
       const chart = echarts.init(document.getElementById('trend-chart'))
