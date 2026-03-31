@@ -1,8 +1,16 @@
 <template>
   <div class="problem">
-
     <Panel :title="title">
       <el-form ref="form" :model="problem" :rules="rules" label-position="top" label-width="70px">
+        <!-- AI 生成按钮独立行 -->
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-button type="primary" icon="el-icon-magic-stick" @click="openAIGenerateDialog" style="margin-bottom: 20px;">
+              AI 生成题目
+            </el-button>
+          </el-col>
+        </el-row>
+
         <el-row :gutter="20">
           <el-col :span="6">
             <el-form-item prop="_id" :label="$t('m.Display_ID')"
@@ -16,15 +24,7 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-row :gutter="20">
-          <el-col :span="18">
-            <el-form-item prop="title" :label="$t('m.Title')" required>
-              <el-input :placeholder="$t('m.Title')" v-model="problem.title">
-                <el-button slot="append" icon="el-icon-magic-stick" @click="openAIGenerateDialog">AI 生成</el-button>
-              </el-input>
-            </el-form-item>
-          </el-col>
-        </el-row>
+
         <el-row :gutter="20">
           <el-col :span="24">
             <el-form-item prop="description" :label="$t('m.Description')" required>
@@ -32,6 +32,7 @@
             </el-form-item>
           </el-col>
         </el-row>
+
         <el-row :gutter="20">
           <el-col :span="24">
             <el-form-item prop="input_description" :label="$t('m.Input_Description')" required>
@@ -44,6 +45,7 @@
             </el-form-item>
           </el-col>
         </el-row>
+
         <el-row :gutter="20">
           <el-col :span="8">
             <el-form-item :label="$t('m.Time_Limit') + ' (ms)' " required>
@@ -65,6 +67,7 @@
             </el-form-item>
           </el-col>
         </el-row>
+
         <el-row :gutter="20">
           <el-col :span="4">
             <el-form-item :label="$t('m.Visible')">
@@ -121,6 +124,7 @@
             </el-form-item>
           </el-col>
         </el-row>
+
         <div>
           <el-form-item v-for="(sample, index) in problem.samples" :key="'sample'+index">
             <Accordion :title="'Sample' + (index + 1)">
@@ -152,13 +156,16 @@
             </Accordion>
           </el-form-item>
         </div>
+
         <div class="add-sample-btn">
           <button type="button" class="add-samples" @click="addSample()"><i class="el-icon-plus"></i>{{$t('m.Add_Sample')}}
           </button>
         </div>
+
         <el-form-item style="margin-top: 20px" :label="$t('m.Hint')">
           <Simditor v-model="problem.hint" placeholder=""></Simditor>
         </el-form-item>
+
         <el-form-item :label="$t('m.Code_Template')">
           <el-row>
             <el-col :span="24" v-for="(v, k) in template" :key="'template'+k">
@@ -171,11 +178,13 @@
             </el-col>
           </el-row>
         </el-form-item>
+
         <el-form-item :label="$t('m.Special_Judge')" :error="error.spj">
           <el-col :span="24">
             <el-checkbox v-model="problem.spj" @click.native.prevent="switchSpj()">{{$t('m.Use_Special_Judge')}}</el-checkbox>
           </el-col>
         </el-form-item>
+
         <el-form-item v-if="problem.spj">
           <Accordion :title="$t('m.Special_Judge_Code')">
             <template slot="header">
@@ -194,6 +203,7 @@
             <code-mirror v-model="problem.spj_code" :mode="spjMode"></code-mirror>
           </Accordion>
         </el-form-item>
+
         <el-row :gutter="20">
           <el-col :span="4">
             <el-form-item :label="$t('m.Type')">
@@ -268,6 +278,7 @@
         <el-form-item :label="$t('m.Source')">
           <el-input :placeholder="$t('m.Source')" v-model="problem.source"></el-input>
         </el-form-item>
+
         <save @click.native="submit()">Save</save>
       </el-form>
     </Panel>
@@ -592,6 +603,45 @@
           }
         }).catch(() => {
         })
+      },
+      openAIGenerateDialog() {
+        this.$prompt('请输入题目生成要求（例如：生成一道关于二叉树的题目）', 'AI 生成题目', {
+          confirmButtonText: '生成',
+          cancelButtonText: '取消',
+          inputPlaceholder: '例如：生成一道关于动态规划的题目，难度中等'
+        }).then(({ value }) => {
+          this.generateProblemWithAI(value);
+        }).catch(() => {});
+      },
+      generateProblemWithAI(prompt) {
+        const loading = this.$loading({ text: 'AI 生成中...' });
+        api.generateProblemWithAI(prompt)
+          .then(res => {
+            loading.close();
+            if (res.data.error) {
+              this.$error(res.data.data);
+              return;
+            }
+            const data = res.data.data;
+            this.problem.title = data.title;
+            this.problem.description = data.description;
+            this.problem.input_description = data.input_description;
+            this.problem.output_description = data.output_description;
+            this.problem.hint = data.hint || '';
+            this.problem.source = data.source || '';
+            this.problem.time_limit = data.time_limit;
+            this.problem.memory_limit = data.memory_limit;
+            this.problem.difficulty = data.difficulty;
+            this.problem.tags = data.tags;
+            if (data.samples && data.samples.length) {
+              this.problem.samples = data.samples;
+            }
+            this.$message.success('AI 生成完成，请检查并调整');
+          })
+          .catch(err => {
+            loading.close();
+            this.$error('AI 生成失败：' + (err.response?.data?.data || err.message));
+          });
       }
     }
   }
