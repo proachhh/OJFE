@@ -640,7 +640,11 @@
           })
           .catch(err => {
             loading.close();
-            this.$error('AI 生成失败：' + (err.response?.data?.data || err.message));
+            let errorMsg = err.message;
+            if (err.response && err.response.data && err.response.data.data) {
+              errorMsg = err.response.data.data;
+            }
+            this.$error('AI 生成失败：' + errorMsg);
           });
       }
     }
