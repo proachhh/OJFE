@@ -296,6 +296,11 @@ export default {
     return ajax('export_problem', 'post', {
       data
     })
+  },
+  generateProblemWithAI(prompt) {
+    return ajax('admin/problem/generate_with_ai/', 'post', {
+      data: { prompt }
+    })
   }
 }
 
