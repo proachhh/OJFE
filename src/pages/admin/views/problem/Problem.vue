@@ -275,6 +275,21 @@
           </el-col>
         </el-row>
 
+        <el-collapse v-model="activePreview" v-if="testCasePreview && testCasePreview.length">
+          <el-collapse-item :title="'测试点 ' + item.index" :name="item.index" v-for="item in testCasePreview" :key="item.index">
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <strong>输入 ({{ item.input_name }})：</strong>
+                <pre>{{ item.input_preview }}</pre>
+              </el-col>
+              <el-col :span="12" v-if="item.output_name">
+                <strong>输出 ({{ item.output_name }})：</strong>
+                <pre>{{ item.output_preview }}</pre>
+              </el-col>
+            </el-row>
+          </el-collapse-item>
+        </el-collapse>
+
         <el-form-item :label="$t('m.Source')">
           <el-input :placeholder="$t('m.Source')" v-model="problem.source"></el-input>
         </el-form-item>
@@ -331,7 +346,10 @@
           spj: '',
           languages: '',
           testCase: ''
-        }
+        },
+        // 新增测试用例预览数据
+        testCasePreview: [],   // 存储测试用例预览数据
+        activePreview: []      // 存储展开的折叠面板项（可选）
       }
     },
     mounted () {
@@ -483,21 +501,31 @@
       deleteSample (index) {
         this.problem.samples.splice(index, 1)
       },
-      uploadSucceeded (response) {
+      uploadSucceeded(response) {
         if (response.error) {
-          this.$error(response.data)
-          return
+          this.$error(response.data);
+          return;
         }
-        let fileList = response.data.info
+        let fileList = response.data.info;
         for (let file of fileList) {
-          file.score = (100 / fileList.length).toFixed(0)
+          file.score = (100 / fileList.length).toFixed(0);
           if (!file.output_name && this.problem.spj) {
-            file.output_name = '-'
+            file.output_name = '-';
           }
         }
-        this.problem.test_case_score = fileList
-        this.testCaseUploaded = true
-        this.problem.test_case_id = response.data.id
+        this.problem.test_case_score = fileList;
+        this.testCaseUploaded = true;
+        this.problem.test_case_id = response.data.id;
+
+        // 调用预览接口
+        this.loadTestCasePreview();
+      },
+      loadTestCasePreview() {
+        if (!this.problem.id) return;
+        api.getTestCasePreview(this.problem.id).then(res => {
+          if (res.data.error) return;
+          this.testCasePreview = res.data.data.test_cases;
+        }).catch(() => {});
       },
       uploadFailed () {
         this.$error('Upload failed')
