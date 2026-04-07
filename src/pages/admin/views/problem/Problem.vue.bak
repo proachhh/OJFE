@@ -642,9 +642,10 @@
         }).catch(() => {});
       },
       generateProblemWithAI(prompt) {
-        const loading = this.$loading({ text: "AI 生成中..." });
+        const loading = this.$loading({ text: 'AI 生成中...' });
         api.generateProblemWithAI(prompt)
           .then(res => {
+            loading.close();
             if (res.data.error) {
               this.$error(res.data.data);
               return;
@@ -654,8 +655,8 @@
             this.problem.description = data.description;
             this.problem.input_description = data.input_description;
             this.problem.output_description = data.output_description;
-            this.problem.hint = data.hint || "";
-            this.problem.source = data.source || "";
+            this.problem.hint = data.hint || '';
+            this.problem.source = data.source || '';
             this.problem.time_limit = data.time_limit;
             this.problem.memory_limit = data.memory_limit;
             this.problem.difficulty = data.difficulty;
@@ -663,17 +664,15 @@
             if (data.samples && data.samples.length) {
               this.problem.samples = data.samples;
             }
-            this.$message.success("AI 生成完成，请检查并调整");
+            this.$message.success('AI 生成完成，请检查并调整');
           })
           .catch(err => {
+            loading.close();
             let errorMsg = err.message;
             if (err.response && err.response.data && err.response.data.data) {
               errorMsg = err.response.data.data;
             }
-            this.$error("AI 生成失败：" + errorMsg);
-          })
-          .finally(() => {
-            loading.close();
+            this.$error('AI 生成失败：' + errorMsg);
           });
       }
     }
