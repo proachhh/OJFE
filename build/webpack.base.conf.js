@@ -119,5 +119,10 @@ module.exports = {
       files: ['index.html', 'admin/index.html'],
       append: false
     }),
+    new webpack.ProvidePlugin({
+      $: 'jquery',
+      jQuery: 'jquery',
+      'window.jQuery': 'jquery'
+    }),
   ]
 }

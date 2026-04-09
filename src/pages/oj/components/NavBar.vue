@@ -18,6 +18,10 @@
         <Icon type="ios-pulse-strong"></Icon>
         {{$t('m.NavStatus')}}
       </Menu-item>
+      <Menu-item name="/learning-path">
+        <Icon type="ios-git-branch"></Icon>
+        {{$t('m.Learning_Path')}}
+      </Menu-item>
       <Submenu name="rank">
         <template slot="title">
           <Icon type="podium"></Icon>

@@ -193,5 +193,12 @@ export default [
     name: 'learning-report',
     meta: {title: 'Learning Report'},
     component: () => import('../views/recommend/LearningReport.vue')
+  },
+
+  // learning path
+  {
+    path: '/learning-path',
+    name: 'LearningPath',
+    component: () => import('@/pages/oj/views/recommend/LearningPath.vue')
   }
 ]

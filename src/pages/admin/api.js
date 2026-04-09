@@ -302,7 +302,10 @@ export default {
     return ajax('admin/problem/generate_with_ai/', 'post', {
       data: { prompt }
     })
-  }
+  },
+  getLearningStats() {
+    return ajax('learning-stats', 'get')
+  },
 }
 
 /**

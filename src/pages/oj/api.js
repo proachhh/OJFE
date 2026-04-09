@@ -268,6 +268,12 @@ export default {
     return ajax('admin/contest/acm_helper', 'put', {
       data
     })
+  },
+  getLearningPath (params) {
+    return ajax('learning-path', 'get', { params })
+  },
+  getLearningStats () {
+    return ajax('learning-stats', 'get')
   }
 }
 
@@ -291,24 +297,39 @@ function ajax (url, method, options) {
       params,
       data
     }).then(res => {
-      // API正常返回(status=20x), 是否错误通过有无error判断
-      if (res.data.error !== null) {
-        Vue.prototype.$error(res.data.data)
+      // 只有当响应数据中明确存在 error 字段且不为 null/undefined 时，才视为业务错误
+      if (res.data.hasOwnProperty('error') && res.data.error !== null && res.data.error !== undefined) {
+        let errorMsg = '操作失败'
+        if (res.data.data && typeof res.data.data === 'string') {
+          errorMsg = res.data.data
+        } else if (typeof res.data.error === 'string') {
+          errorMsg = res.data.error
+        }
+        Vue.prototype.$error(errorMsg)
         reject(res)
-        // 若后端返回为登录，则为session失效，应退出当前登录用户
-        if (res.data.data.startsWith('Please login')) {
+        if (errorMsg.includes('Please login') || errorMsg.includes('登录')) {
           store.dispatch('changeModalStatus', {'mode': 'login', 'visible': true})
         }
       } else {
+        // 无错误，正常返回
         resolve(res)
-        // if (method !== 'get') {
-        //   Vue.prototype.$success('Succeeded')
-        // }
       }
     }, res => {
-      // API请求异常，一般为Server error 或 network error
+      // 网络错误或 HTTP 状态码非 20x
       reject(res)
-      Vue.prototype.$error(res.data.data)
+      let errorMsg = '网络错误，请稍后重试'
+      if (res.data) {
+        if (typeof res.data === 'string') {
+          errorMsg = res.data
+        } else if (res.data.data && typeof res.data.data === 'string') {
+          errorMsg = res.data.data
+        } else if (res.data.error) {
+          errorMsg = res.data.error
+        }
+      } else if (res.statusText) {
+        errorMsg = res.statusText
+      }
+      Vue.prototype.$error(errorMsg)
     })
   })
 }
