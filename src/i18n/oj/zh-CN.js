@@ -381,6 +381,11 @@ export const m = {
   Go_Home: '返回主页',
   Recent_Announcements:'公告',
   Search_Tags:'查找标签',
+  Search: '搜索',
+  Enter: '进入',
+  Explore_Learning_Path:'探索学习路径',
+  Knowledge_Graph:'知识图谱',
+  Scroll_to_Bottom:'滚动到底部',
   // Problem.vue
   Description: '题目描述',
   Input: '输入',

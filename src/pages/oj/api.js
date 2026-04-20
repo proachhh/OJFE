@@ -274,6 +274,9 @@ export default {
   },
   getLearningStats () {
     return ajax('learning-stats', 'get')
+  },
+  getKnowledgeGraph () {
+    return ajax('knowledge-graph', 'get')
   }
 }
 

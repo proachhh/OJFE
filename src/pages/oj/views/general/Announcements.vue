@@ -1,80 +1,103 @@
 <template>
-  <Panel shadow :padding="10">
-    <div slot="title">
-      {{ title }}
-    </div>
-    <div slot="extra">
-      <Button v-if="listVisible" type="info" @click="init" :loading="btnLoading">
-        {{ $t('m.Refresh') }}
-      </Button>
-      <Button v-else type="ghost" icon="ios-undo" @click="goBack">
-        {{ $t('m.Back') }}
-      </Button>
-    </div>
-
-    <transition-group name="announcement-animate" mode="in-out">
-      <div class="no-announcement" v-if="!announcements.length" key="no-announcement">
-        <p>{{ $t('m.No_Announcements') }}</p>
-      </div>
-
-      <template v-if="listVisible">
-        <div class="announcement-layout" key="layout">
-          <!-- 左侧轮播图 -->
-          <div class="carousel-side" v-if="carouselItems.length">
-            <div class="carousel-wrapper">
-              <Carousel
-                v-model="carouselIndex"
-                :autoplay="true"
-                :autoplay-speed="3000"
-                :dots="'inside'"
-                :radius-dot="true"
-                :trigger="'hover'"
-                :arrow="'always'"
-                :height="carouselHeight"
-                class="carousel"
+  <div class="announcements-elegant">
+    <!-- 主内容区 -->
+    <div class="content-wrapper">
+      <!-- 轮播图 + 公告列表布局 -->
+      <div class="main-layout">
+        <!-- 左侧堆叠卡片轮播 -->
+        <div class="stacked-carousel" v-if="carouselItems.length">
+          <div class="stacked-container">
+            <div class="stack-wrapper">
+              <!-- 所有卡片层叠 -->
+              <div 
+                v-for="(item, index) in carouselItems" 
+                :key="index"
+                class="stack-card"
+                :class="{ 
+                  'stack-active': index === carouselIndex,
+                  'stack-next': index === nextIndex,
+                  'stack-hidden': index !== carouselIndex && index !== nextIndex
+                }"
+                :style="{ backgroundImage: `url(${item.image})` }"
+                @click="index === carouselIndex && goAnnouncement(item.announcement)"
               >
-                <CarouselItem v-for="(item, index) in carouselItems" :key="index">
-                  <div class="carousel-item" @click="goAnnouncement(item.announcement)">
-                    <img :src="item.image" :alt="item.announcement.title" />
-                    <div class="carousel-title">{{ item.announcement.title }}</div>
-                  </div>
-                </CarouselItem>
-              </Carousel>
+                <div class="stack-overlay">
+                  <span class="stack-badge">{{ index === carouselIndex ? 'Featured' : 'Next' }}</span>
+                  <h3 class="stack-title">{{ item.announcement.title }}</h3>
+                  <p class="stack-meta">
+                    <span class="author">{{ item.announcement.created_by.username }}</span>
+                    <span class="divider">·</span>
+                    <span class="time">{{ item.announcement.create_time | localtime }}</span>
+                  </p>
+                </div>
+              </div>
             </div>
-          </div>
-          <div v-else class="carousel-side empty-carousel">
-            <p>{{ $t('m.No_Image_Announcement') }}</p>
-          </div>
-
-          <!-- 右侧列表（只显示标题，极简风格） -->
-          <div class="list-side">
-            <div class="list-header">
-              <span>{{ $t('m.Recent_Announcements') }}</span>
-              <Button type="text" icon="ios-arrow-down" @click="scrollToListBottom" :title="$t('m.Scroll_to_Bottom')" size="small" />
-            </div>
-            <ul class="announcements-container" ref="announcementList">
-              <li v-for="announcement in announcements" :key="announcement.id" @click="goAnnouncement(announcement)">
-                <Tooltip :content="`${announcement.created_by.username} · ${announcement.create_time | localtime}`" placement="left">
-                  <span class="item-title">{{ announcement.title }}</span>
-                </Tooltip>
-              </li>
-            </ul>
-            <div class="pagination-wrapper" v-if="!isContest">
-              <Pagination
-                :total="total"
-                :page-size="limit"
-                @on-change="getAnnouncementList"
+            <!-- 轮播指示器 -->
+            <div class="stack-dots">
+              <span 
+                v-for="(item, index) in carouselItems" 
+                :key="index"
+                :class="['dot', { active: index === carouselIndex }]"
+                @click="carouselIndex = index"
               />
             </div>
           </div>
         </div>
-      </template>
 
-      <template v-else>
-        <div v-katex v-html="announcement.content" key="content" class="content-container markdown-body"></div>
-      </template>
-    </transition-group>
-  </Panel>
+        <!-- 右侧公告列表 -->
+        <div class="list-section">
+          <div class="list-header">
+            <span>{{ $t('m.Recent_Announcements') }}</span>
+          </div>
+          <div class="announcement-list">
+            <div 
+              v-for="(item, index) in displayAnnouncements" 
+              :key="item.id"
+              class="announcement-item"
+              @click="goAnnouncement(item)"
+            >
+              <div class="item-content">
+                <div class="item-header">
+                  <span class="item-number">{{ String(index + 1).padStart(2, '0') }}</span>
+                  <h4 class="item-title">{{ item.title }}</h4>
+                </div>
+                <p class="item-meta">
+                  <span class="time">{{ item.create_time | localtime }}</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 分页 -->
+      <div v-if="!isContest && total > limit" class="pagination-section">
+        <Pagination
+          :total="total"
+          :page-size="limit"
+          @on-change="getAnnouncementList"
+        />
+      </div>
+    </div>
+
+    <!-- 详情弹窗 -->
+    <transition name="fade">
+      <div v-if="!listVisible && announcement" class="detail-modal" @click.self="goBack">
+        <div class="detail-content">
+          <button class="close-btn" @click="goBack">
+            <Icon type="ios-close" />
+          </button>
+          <h2 class="detail-title">{{ announcement.title }}</h2>
+          <div class="detail-meta">
+            <span class="author">{{ announcement.created_by.username }}</span>
+            <span class="divider">·</span>
+            <span class="time">{{ announcement.create_time | localtime }}</span>
+          </div>
+          <div class="detail-body markdown-body" v-katex v-html="announcement.content"></div>
+        </div>
+      </div>
+    </transition>
+  </div>
 </template>
 
 <script>
@@ -83,269 +106,545 @@ import Pagination from '@oj/components/Pagination'
 
 export default {
   name: 'Announcement',
-  components: {
-    Pagination
-  },
-  data () {
+  components: { Pagination },
+  data() {
     return {
-      limit: 10,
-      total: 10,
+      limit: 6,
+      total: 0,
       btnLoading: false,
       announcements: [],
-      announcement: '',
+      announcement: null,
       listVisible: true,
       carouselIndex: 0,
-      carouselHeight: '200px',
-      resizeTimer: null
+      preloadedImages: new Set()
     }
   },
-  mounted () {
-    this.calcCarouselHeight()
-    window.addEventListener('resize', this.handleResize)
+  mounted() {
     this.init()
+    this.startAutoPlay()
   },
-  beforeDestroy () {
-    window.removeEventListener('resize', this.handleResize)
-    if (this.resizeTimer) clearTimeout(this.resizeTimer)
-  },
-  methods: {
-    // 防抖处理 resize 事件
-    handleResize () {
-      if (this.resizeTimer) clearTimeout(this.resizeTimer)
-      this.resizeTimer = setTimeout(() => {
-        this.calcCarouselHeight()
-      }, 100)
-    },
-    // 计算轮播图高度（基于容器宽度 16:9）
-    calcCarouselHeight () {
-      this.$nextTick(() => {
-        const wrapper = this.$el.querySelector('.carousel-wrapper')
-        if (wrapper) {
-          const width = wrapper.clientWidth
-          // 只有宽度有效时才计算，避免高度突变为异常值
-          if (width > 0) {
-            this.carouselHeight = (width * 9 / 16) + 'px'
-          }
-        }
-      })
-    },
-    // 滚动公告列表到底部
-    scrollToListBottom () {
-      const listEl = this.$refs.announcementList
-      if (listEl) {
-        listEl.scrollTo({
-          top: listEl.scrollHeight,
-          behavior: 'smooth'
-        })
-      }
-    },
-    init () {
-      if (this.isContest) {
-        this.getContestAnnouncementList()
-      } else {
-        this.getAnnouncementList()
-      }
-    },
-    getAnnouncementList (page = 1) {
-      this.btnLoading = true
-      api.getAnnouncementList((page - 1) * this.limit, this.limit).then(res => {
-        this.btnLoading = false
-        this.announcements = res.data.data.results
-        this.total = res.data.data.total
-        // 数据更新后重新计算轮播图高度（因为可能新增/减少了包含图片的公告）
-        this.$nextTick(() => {
-          this.calcCarouselHeight()
-        })
-      }, () => {
-        this.btnLoading = false
-      })
-    },
-    getContestAnnouncementList () {
-      this.btnLoading = true
-      api.getContestAnnouncementList(this.$route.params.contestID).then(res => {
-        this.btnLoading = false
-        this.announcements = res.data.data
-        this.$nextTick(() => {
-          this.calcCarouselHeight()
-        })
-      }, () => {
-        this.btnLoading = false
-      })
-    },
-    goAnnouncement (announcement) {
-      this.announcement = announcement
-      this.listVisible = false
-    },
-    goBack () {
-      this.listVisible = true
-      this.announcement = ''
-    },
-    // 提取公告内容中第一张图片的URL
-    extractFirstImage (content) {
-      if (!content) return null
-      // 匹配 Markdown 图片语法: ![alt](url)
-      const mdMatch = content.match(/!\[.*?\]\((.*?)\)/)
-      if (mdMatch) return mdMatch[1]
-      // 匹配 HTML img 标签
-      const htmlMatch = content.match(/<img[^>]+src="([^">]+)"/)
-      if (htmlMatch) return htmlMatch[1]
-      return null
-    }
+  beforeDestroy() {
+    this.stopAutoPlay()
   },
   computed: {
-    title () {
-      if (this.listVisible) {
-        return this.isContest ? this.$i18n.t('m.Contest_Announcements') : this.$i18n.t('m.Announcements')
-      } else {
-        return this.announcement.title
-      }
-    },
-    isContest () {
+    isContest() {
       return !!this.$route.params.contestID
     },
-    carouselItems () {
+    // 只显示6个公告
+    displayAnnouncements() {
+      return this.announcements.slice(0, 6)
+    },
+    // 轮播图项目（取前4个有图片的公告）
+    carouselItems() {
       return this.announcements
         .map(ann => {
           const image = this.extractFirstImage(ann.content)
           return image ? { announcement: ann, image } : null
         })
         .filter(item => item !== null)
+        .slice(0, 4)
+    },
+    // 下一张索引
+    nextIndex() {
+      if (this.carouselItems.length <= 1) return 0
+      return (this.carouselIndex + 1) % this.carouselItems.length
+    }
+  },
+  watch: {
+    carouselIndex() {
+      // 索引变化时重置自动轮播计时
+      this.resetAutoPlay()
+    }
+  },
+  methods: {
+    init() {
+      if (this.isContest) {
+        this.getContestAnnouncementList()
+      } else {
+        this.getAnnouncementList()
+      }
+    },
+    getAnnouncementList(page = 1) {
+      this.btnLoading = true
+      api.getAnnouncementList((page - 1) * this.limit, this.limit).then(res => {
+        this.btnLoading = false
+        this.announcements = res.data.data.results
+        this.total = res.data.data.total
+        // 预加载轮播图图片
+        this.$nextTick(() => {
+          this.preloadCarouselImages()
+        })
+      }, () => {
+        this.btnLoading = false
+      })
+    },
+    getContestAnnouncementList() {
+      this.btnLoading = true
+      api.getContestAnnouncementList(this.$route.params.contestID).then(res => {
+        this.btnLoading = false
+        this.announcements = res.data.data
+      }, () => {
+        this.btnLoading = false
+      })
+    },
+    goAnnouncement(announcement) {
+      this.announcement = announcement
+      this.listVisible = false
+    },
+    goBack() {
+      this.listVisible = true
+      this.announcement = null
+    },
+    extractFirstImage(content) {
+      if (!content) return null
+      const mdMatch = content.match(/!\[.*?\]\((.*?)\)/)
+      if (mdMatch) return mdMatch[1]
+      const htmlMatch = content.match(/<img[^>]+src="([^">]+)"/)
+      if (htmlMatch) return htmlMatch[1]
+      return null
+    },
+    preloadCarouselImages() {
+      // 预加载所有轮播图图片
+      this.carouselItems.forEach(item => {
+        if (item.image && !this.preloadedImages.has(item.image)) {
+          const img = new Image()
+          img.src = item.image
+          this.preloadedImages.add(item.image)
+        }
+      })
+    },
+    startAutoPlay() {
+      this.stopAutoPlay()
+      this.autoPlayTimer = setInterval(() => {
+        if (this.carouselItems.length > 1) {
+          // 先预加载下一张图片
+          const nextIdx = (this.carouselIndex + 1) % this.carouselItems.length
+          const nextItem = this.carouselItems[nextIdx]
+          const nextImage = nextItem ? nextItem.image : null
+          if (nextImage && !this.preloadedImages.has(nextImage)) {
+            const img = new Image()
+            img.src = nextImage
+            this.preloadedImages.add(nextImage)
+          }
+          this.carouselIndex = nextIdx
+        }
+      }, 4000)
+    },
+    stopAutoPlay() {
+      if (this.autoPlayTimer) {
+        clearInterval(this.autoPlayTimer)
+        this.autoPlayTimer = null
+      }
+    },
+    resetAutoPlay() {
+      this.startAutoPlay()
     }
   }
 }
 </script>
 
 <style scoped lang="less">
-.announcement-layout {
-  display: flex;
-  gap: 20px;
-  margin-top: 10px;
+.announcements-elegant {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px;
 }
 
-.carousel-side {
-  flex: 2; // 轮播图占 2 份，更宽
+/* 标题区 */
+.header-section {
+  text-align: center;
+  margin-bottom: 30px;
+
+  .section-title {
+    font-size: 1.8rem;
+    font-weight: 300;
+    color: #1a1a2e;
+    letter-spacing: 0.15em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 8px;
+
+    .title-line {
+      width: 50px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #1e3a8a, transparent);
+    }
+  }
+
+  .section-subtitle {
+    font-size: 0.8rem;
+    color: #64748b;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+}
+
+/* 主布局 - 左右分栏 */
+.main-layout {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 30px;
+}
+
+/* 堆叠轮播区域 */
+.stacked-carousel {
+  flex: 2;
   min-width: 0;
 }
 
-.empty-carousel {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f8f8f9;
-  border-radius: 8px;
-  color: #808695;
+.stacked-container {
+  position: relative;
+  height: 420px;
 }
 
-.list-side {
-  flex: 1; // 列表占 1 份，更窄
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.list-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 4px 12px 4px;
-  font-weight: 500;
-  color: #17233d;
-  border-bottom: 1px solid #e8eaec;
-}
-
-.announcements-container {
-  flex: 1;
-  overflow-y: auto;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-
-  &::-webkit-scrollbar {
-    width: 4px;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: #c5c8ce;
-    border-radius: 2px;
-  }
-
-  li {
-    padding: 12px 4px;
-    border-bottom: 1px solid #f0f0f0;
-    cursor: pointer;
-    transition: background 0.2s;
-    &:hover {
-      background: #f8f8f9;
-    }
-    &:last-child {
-      border-bottom: none;
-    }
-  }
-}
-
-.item-title {
-  font-size: 14px;
-  color: #17233d;
-  display: block;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.pagination-wrapper {
-  margin-top: 12px;
-  text-align: right;
-}
-
-.carousel-wrapper {
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.carousel {
-  /deep/ .ivu-carousel-item {
-    img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-  }
-}
-
-.carousel-item {
+.stack-wrapper {
   position: relative;
   width: 100%;
   height: 100%;
-  cursor: pointer;
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-  .carousel-title {
-    position: absolute;
-    bottom: 0;
+}
+
+.stack-card {
+  position: absolute;
+  width: 92%;
+  height: 360px;
+  border-radius: 16px;
+  background-size: cover;
+  background-position: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  transition: all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+
+  /* 当前激活的卡片 */
+  &.stack-active {
+    top: 0;
     left: 0;
-    right: 0;
-    padding: 8px 16px;
-    background: linear-gradient(transparent, rgba(0, 0, 0, 0.6));
-    color: white;
-    font-size: 16px;
-    font-weight: 500;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    z-index: 10;
+    opacity: 1;
+    transform: scale(1);
+    cursor: pointer;
+
+    &:hover {
+      transform: translateY(-6px) scale(1.01);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+    }
+
+    .stack-title,
+    .stack-meta {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* 下一张卡片 */
+  &.stack-next {
+    bottom: 10px;
+    right: 10px;
+    z-index: 5;
+    opacity: 0.6;
+    transform: scale(0.94);
+    filter: brightness(0.85);
+
+    .stack-title,
+    .stack-meta {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+  }
+
+  /* 隐藏的卡片 */
+  &.stack-hidden {
+    bottom: 20px;
+    right: 20px;
+    z-index: 1;
+    opacity: 0;
+    transform: scale(0.88);
+    pointer-events: none;
+
+    .stack-title,
+    .stack-meta {
+      opacity: 0;
+    }
   }
 }
 
-.content-container {
-  padding: 0 20px 20px 20px;
+.stack-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 28px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.75));
+  color: white;
+
+  .stack-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .stack-title {
+    font-size: 1.25rem;
+    font-weight: 500;
+    margin-bottom: 10px;
+    line-height: 1.4;
+    transition: all 0.4s ease;
+  }
+
+  .stack-meta {
+    font-size: 0.85rem;
+    opacity: 0.85;
+    margin: 0;
+    transition: all 0.4s ease;
+
+    .divider {
+      margin: 0 6px;
+    }
+  }
 }
 
-.no-announcement {
-  text-align: center;
-  font-size: 16px;
+/* 轮播指示器 */
+.stack-dots {
+  position: absolute;
+  bottom: -30px;
+  left: 0;
+  display: flex;
+  gap: 8px;
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #cbd5e1;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &.active {
+      width: 24px;
+      border-radius: 4px;
+      background: #1e3a8a;
+    }
+
+    &:hover {
+      background: #64748b;
+    }
+  }
 }
 
-.announcement-animate-enter-active {
-  animation: fadeIn 1s;
+/* 公告列表区域 */
+.list-section {
+  flex: 1;
+  min-width: 0;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+
+  .list-header {
+    padding: 12px 16px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #1e3a8a;
+    border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
+  }
+}
+
+.announcement-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.announcement-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background: #f8fafc;
+    padding-left: 18px;
+  }
+
+  .item-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .item-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 4px;
+
+    .item-number {
+      font-size: 0.65rem;
+      font-weight: 600;
+      color: #1e3a8a;
+      letter-spacing: 0.05em;
+      min-width: 18px;
+    }
+
+    .item-title {
+      font-size: 0.9rem;
+      font-weight: 400;
+      color: #334155;
+      margin: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .item-meta {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin: 0;
+    padding-left: 28px;
+  }
+}
+
+/* 分页 */
+.pagination-section {
+  display: flex;
+  justify-content: center;
+}
+
+/* 详情弹窗 */
+.detail-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+
+.detail-content {
+  background: white;
+  border-radius: 16px;
+  max-width: 800px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 36px;
+  position: relative;
+
+  .close-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: #f1f5f9;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.3rem;
+    color: #64748b;
+    transition: all 0.2s;
+
+    &:hover {
+      background: #e2e8f0;
+      color: #1e293b;
+    }
+  }
+
+  .detail-title {
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: #1a1a2e;
+    margin-bottom: 12px;
+    line-height: 1.4;
+  }
+
+  .detail-meta {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e2e8f0;
+
+    .divider {
+      margin: 0 6px;
+    }
+  }
+
+  .detail-body {
+    line-height: 1.7;
+    color: #334155;
+    font-size: 0.95rem;
+  }
+}
+
+/* 动画 */
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s;
+}
+.fade-enter, .fade-leave-to {
+  opacity: 0;
+}
+
+/* 响应式 */
+@media (max-width: 900px) {
+  .main-layout {
+    flex-direction: column;
+  }
+
+  .stacked-container {
+    height: 320px;
+  }
+
+  .stack-card {
+    height: 280px;
+  }
+
+  .stack-overlay {
+    padding: 20px;
+
+    .stack-title {
+      font-size: 1.1rem;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .announcements-elegant {
+    padding: 20px;
+  }
+
+  .header-section {
+    .section-title {
+      font-size: 1.4rem;
+
+      .title-line {
+        width: 30px;
+      }
+    }
+  }
+
+  .detail-content {
+    padding: 24px;
+    margin: 20px;
+  }
 }
 </style>

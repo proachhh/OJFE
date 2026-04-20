@@ -1,11 +1,9 @@
 <template>
   <div>
     <NavBar></NavBar>
-    <div class="content-app">
-      <transition name="fadeInUp" mode="out-in">
-        <router-view></router-view>
-      </transition>
-      <div class="footer">
+    <div class="content-app" :class="{ 'home-page': isHomePage }">
+      <router-view></router-view>
+      <div v-if="!isHomePage" class="footer">
         <p v-html="website.website_footer"></p>
         <p>Powered by <a href="https://github.com/QingdaoU/OnlineJudge">OnlineJudge</a>
           <span v-if="version">&nbsp; Version: {{ version }}</span>
@@ -38,12 +36,26 @@
     },
     mounted () {
       this.getWebsiteConfig()
+      this.toggleHomeBackground()
     },
     methods: {
-      ...mapActions(['getWebsiteConfig', 'changeDomTitle'])
+      ...mapActions(['getWebsiteConfig', 'changeDomTitle']),
+      toggleHomeBackground () {
+        const homeBg = document.getElementById('home-bg')
+        if (homeBg) {
+          if (this.isHomePage) {
+            homeBg.classList.remove('hide')
+          } else {
+            homeBg.classList.add('hide')
+          }
+        }
+      }
     },
     computed: {
-      ...mapState(['website'])
+      ...mapState(['website']),
+      isHomePage () {
+        return this.$route.path === '/' || this.$route.path === '/home' || this.$route.path === '/learning-path'
+      }
     },
     watch: {
       'website' () {
@@ -51,6 +63,7 @@
       },
       '$route' () {
         this.changeDomTitle()
+        this.toggleHomeBackground()
       }
     }
   }
@@ -73,18 +86,15 @@
   }
 
 
-  @media screen and (max-width: 1200px) {
   .content-app {
-    margin-top: 160px;
-    padding: 0 2%;
-  }
+  min-height: 100vh;
+  margin-top: 80px;
+  padding: 0 2%;
 }
 
-@media screen and (min-width: 1200px) {
-  .content-app {
-    margin-top: 80px;
-    padding: 0 2%;
-  }
+.content-app.home-page {
+  margin-top: 0;
+  padding: 0;
 }
 
   .footer {
@@ -94,9 +104,6 @@
     font-size: small;
   }
 
-  .fadeInUp-enter-active {
-    animation: fadeInUp .8s;
-  }
 
 
 </style>

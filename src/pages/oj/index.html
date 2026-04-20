@@ -9,6 +9,32 @@
   <link rel="shortcut icon" href="/public/website/favicon.ico">
 
   <link href="/static/css/loader.css" rel="stylesheet">
+  <style>
+    /* 首页全屏背景图 */
+    .home-background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: url('/static/pictures/image.jpg') center center / cover no-repeat;
+      z-index: 0;
+      opacity: 1;
+    }
+    .home-background.hide {
+      opacity: 0;
+    }
+    .home-background::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.1) 50%, transparent 100%);
+      pointer-events: none;
+    }
+  </style>
   <script>
     // IE 10 and earlier
     if (window.navigator.userAgent.indexOf('MSIE ') > 0 &&
@@ -18,6 +44,8 @@
   </script>
 </head>
 <body>
+<!-- 首页背景图 - 全屏背景层 -->
+<div id="home-bg" class="home-background"></div>
 <div id="app-loader">
   <div class="square"></div>
   <div class="square"></div>

@@ -150,7 +150,7 @@
 
 <script>
 import axios from 'axios'
-import echarts from 'echarts'
+import * as echarts from 'echarts'
 
 export default {
   data() {
@@ -178,6 +178,13 @@ export default {
     this.fetchStats()
     this.fetchRecommendations()
     this.fetchTrendData()
+    // 延迟重绘图表，确保 DOM 已渲染
+    this.$nextTick(() => {
+      setTimeout(() => {
+        this.drawRadar()
+        this.drawTrendChart()
+      }, 300)
+    })
   },
   methods: {
     translateTag(tagName) {
@@ -243,6 +250,12 @@ export default {
         .catch(err => console.error(err))
     },
     drawRadar() {
+        const chartDom = document.getElementById('radar-chart');
+        if (!chartDom) {
+            console.warn('Radar chart DOM not found');
+            return;
+        }
+
         let radarData = [];
         let indicator = [];
 
@@ -262,12 +275,12 @@ export default {
 
         // 无数据时清空图表并返回
         if (!radarData.length) {
-            const chart = echarts.init(document.getElementById('radar-chart'));
+            const chart = echarts.init(chartDom);
             chart.clear();
             return;
         }
 
-        const chart = echarts.init(document.getElementById('radar-chart'));
+        const chart = echarts.init(chartDom);
         chart.setOption({
             radar: {
             indicator: indicator,
@@ -287,8 +300,13 @@ export default {
         });
     },
     drawTrendChart() {
+      const chartDom = document.getElementById('trend-chart');
+      if (!chartDom) {
+        console.warn('Trend chart DOM not found');
+        return;
+      }
       if (!this.trendData.dates.length) return
-      const chart = echarts.init(document.getElementById('trend-chart'))
+      const chart = echarts.init(chartDom)
       chart.setOption({
         tooltip: { trigger: 'axis' },
         xAxis: { type: 'category', data: this.trendData.dates },
