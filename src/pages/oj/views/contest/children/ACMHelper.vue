@@ -1,25 +1,43 @@
 <template>
-  <panel shadow>
-    <div slot="title">{{$t('m.ACM_Helper')}}</div>
-    <div slot="extra">
-      <ul class="filter">
-        <li>
-          {{$t('m.Auto_Refresh')}} (10s)
-          <i-switch style="margin-left: 5px;" @on-change="handleAutoRefresh"></i-switch>
-        </li>
-        <li>
-          <Button type="info" @click="getACInfo">{{$t('m.Refresh')}}</Button>
-        </li>
-      </ul>
+  <div class="acm-helper-elegant">
+    <!-- 页面标题区 -->
+    <div class="page-header">
+      <h1 class="page-title">
+        <span class="title-line"></span>
+        {{ $t('m.ACM_Helper') }}
+        <span class="title-line"></span>
+      </h1>
+      <p class="page-subtitle">ACM Contest Helper</p>
     </div>
-    <Table :data="pagedAcInfo" :columns="columns" :loading="loadingTable" disabled-hover></Table>
-    <pagination :total="total"
-                :page-size.sync="limit"
-                :current.sync="page"
-                @on-change="handlePage"
-                @on-page-size-change="handlePage(1)"
-                show-sizer></pagination>
-  </panel>
+
+    <!-- 控制面板 -->
+    <div class="control-panel">
+      <div class="control-left">
+        <ul class="filter">
+          <li>
+            {{ $t('m.Auto_Refresh') }} (10s)
+            <i-switch style="margin-left: 5px;" @on-change="handleAutoRefresh"></i-switch>
+          </li>
+        </ul>
+      </div>
+      <div class="control-right">
+        <Button type="info" @click="getACInfo">{{ $t('m.Refresh') }}</Button>
+      </div>
+    </div>
+
+    <!-- 主面板 -->
+    <div class="helper-panel">
+      <Table :data="pagedAcInfo" :columns="columns" :loading="loadingTable" disabled-hover class="helper-table"></Table>
+      <div class="pagination-wrapper">
+        <pagination :total="total"
+                    :page-size.sync="limit"
+                    :current.sync="page"
+                    @on-change="handlePage"
+                    @on-page-size-change="handlePage(1)"
+                    show-sizer></pagination>
+      </div>
+    </div>
+  </div>
 </template>
 <script>
   import { mapState, mapActions } from 'vuex'
@@ -230,5 +248,104 @@
   }
 </script>
 <style lang="less" scoped>
+.acm-helper-elegant {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  min-height: calc(100vh - 60px);
+  background: linear-gradient(180deg, #f0f4f8 0%, #f8fafc 100%);
+}
 
+/* 页面标题 */
+.page-header {
+  text-align: center;
+  margin-bottom: 40px;
+  animation: fadeInDown 0.6s ease-out;
+
+  .page-title {
+    font-size: 2.2rem;
+    font-weight: 600;
+    color: #1e3a8a;
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 12px;
+
+    .title-line {
+      width: 60px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #1e3a8a, #3b82f6, transparent);
+      border-radius: 1px;
+    }
+  }
+
+  .page-subtitle {
+    font-size: 1rem;
+    color: #64748b;
+    letter-spacing: 0.1em;
+    font-weight: 400;
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 控制面板 */
+.control-panel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+
+  .control-left {
+    .filter {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      
+      li {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: #64748b;
+      }
+    }
+  }
+}
+
+/* 主面板 */
+.helper-panel {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(30, 58, 138, 0.08);
+  overflow: hidden;
+  padding: 32px;
+  transition: box-shadow 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 12px 40px rgba(30, 58, 138, 0.12);
+  }
+
+  .helper-table {
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+
+  .pagination-wrapper {
+    display: flex;
+    justify-content: center;
+  }
+}
 </style>

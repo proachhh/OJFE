@@ -306,6 +306,24 @@ export default {
   getLearningStats() {
     return ajax('learning-stats', 'get')
   },
+  getLessonPlanList (params) {
+    return ajax('admin/lesson_plan', 'get', { params })
+  },
+  getLessonPlanDetail (id) {
+    return ajax('admin/lesson_plan', 'get', { params: { id } })
+  },
+  createLessonPlan (data) {
+    return ajax('admin/lesson_plan', 'post', { data })
+  },
+  updateLessonPlan (data) {
+    return ajax('admin/lesson_plan', 'put', { data })
+  },
+  deleteLessonPlan (id) {
+    return ajax('admin/lesson_plan', 'delete', { params: { id } })
+  },
+  getDataDashboard () {
+    return ajax('admin/dashboard', 'get')
+  }
 }
 
 /**

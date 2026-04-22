@@ -290,13 +290,13 @@ export default {
 
 /* 堆叠轮播区域 */
 .stacked-carousel {
-  flex: 2;
+  flex: 3;
   min-width: 0;
 }
 
 .stacked-container {
   position: relative;
-  height: 420px;
+  height: 520px;
 }
 
 .stack-wrapper {
@@ -308,7 +308,7 @@ export default {
 .stack-card {
   position: absolute;
   width: 92%;
-  height: 360px;
+  height: 460px;
   border-radius: 16px;
   background-size: cover;
   background-position: center;
@@ -374,32 +374,32 @@ export default {
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 28px;
+  padding: 32px;
   background: linear-gradient(transparent, rgba(0, 0, 0, 0.75));
   color: white;
 
   .stack-badge {
     display: inline-block;
-    padding: 4px 12px;
+    padding: 5px 14px;
     background: rgba(255, 255, 255, 0.2);
     backdrop-filter: blur(10px);
     border-radius: 20px;
-    font-size: 0.7rem;
+    font-size: 0.8rem;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
   }
 
   .stack-title {
-    font-size: 1.25rem;
+    font-size: 1.5rem;
     font-weight: 500;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
     line-height: 1.4;
     transition: all 0.4s ease;
   }
 
   .stack-meta {
-    font-size: 0.85rem;
+    font-size: 1rem;
     opacity: 0.85;
     margin: 0;
     transition: all 0.4s ease;
@@ -448,8 +448,8 @@ export default {
   overflow: hidden;
 
   .list-header {
-    padding: 12px 16px;
-    font-size: 0.85rem;
+    padding: 14px 18px;
+    font-size: 1rem;
     font-weight: 500;
     color: #1e3a8a;
     border-bottom: 1px solid #e2e8f0;
@@ -487,19 +487,19 @@ export default {
   .item-header {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 4px;
+    gap: 12px;
+    margin-bottom: 6px;
 
     .item-number {
-      font-size: 0.65rem;
+      font-size: 0.8rem;
       font-weight: 600;
       color: #1e3a8a;
       letter-spacing: 0.05em;
-      min-width: 18px;
+      min-width: 22px;
     }
 
     .item-title {
-      font-size: 0.9rem;
+      font-size: 1.05rem;
       font-weight: 400;
       color: #334155;
       margin: 0;
@@ -510,10 +510,10 @@ export default {
   }
 
   .item-meta {
-    font-size: 0.75rem;
+    font-size: 0.85rem;
     color: #94a3b8;
     margin: 0;
-    padding-left: 28px;
+    padding-left: 34px;
   }
 }
 

@@ -1,6 +1,7 @@
 <template>
   <div>
     <NavBar></NavBar>
+    <GlobalSidebar></GlobalSidebar>
     <div class="content-app" :class="{ 'home-page': isHomePage }">
       <router-view></router-view>
       <div v-if="!isHomePage" class="footer">
@@ -11,17 +12,22 @@
       </div>
     </div>
     <BackTop></BackTop>
+    <AIChatWindow></AIChatWindow>
   </div>
 </template>
 
 <script>
   import { mapActions, mapState } from 'vuex'
   import NavBar from '@oj/components/NavBar.vue'
+  import AIChatWindow from '@oj/views/chat/Chat.vue'
+  import GlobalSidebar from '@oj/components/GlobalSidebar.vue'
 
   export default {
     name: 'app',
     components: {
-      NavBar
+      NavBar,
+      AIChatWindow,
+      GlobalSidebar
     },
     data () {
       return {
@@ -52,7 +58,7 @@
       }
     },
     computed: {
-      ...mapState(['website']),
+      ...mapState(['website', 'sidebarCollapsed']),
       isHomePage () {
         return this.$route.path === '/' || this.$route.path === '/home' || this.$route.path === '/learning-path'
       }

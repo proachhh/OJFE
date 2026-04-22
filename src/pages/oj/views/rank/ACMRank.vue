@@ -1,18 +1,34 @@
 <template>
-  <Row type="flex" justify="space-around">
-    <Col :span="22">
-    <Panel :padding="10">
-      <div slot="title">{{$t('m.ACM_Ranklist')}}</div>
-      <div class="echarts">
-        <ECharts :options="options" ref="chart" auto-resize></ECharts>
+  <div class="rank-list-elegant">
+    <!-- 页面标题区 -->
+    <div class="page-header">
+      <h1 class="page-title">
+        <span class="title-line"></span>
+        {{ $t('m.ACM_Ranklist') }}
+        <span class="title-line"></span>
+      </h1>
+      <p class="page-subtitle">Compete & Climb the Leaderboard</p>
+    </div>
+
+    <div class="rank-panel">
+      <div class="chart-section">
+        <div class="section-title">Top 10 Rankings</div>
+        <div class="echarts">
+          <ECharts :options="options" ref="chart" auto-resize></ECharts>
+        </div>
       </div>
-    </Panel>
-    <Table :data="dataRank" :columns="columns" :loading="loadingTable" size="large"></Table>
-    <Pagination :total="total" :page-size.sync="limit" :current.sync="page"
-                @on-change="getRankData" show-sizer
-                @on-page-size-change="getRankData(1)"></Pagination>
-    </Col>
-  </Row>
+
+      <div class="table-section">
+        <Table :data="dataRank" :columns="columns" :loading="loadingTable" class="rank-table" disabled-hover></Table>
+      </div>
+
+      <div class="pagination-wrapper">
+        <Pagination :total="total" :page-size.sync="limit" :current.sync="page"
+                    @on-change="getRankData" show-sizer
+                    @on-page-size-change="getRankData(1)"></Pagination>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -189,9 +205,105 @@
 </script>
 
 <style scoped lang="less">
+.rank-list-elegant {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+/* 页面标题 */
+.page-header {
+  text-align: center;
+  margin-bottom: 40px;
+  animation: fadeInDown 0.6s ease-out;
+
+  .page-title {
+    font-size: 2.2rem;
+    font-weight: 600;
+    color: #1e3a8a;
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 12px;
+
+    .title-line {
+      width: 60px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #1e3a8a, #3b82f6, transparent);
+      border-radius: 1px;
+    }
+  }
+
+  .page-subtitle {
+    font-size: 1rem;
+    color: #64748b;
+    letter-spacing: 0.1em;
+    font-weight: 400;
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 主面板 */
+.rank-panel {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(30, 58, 138, 0.08);
+  overflow: hidden;
+  padding: 30px;
+  transition: box-shadow 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 12px 40px rgba(30, 58, 138, 0.12);
+  }
+}
+
+/* 图表区域 */
+.chart-section {
+  margin-bottom: 30px;
+
+  .section-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #1e3a8a;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #f1f5f9;
+  }
+
   .echarts {
     margin: 0 auto;
     width: 95%;
     height: 400px;
   }
+}
+
+/* 表格区域 */
+.table-section {
+  margin-bottom: 30px;
+
+  .rank-table {
+    border-radius: 8px;
+    overflow: hidden;
+  }
+}
+
+/* 分页区域 */
+.pagination-wrapper {
+  display: flex;
+  justify-content: center;
+  padding-top: 20px;
+  border-top: 1px solid #f1f5f9;
+}
 </style>

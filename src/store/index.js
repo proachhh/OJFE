@@ -13,7 +13,8 @@ const rootState = {
   modalStatus: {
     mode: 'login', // or 'register',
     visible: false
-  }
+  },
+  sidebarCollapsed: false
 }
 
 const rootGetters = {
@@ -22,6 +23,9 @@ const rootGetters = {
   },
   'modalStatus' (state) {
     return state.modalStatus
+  },
+  'sidebarCollapsed' (state) {
+    return state.sidebarCollapsed
   }
 }
 
@@ -36,6 +40,9 @@ const rootMutations = {
     if (visible !== undefined) {
       state.modalStatus.visible = visible
     }
+  },
+  [types.TOGGLE_SIDEBAR] (state, payload) {
+    state.sidebarCollapsed = payload.collapsed
   }
 }
 
@@ -49,6 +56,9 @@ const rootActions = {
   },
   changeModalStatus ({commit}, payload) {
     commit(types.CHANGE_MODAL_STATUS, payload)
+  },
+  toggleSidebar ({commit}, payload) {
+    commit(types.TOGGLE_SIDEBAR, payload)
   },
   changeDomTitle ({commit, state}, payload) {
     if (payload && payload.title) {

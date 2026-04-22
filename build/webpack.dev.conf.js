@@ -25,6 +25,15 @@ module.exports = merge(baseWebpackConfig, {
         target: 'http://127.0.0.1:8001',   // 你的测试后端地址
         changeOrigin: true,
         logLevel: 'debug'                 // 可选，便于调试
+      },
+      '/public': {
+        target: 'http://127.0.0.1:8001',
+        changeOrigin: true,
+        logLevel: 'debug',
+        onProxyRes: function(proxyRes, req, res) {
+          delete proxyRes.headers['x-frame-options'];
+          delete proxyRes.headers['X-Frame-Options'];
+        }
       }
     }
   },

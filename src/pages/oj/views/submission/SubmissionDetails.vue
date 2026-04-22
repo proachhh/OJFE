@@ -1,32 +1,54 @@
 <template>
-  <Row type="flex" justify="space-around">
-    <Col :span="20" id="status">
-      <Alert :type="status.type" showIcon>
-        <span class="title">{{$t('m.' + status.statusName.replace(/ /g, "_"))}}</span>
-        <div slot="desc" class="content">
-          <template v-if="isCE">
-            <pre>{{submission.statistic_info.err_info}}</pre>
-          </template>
-          <template v-else>
-            <span>{{$t('m.Time')}}: {{submission.statistic_info.time_cost | submissionTime}}</span>
-            <span>{{$t('m.Memory')}}: {{submission.statistic_info.memory_cost | submissionMemory}}</span>
-            <span>{{$t('m.Lang')}}: {{submission.language}}</span>
-            <span>{{$t('m.Author')}}: {{submission.username}}</span>
-          </template>
+  <div class="submission-details-elegant">
+    <!-- 页面标题区 -->
+    <div class="page-header">
+      <h1 class="page-title">
+        <span class="title-line"></span>
+        {{ $t('m.Submission_Details') }}
+        <span class="title-line"></span>
+      </h1>
+      <p class="page-subtitle">View Your Code & Results</p>
+    </div>
+
+    <div class="details-panel">
+      <!-- 状态信息 -->
+      <div class="status-section">
+        <Alert :type="status.type" showIcon>
+          <span class="status-title">{{$t('m.' + status.statusName.replace(/ /g, "_"))}}</span>
+          <div slot="desc" class="status-content">
+            <template v-if="isCE">
+              <pre>{{submission.statistic_info.err_info}}</pre>
+            </template>
+            <template v-else>
+              <span>{{$t('m.Time')}}: {{submission.statistic_info.time_cost | submissionTime}}</span>
+              <span>{{$t('m.Memory')}}: {{submission.statistic_info.memory_cost | submissionMemory}}</span>
+              <span>{{$t('m.Lang')}}: {{submission.language}}</span>
+              <span>{{$t('m.Author')}}: {{submission.username}}</span>
+            </template>
+          </div>
+        </Alert>
+      </div>
+
+      <!-- 测试点详情 -->
+      <div v-if="submission.info && !isCE" class="test-cases-section">
+        <div class="section-header">
+          <Icon type="ios-list" />
+          <span>{{ $t('m.Test_Cases') }}</span>
         </div>
-      </Alert>
-    </Col>
+        <Table stripe :loading="loading" :disabled-hover="true" :columns="columns" :data="submission.info.data"></Table>
+      </div>
 
-    <!--后台返info就显示出来， 权限控制放后台 -->
-    <Col v-if="submission.info && !isCE" :span="20">
-      <Table stripe :loading="loading" :disabled-hover="true" :columns="columns" :data="submission.info.data"></Table>
-    </Col>
+      <!-- 代码展示 -->
+      <div class="code-section">
+        <div class="section-header">
+          <Icon type="ios-code" />
+          <span>{{ $t('m.Your_Code') }}</span>
+        </div>
+        <Highlight :code="submission.code" :language="submission.language" :border-color="status.color"></Highlight>
+      </div>
 
-    <Col :span="20">
-      <Highlight :code="submission.code" :language="submission.language" :border-color="status.color"></Highlight>
-    </Col>
-    <Col v-if="submission.can_unshare" :span="20">
-      <div id="share-btn">
+      <!-- 分享按钮 -->
+      <div v-if="submission.can_unshare" class="share-section">
         <Button v-if="submission.shared"
                 type="warning" size="large" @click="shareSubmission(false)">
           {{$t('m.UnShare')}}
@@ -36,9 +58,8 @@
           {{$t('m.Share')}}
         </Button>
       </div>
-    </Col>
-  </Row>
-
+    </div>
+  </div>
 </template>
 
 <script>
@@ -174,40 +195,149 @@
 </script>
 
 <style scoped lang="less">
-  #status {
-    .title {
+.submission-details-elegant {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  min-height: calc(100vh - 60px);
+  background: linear-gradient(180deg, #f0f4f8 0%, #f8fafc 100%);
+}
+
+/* 页面标题 */
+.page-header {
+  text-align: center;
+  margin-bottom: 40px;
+  animation: fadeInDown 0.6s ease-out;
+
+  .page-title {
+    font-size: 2.2rem;
+    font-weight: 600;
+    color: #1e3a8a;
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 12px;
+
+    .title-line {
+      width: 60px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #1e3a8a, #3b82f6, transparent);
+      border-radius: 1px;
+    }
+  }
+
+  .page-subtitle {
+    font-size: 1rem;
+    color: #64748b;
+    letter-spacing: 0.1em;
+    font-weight: 400;
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 主面板 */
+.details-panel {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(30, 58, 138, 0.08);
+  overflow: hidden;
+  padding: 40px;
+  transition: box-shadow 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 12px 40px rgba(30, 58, 138, 0.12);
+  }
+}
+
+/* 状态区域 */
+.status-section {
+  margin-bottom: 32px;
+
+  .status-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+  }
+
+  .status-content {
+    margin-top: 12px;
+    font-size: 14px;
+    
+    span {
+      margin-right: 20px;
+      display: inline-block;
+    }
+
+    pre {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      word-break: break-all;
+      background: #f8fafc;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 8px;
+    }
+  }
+}
+
+/* 测试用例区域 */
+.test-cases-section {
+  margin-bottom: 32px;
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #1e3a8a;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f1f5f9;
+
+    .ivu-icon {
       font-size: 20px;
     }
-    .content {
-      margin-top: 10px;
-      font-size: 14px;
-      span {
-        margin-right: 10px;
-      }
-      pre {
-        white-space: pre-wrap;
-        word-wrap: break-word;
-        word-break: break-all;
-      }
+  }
+}
+
+/* 代码区域 */
+.code-section {
+  margin-bottom: 32px;
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #1e3a8a;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f1f5f9;
+
+    .ivu-icon {
+      font-size: 20px;
     }
   }
+}
 
-  .admin-info {
-    margin: 5px 0;
-    &-content {
-      font-size: 16px;
-      padding: 10px;
-    }
-  }
-
-  #share-btn {
-    float: right;
-    margin-top: 5px;
-    margin-right: 10px;
-  }
-
-  pre {
-    border: none;
-    background: none;
-  }
+/* 分享按钮区域 */
+.share-section {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 20px;
+  border-top: 1px solid #f1f5f9;
+}
 </style>

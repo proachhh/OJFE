@@ -1,14 +1,21 @@
 <template>
-  <div class="error404">
-    <div class="error404-body-con">
-      <Card>
-        <div class="error404-body-con-title">4<span><Icon type="ios-navigate-outline"></Icon></span>4</div>
-        <p class="error404-body-con-message">YOU&nbsp;&nbsp;LOOK&nbsp;&nbsp;LOST</p>
-        <div class="error404-btn-con">
-          <Button @click="goHome" size="large" style="width: 200px;" type="ghost">{{$t('m.Go_Home')}}</Button>
-          <Button @click="backPage" size="large" style="width: 200px;margin-left: 40px;" type="primary">{{$t('m.Back')}}</Button>
-        </div>
-      </Card>
+  <div class="error404-elegant">
+    <div class="error404-content">
+      <div class="error-code">
+        4<span><Icon type="ios-navigate-outline"></Icon></span>4
+      </div>
+      <p class="error-message">YOU&nbsp;&nbsp;LOOK&nbsp;&nbsp;LOST</p>
+      <p class="error-subtitle">The page you're looking for doesn't exist or has been moved</p>
+      <div class="error-actions">
+        <Button @click="goHome" size="large" class="action-btn" type="ghost">
+          <Icon type="ios-home" />
+          {{$t('m.Go_Home')}}
+        </Button>
+        <Button @click="backPage" size="large" class="action-btn primary" type="primary">
+          <Icon type="ios-arrow-back" />
+          {{$t('m.Back')}}
+        </Button>
+      </div>
     </div>
   </div>
 </template>
@@ -51,39 +58,91 @@
     }
   }
 
-  .error404 {
-    &-body-con {
-      width: 700px;
-      height: 500px;
-      margin: 0 auto;
-      &-title {
-        text-align: center;
-        font-size: 240px;
-        font-weight: 700;
-        color: #2d8cf0;
-        height: 260px;
-        line-height: 260px;
-        margin-top: 40px;
-        span {
-          display: inline-block;
-          color: #19be6b;
-          font-size: 230px;
-          animation: error404animation 3s ease 0s infinite alternate;
-        }
-      }
-      &-message {
-        display: block;
-        text-align: center;
-        font-size: 30px;
-        font-weight: 500;
-        letter-spacing: 12px;
-        color: #dddde2;
+  .error404-elegant {
+    min-height: calc(100vh - 60px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
+    padding: 40px 20px;
+  }
+
+  .error404-content {
+    text-align: center;
+    max-width: 600px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(30, 58, 138, 0.08);
+    padding: 60px 40px;
+    transition: box-shadow 0.3s ease;
+
+    &:hover {
+      box-shadow: 0 12px 40px rgba(30, 58, 138, 0.12);
+    }
+
+    .error-code {
+      text-align: center;
+      font-size: 180px;
+      font-weight: 700;
+      color: #1e3a8a;
+      height: 200px;
+      line-height: 200px;
+      margin-bottom: 20px;
+
+      span {
+        display: inline-block;
+        color: #3b82f6;
+        font-size: 160px;
+        animation: error404animation 3s ease 0s infinite alternate;
       }
     }
-    &-btn-con {
+
+    .error-message {
+      display: block;
       text-align: center;
-      padding: 20px 0;
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: 8px;
+      color: #1e3a8a;
+      margin-bottom: 12px;
+    }
+
+    .error-subtitle {
+      font-size: 16px;
+      color: #64748b;
       margin-bottom: 40px;
+    }
+
+    .error-actions {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+
+      .action-btn {
+        width: 180px;
+        font-size: 16px;
+        font-weight: 500;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+
+        .ivu-icon {
+          margin-right: 8px;
+        }
+
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(30, 58, 138, 0.2);
+        }
+
+        &.primary {
+          background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+          border: none;
+
+          &:hover {
+            background: linear-gradient(135deg, #1e40af, #2563eb);
+          }
+        }
+      }
     }
   }
 </style>

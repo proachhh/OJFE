@@ -200,5 +200,19 @@ export default [
     path: '/learning-path',
     name: 'LearningPath',
     component: () => import('@/pages/oj/views/recommend/LearningPath.vue')
+  },
+
+  // lesson plans
+  {
+    path: '/lesson-plan',
+    name: 'lesson-plan-list',
+    meta: {title: 'Lesson Plans'},
+    component: () => import('@oj/views/lesson/LessonPlanList.vue')
+  },
+  {
+    path: '/lesson-plan/:id',
+    name: 'lesson-plan-details',
+    meta: {title: 'Lesson Plan Study'},
+    component: () => import('@oj/views/lesson/LessonPlanStudy.vue')
   }
 ]

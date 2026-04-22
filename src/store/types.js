@@ -13,6 +13,7 @@ export default keyMirror({
   'CHANGE_PROFILE': null,
   'CHANGE_MODAL_STATUS': null,
   'UPDATE_WEBSITE_CONF': null,
+  'TOGGLE_SIDEBAR': null,
 
   'NOW': null,
   'NOW_ADD_1S': null,

@@ -196,34 +196,155 @@
 </script>
 
 <style scoped lang="less">
-  pre {
-    display: inline-block;
+.contest-detail-elegant {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  min-height: calc(100vh - 60px);
+  background: linear-gradient(180deg, #f0f4f8 0%, #f8fafc 100%);
+}
+
+/* 页面标题 */
+.page-header {
+  text-align: center;
+  margin-bottom: 40px;
+  animation: fadeInDown 0.6s ease-out;
+
+  .page-title {
+    font-size: 2.2rem;
+    font-weight: 600;
+    color: #1e3a8a;
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 12px;
+
+    .title-line {
+      width: 60px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #1e3a8a, #3b82f6, transparent);
+      border-radius: 1px;
+    }
   }
 
-  #countdown {
-    font-size: 16px;
+  .page-subtitle {
+    font-size: 1rem;
+    color: #64748b;
+    letter-spacing: 0.1em;
+    font-weight: 400;
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 主布局 */
+.flex-container {
+  display: flex;
+  gap: 24px;
+
+  #contest-main {
+    flex: 1;
+    min-width: 0;
+
+    #contest-desc {
+      .contest-panel {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        overflow: hidden;
+        margin-bottom: 24px;
+
+        .contest-header {
+          padding: 24px;
+          border-bottom: 1px solid #f1f5f9;
+          background: #fafbfc;
+
+          .contest-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #1e3a8a;
+            margin-bottom: 12px;
+          }
+
+          .contest-status {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+
+            #countdown {
+              font-size: 16px;
+              font-weight: 600;
+            }
+          }
+        }
+
+        .contest-content {
+          padding: 24px;
+
+          .markdown-body {
+            line-height: 1.8;
+            color: #334155;
+          }
+        }
+
+        .contest-password {
+          margin-top: 24px;
+          padding: 20px;
+          background: #f8fafc;
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+
+          &-input {
+            flex: 1;
+            max-width: 300px;
+          }
+        }
+      }
+
+      .contest-table {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        overflow: hidden;
+        padding: 24px;
+      }
+    }
   }
 
-  .flex-container {
-    #contest-main {
-      flex: 1 1;
-      width: 0;
-      #contest-desc {
-        flex: auto;
-      }
-    }
-    #contest-menu {
-      flex: none;
-      width: 210px;
-      margin-left: 20px;
-    }
-    .contest-password {
-      margin-top: 20px;
-      margin-bottom: -10px;
-      &-input {
-        width: 200px;
-        margin-right: 10px;
-      }
+  #contest-menu {
+    flex: none;
+    width: 240px;
+
+    .menu-card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+      overflow: hidden;
+      position: sticky;
+      top: 80px;
     }
   }
+}
+
+pre {
+  display: inline-block;
+  background: #f8fafc;
+  padding: 12px;
+  border-radius: 8px;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+}
 </style>

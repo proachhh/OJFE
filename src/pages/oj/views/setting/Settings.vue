@@ -1,26 +1,45 @@
 <template>
-  <div class="container">
-    <Card :padding="0">
+  <div class="settings-elegant">
+    <!-- 页面标题区 -->
+    <div class="page-header">
+      <h1 class="page-title">
+        <span class="title-line"></span>
+        {{ $t('m.Settings') }}
+        <span class="title-line"></span>
+      </h1>
+      <p class="page-subtitle">Manage Your Account</p>
+    </div>
+
+    <div class="settings-panel">
       <div class="flex-container">
         <div class="menu">
-          <Menu accordion @on-select="goRoute" :activeName="activeName" style="text-align: center;" width="auto">
-            <div class="avatar-editor">
-              <div class="avatar-container">
-                <img class="avatar" :src="profile.avatar"/>
-                <div class="avatar-mask">
-                  <a @click.stop="goRoute({name: 'profile-setting'})">
-                    <div class="mask-content">
-                      <Icon type="camera" size="30"></Icon>
-                      <p class="text">change avatar</p>
-                    </div>
-                  </a>
-                </div>
+          <div class="avatar-editor">
+            <div class="avatar-container">
+              <img class="avatar" :src="profile.avatar"/>
+              <div class="avatar-mask">
+                <a @click.stop="goRoute({name: 'profile-setting'})">
+                  <div class="mask-content">
+                    <Icon type="camera" size="30"></Icon>
+                    <p class="text">Change Avatar</p>
+                  </div>
+                </a>
               </div>
             </div>
+          </div>
 
-            <Menu-item name="/setting/profile">{{$t('m.Profile')}}</Menu-item>
-            <Menu-item name="/setting/account">{{$t('m.Account')}}</Menu-item>
-            <Menu-item name="/setting/security">{{$t('m.Security')}}</Menu-item>
+          <Menu accordion @on-select="goRoute" :activeName="activeName" class="settings-menu" width="auto">
+            <Menu-item name="/setting/profile">
+              <Icon type="ios-person" />
+              {{ $t('m.Profile') }}
+            </Menu-item>
+            <Menu-item name="/setting/account">
+              <Icon type="ios-key" />
+              {{ $t('m.Account') }}
+            </Menu-item>
+            <Menu-item name="/setting/security">
+              <Icon type="ios-lock" />
+              {{ $t('m.Security') }}
+            </Menu-item>
           </Menu>
         </div>
         <div class="panel">
@@ -29,7 +48,7 @@
           </transition>
         </div>
       </div>
-    </Card>
+    </div>
   </div>
 </template>
 <script>
@@ -52,99 +71,188 @@
 </script>
 
 <style lang="less" scoped>
-  @avatar-radius: 50%;
+.settings-elegant {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  min-height: calc(100vh - 60px);
+  background: linear-gradient(180deg, #f0f4f8 0%, #f8fafc 100%);
+}
 
-  .container {
-    width: 90%;
-    min-width: 800px;
-    margin: auto;
+/* 页面标题 */
+.page-header {
+  text-align: center;
+  margin-bottom: 40px;
+  animation: fadeInDown 0.6s ease-out;
+
+  .page-title {
+    font-size: 2.2rem;
+    font-weight: 600;
+    color: #1e3a8a;
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 12px;
+
+    .title-line {
+      width: 60px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #1e3a8a, #3b82f6, transparent);
+      border-radius: 1px;
+    }
   }
 
-  .flex-container {
-    .menu {
-      flex: 1 0 150px;
-      max-width: 250px;
-      .avatar-editor {
-        padding: 10% 22%;
-        margin-bottom: 10px;
-        .avatar-container {
-          &:hover {
-            .avatar-mask {
-              opacity: .5;
-            }
-          }
-          position: relative;
-          .avatar {
-            width: 100%;
-            height: auto;
-            max-width: 100%;
-            display: block;
-            border-radius: @avatar-radius;
-            box-shadow: 0px 0px 1px 0px;
-          }
-          .avatar-mask {
-            transition: opacity .2s ease-in;
-            z-index: 1;
-            border-radius: @avatar-radius;
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: black;
-            opacity: 0;
-            .mask-content {
-              position: absolute;
-              top: 50%;
-              left: 50%;
-              z-index: 3;
-              color: #fff;
-              font-size: 16px;
-              text-align: center;
-              transform: translate(-50%, -50%);
-              .text {
-                white-space: nowrap;
-              }
-            }
-          }
+  .page-subtitle {
+    font-size: 1rem;
+    color: #64748b;
+    letter-spacing: 0.1em;
+    font-weight: 400;
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 主面板 */
+.settings-panel {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(30, 58, 138, 0.08);
+  overflow: hidden;
+  transition: box-shadow 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 12px 40px rgba(30, 58, 138, 0.12);
+  }
+}
+
+.flex-container {
+  display: flex;
+  min-height: 500px;
+}
+
+.menu {
+  flex: 0 0 250px;
+  background: #f8fafc;
+  border-right: 1px solid #e2e8f0;
+  padding: 20px 0;
+
+  .avatar-editor {
+    padding: 20px;
+    margin-bottom: 20px;
+    text-align: center;
+
+    .avatar-container {
+      position: relative;
+      display: inline-block;
+      width: 120px;
+      height: 120px;
+
+      &:hover {
+        .avatar-mask {
+          opacity: .7;
         }
       }
 
-    }
-
-    .panel {
-      flex: auto;
-      &::before {
-        content: '';
-        display: block;
-        width: 1px;
+      .avatar {
+        width: 100%;
         height: 100%;
-        background: #dddee1;
+        border-radius: 50%;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        object-fit: cover;
+      }
+
+      .avatar-mask {
+        transition: opacity .2s ease-in;
+        z-index: 1;
+        border-radius: 50%;
         position: absolute;
         top: 0;
+        left: 0;
+        right: 0;
         bottom: 0;
-        z-index: 1;
+        background: rgba(30, 58, 138, 0.8);
+        opacity: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        .mask-content {
+          color: #fff;
+          font-size: 14px;
+          text-align: center;
+
+          .text {
+            margin-top: 8px;
+            font-size: 12px;
+          }
+        }
       }
     }
-
   }
 
-  .ivu-menu-vertical.ivu-menu-light:after {
-    /*取消默认的伪元素*/
-    width: 0;
+  .settings-menu {
+    border-right: none;
+
+    .ivu-menu-item {
+      text-align: left;
+      padding-left: 30px;
+      font-size: 15px;
+      color: #475569;
+
+      &:hover {
+        background: #e2e8f0;
+        color: #1e3a8a;
+      }
+
+      &.ivu-menu-item-active {
+        background: #1e3a8a;
+        color: white;
+        border-right: 3px solid #3b82f6;
+      }
+
+      .ivu-icon {
+        margin-right: 8px;
+      }
+    }
   }
+}
+
+.panel {
+  flex: 1;
+  padding: 30px;
+  background: white;
+}
 </style>
 
 <style lang="less">
-  .setting-main {
-    position: relative;
-    margin: 10px 40px;
-    padding-bottom: 20px;
-    .setting-content {
-      margin-left: 20px;
-    }
-    .mini-container {
-      width: 500px;
-    }
+.setting-main {
+  position: relative;
+  margin: 0;
+  padding-bottom: 20px;
+
+  .section-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #1e3a8a;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #f1f5f9;
   }
+
+  .mini-container {
+    width: 100%;
+    max-width: 500px;
+  }
+}
 </style>

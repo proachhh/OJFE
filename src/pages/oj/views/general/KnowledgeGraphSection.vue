@@ -17,7 +17,7 @@ export default {
       autoPanEnabled: false,
       mouseX: 0,
       mouseY: 0,
-      panSpeed: 4,          // 柔和的速度
+      panSpeed: 4,
       edgeThreshold: 60,
       panAnimationFrame: null
     }
@@ -64,22 +64,17 @@ export default {
 
       let dx = 0, dy = 0
 
-      // 修正方向：鼠标靠左 → 希望看到左侧内容 → 内容应向右移动（视窗向左，dx为负？）
-      // 但根据用户反馈“鼠标靠近左上，集中看左上”，应该是将左上内容拉到中央，即内容向右下移动
-      // 因此：鼠标靠左 → dx > 0（视窗向右，内容向左）？不对，视窗向右移动意味着我们看到的内容向左移动。
-      // 我们直接用实际效果测试：先按用户要求反着来，如果反了就再调整。用户说“靠近左上就往左上滑”，
-      // 滑的意思应该是图谱整体向左上移动，即 dx < 0, dy < 0。
-      // 我们就按此实现：鼠标靠左 → dx < 0；鼠标靠上 → dy < 0。
+      // 鼠标靠近边缘时，图谱向相反方向移动，以便查看更多内容
       if (this.mouseX < threshold) {
-        dx = -this.panSpeed * (1 - this.mouseX / threshold)
+        dx = this.panSpeed * (1 - this.mouseX / threshold)
       } else if (this.mouseX > winWidth - threshold) {
-        dx = this.panSpeed * ((this.mouseX - (winWidth - threshold)) / threshold)
+        dx = -this.panSpeed * ((this.mouseX - (winWidth - threshold)) / threshold)
       }
 
       if (this.mouseY < threshold) {
-        dy = -this.panSpeed * (1 - this.mouseY / threshold)
+        dy = this.panSpeed * (1 - this.mouseY / threshold)
       } else if (this.mouseY > winHeight - threshold) {
-        dy = this.panSpeed * ((this.mouseY - (winHeight - threshold)) / threshold)
+        dy = -this.panSpeed * ((this.mouseY - (winHeight - threshold)) / threshold)
       }
 
       if (dx !== 0 || dy !== 0) {
@@ -109,7 +104,7 @@ export default {
     async fetchGraphData() {
       try {
         const res = await api.getKnowledgeGraph()
-        this.graphData = res.data
+        this.graphData = res.data  // 预期格式：{ nodes: [{name: ...}], edges: [{source, target}] }
         this.$nextTick(() => {
           this.initChart()
         })
@@ -237,7 +232,7 @@ export default {
 .kg-section {
   position: relative;
   width: 100%;
-  height: 800px;
+  height: 100vh;
   z-index: 2;
   background: transparent;
   

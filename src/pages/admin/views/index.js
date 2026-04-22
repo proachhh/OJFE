@@ -1,4 +1,5 @@
 import Dashboard from './general/Dashboard.vue'
+import DataDashboard from './general/DataDashboard.vue'
 import Announcement from './general/Announcement.vue'
 import User from './general/User.vue'
 import Conf from './general/Conf.vue'
@@ -14,5 +15,5 @@ import ProblemImportOrExport from './problem/ImportAndExport.vue'
 
 export {
   Announcement, User, Conf, JudgeServer, Problem, ProblemList, Contest,
-  ContestList, Login, Home, PruneTestCase, Dashboard, ProblemImportOrExport
+  ContestList, Login, Home, PruneTestCase, Dashboard, ProblemImportOrExport, DataDashboard
 }

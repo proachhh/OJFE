@@ -15,7 +15,7 @@
           <p class="content" v-html=problem.output_description></p>
 
           <div v-for="(sample, index) of problem.samples" :key="index">
-            <div class="flex-container sample">
+            <div class="sample">
               <div class="sample-input">
                 <p class="title">{{$t('m.Sample_Input')}} {{index + 1}}
                   <a class="copy"
@@ -175,7 +175,7 @@
         </ul>
       </Card>
 
-      <Card id="pieChart" :padding="0" v-if="!this.contestID || OIContestRealTimePermission">
+      <Card id="pieChart" ref="pieChart" :padding="0">
         <div slot="title">
           <Icon type="ios-analytics"></Icon>
           <span class="card-title">{{$t('m.Statistic')}}</span>
@@ -290,9 +290,7 @@
           })
           problem.languages = problem.languages.sort()
           this.problem = problem
-          if (problem.statistic_info) {
-            this.changePie(problem)
-          }
+          this.changePie(problem)
 
           // 在beforeRouteEnter中修改了, 说明本地有code，无需加载template
           if (this.code !== '') {
@@ -309,15 +307,20 @@
         })
       },
       changePie (problemData) {
+        // 初始化 statistic_info
+        if (!problemData.statistic_info) {
+          problemData.statistic_info = {}
+        }
         // 只显示特定的一些状态
         for (let k in problemData.statistic_info) {
           if (filtedStatus.indexOf(k) === -1) {
             delete problemData.statistic_info[k]
           }
         }
-        let acNum = problemData.accepted_number
+        let acNum = problemData.accepted_number || 0
+        let subNum = problemData.submission_number || 0
         let data = [
-          {name: 'WA', value: problemData.submission_number - acNum},
+          {name: 'WA', value: subNum - acNum},
           {name: 'AC', value: acNum}
         ]
         this.pie.series[0].data = data
@@ -334,7 +337,7 @@
         this.largePie.legend.data = legend
 
         // 把ac的数据提取出来放在最后
-        let acCount = problemData.statistic_info['0']
+        let acCount = problemData.statistic_info['0'] || 0
         delete problemData.statistic_info['0']
 
         let largePieData = []
@@ -516,111 +519,275 @@
   }
 
   .flex-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    background: linear-gradient(180deg, #f0f4f8 0%, #f8fafc 100%);
+    min-height: calc(100vh - 60px);
+
     #problem-main {
       flex: auto;
-      margin-right: 18px;
+      margin-right: 24px;
+
+      .problem-panel {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        overflow: hidden;
+        margin-bottom: 24px;
+      }
+
+      .code-panel {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        overflow: hidden;
+        padding: 24px;
+      }
     }
+
     #right-column {
       flex: none;
-      width: 220px;
+      width: 320px;
+
+      .chart-card,
+      #pieChart,
+      #info {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        overflow: hidden;
+        margin-bottom: 20px;
+
+        ::v-deep .ivu-card-body {
+          padding: 0;
+        }
+
+        .header {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 1.1rem;
+          font-weight: 600;
+          color: #1e3a8a;
+          padding: 16px 20px;
+          border-bottom: 2px solid #f1f5f9;
+
+          .ivu-icon {
+            font-size: 20px;
+          }
+        }
+
+        ul {
+          list-style-type: none;
+          padding: 16px 20px;
+          margin: 0;
+
+          li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 0;
+            border-bottom: 1px solid #f1f5f9;
+
+            &:last-child {
+              border-bottom: none;
+            }
+
+            p {
+              margin: 0;
+              font-size: 13px;
+
+              &:first-child {
+                color: #64748b;
+                font-weight: 500;
+              }
+
+              &:last-child {
+                color: #1e3a8a;
+                font-weight: 600;
+                text-align: right;
+                max-width: 120px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+              }
+            }
+          }
+        }
+      }
+
+      .chart-card,
+      #pieChart,
+      #info {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+        overflow: hidden;
+        margin-bottom: 20px;
+
+        ::v-deep .ivu-card-body {
+          padding: 16px;
+        }
+
+        .header {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 1.1rem;
+          font-weight: 600;
+          color: #1e3a8a;
+          padding: 16px 20px;
+          border-bottom: 2px solid #f1f5f9;
+          position: relative;
+
+          .ivu-icon {
+            font-size: 20px;
+          }
+
+          #detail {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+          }
+        }
+
+        .echarts {
+          height: 250px;
+          width: 100%;
+          padding: 0;
+        }
+      }
     }
   }
 
   #problem-content {
-    margin-top: -50px;
+    padding: 24px;
+
     .title {
-      font-size: 20px;
-      font-weight: 400;
-      margin: 25px 0 8px 0;
-      color: #3091f2;
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 40px 0 16px 0;
+      color: #1e3a8a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e2e8f0;
+
+      &:first-child {
+        margin-top: 0;
+      }
+
       .copy {
         padding-left: 8px;
+        color: #3b82f6;
+        cursor: pointer;
+        transition: color 0.2s;
+
+        &:hover {
+          color: #1e3a8a;
+        }
       }
     }
+
     p.content {
-      margin-left: 25px;
-      margin-right: 20px;
-      font-size: 15px
+      margin-left: 0;
+      margin-right: 0;
+      margin-bottom: 24px;
+      font-size: 15px;
+      line-height: 1.85;
+      color: #334155;
     }
+
     .sample {
-      align-items: stretch;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 20px;
+      margin-bottom: 28px;
+      width: 100%;
+      max-width: 800px;
+
       &-input, &-output {
-        width: 50%;
-        flex: 1 1 auto;
         display: flex;
         flex-direction: column;
-        margin-right: 5%;
+        min-width: 0;
+
+        .title {
+          font-size: 1rem;
+          margin-bottom: 10px;
+          margin-top: 0;
+          color: #1e3a8a;
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
       }
+
       pre {
-        flex: 1 1 auto;
-        align-self: stretch;
-        border-style: solid;
-        background: transparent;
-      }
-    }
-  }
-
-  #submit-code {
-    margin-top: 20px;
-    margin-bottom: 20px;
-    .status {
-      float: left;
-      span {
-        margin-right: 10px;
-        margin-left: 10px;
-      }
-    }
-    .captcha-container {
-      display: inline-block;
-      .captcha-code {
-        width: auto;
-        margin-top: -20px;
-        margin-left: 20px;
-      }
-    }
-  }
-
-  #info {
-    margin-bottom: 20px;
-    margin-top: 20px;
-    ul {
-      list-style-type: none;
-      li {
-        border-bottom: 1px dotted #e9eaec;
-        margin-bottom: 10px;
-        p {
-          display: inline-block;
+        margin: 0;
+        background: #f8fafc;
+        border: 2px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 16px;
+        font-family: 'Courier New', monospace;
+        font-size: 13px;
+        line-height: 1.6;
+        max-height: 180px;
+        overflow: auto;
+        white-space: pre;
+        color: #334155;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+        
+        &::-webkit-scrollbar {
+          width: 8px;
+          height: 8px;
         }
-        p:first-child {
-          width: 90px;
+        
+        &::-webkit-scrollbar-track {
+          background: #f1f5f9;
+          border-radius: 4px;
         }
-        p:last-child {
-          float: right;
+        
+        &::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 4px;
+          
+          &:hover {
+            background: #94a3b8;
+          }
         }
       }
-    }
-  }
-
-  .fl-right {
-    float: right;
-  }
-
-  #pieChart {
-    .echarts {
-      height: 250px;
-      width: 210px;
-    }
-    #detail {
-      position: absolute;
-      right: 10px;
-      top: 10px;
     }
   }
 
   #pieChart-detail {
     margin-top: 20px;
-    width: 500px;
+    width: 100%;
     height: 480px;
+  }
+</style>
+
+<style lang="less">
+  #submit-code .ivu-card,
+  #pieChart .ivu-card,
+  #info .ivu-card {
+    border-radius: 20px !important;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  }
+  
+  #submit-code .ivu-card-body,
+  #pieChart .ivu-card-body,
+  #info .ivu-card-body {
+    border-radius: 20px !important;
+  }
+
+  .fl-right {
+    float: right;
   }
 </style>
 

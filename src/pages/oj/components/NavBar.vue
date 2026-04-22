@@ -26,6 +26,10 @@
           <Icon type="ios-git-branch"></Icon>
           {{$t('m.Learning_Path')}}
         </Menu-item>
+        <Menu-item name="/lesson-plan">
+          <Icon type="ios-book"></Icon>
+          {{$t('m.Lesson_Plans')}}
+        </Menu-item>
         <!-- <Submenu name="rank">
           <template slot="title">
             <Icon type="podium"></Icon>
@@ -38,11 +42,6 @@
             {{$t('m.OI_Rank')}}
           </Menu-item>
         </Submenu> -->
-        <!-- 新增aiChat按钮 -->
-        <Menu-item name="/chat">
-          <Icon type="chatbubble-working"></Icon>
-          {{$t('m.AI_Chat')}}
-        </Menu-item>
         <!-- <Submenu name="about">
           <template slot="title">
             <Icon type="information-circled"></Icon>
@@ -150,6 +149,7 @@
         if (path.startsWith('/contest')) return '/contest'
         if (path.startsWith('/learning-report') || path.startsWith('/status')) return '/learning-report'
         if (path.startsWith('/learning-path')) return '/learning-path'
+        if (path.startsWith('/lesson-plan')) return '/lesson-plan'
         if (path.startsWith('/chat')) return '/chat'
         return '/' + path.split('/')[1]
       },

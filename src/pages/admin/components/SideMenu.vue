@@ -5,6 +5,7 @@
       <img src="../../../assets/logo.png" alt="oj admin"/>
     </div>
     <el-menu-item index="/"><i class="el-icon-fa-dashboard"></i>{{$t('m.Dashboard')}}</el-menu-item>
+    <el-menu-item index="/data-dashboard" v-if="isSuperAdmin"><i class="el-icon-fa-bar-chart"></i>数据看板</el-menu-item>
     <el-submenu v-if="isSuperAdmin" index="general">
       <template slot="title"><i class="el-icon-menu"></i>{{$t('m.General')}}</template>
       <el-menu-item index="/user">{{$t('m.User')}}</el-menu-item>
@@ -24,6 +25,10 @@
       <template slot="title"><i class="el-icon-fa-trophy"></i>{{$t('m.Contest')}}</template>
       <el-menu-item index="/contest">{{$t('m.Contest_List')}}</el-menu-item>
       <el-menu-item index="/contest/create">{{$t('m.Create_Contest')}}</el-menu-item>
+    </el-submenu>
+    <el-submenu index="lesson-plan">
+      <template slot="title"><i class="el-icon-fa-book"></i>{{$t('m.Lesson_Plan')}}</template>
+      <el-menu-item index="lesson-plan">{{$t('m.Lesson_Plan_Management')}}</el-menu-item>
     </el-submenu>
   </el-menu>
 </template>

@@ -277,6 +277,12 @@ export default {
   },
   getKnowledgeGraph () {
     return ajax('knowledge-graph', 'get')
+  },
+  getLessonPlanList (params) {
+    return ajax('lesson_plan', 'get', { params })
+  },
+  getLessonPlanDetail (id) {
+    return ajax('lesson_plan', 'get', { params: { id } })
   }
 }
 

@@ -26,20 +26,18 @@ const pie = {
       radius: '80%',
       center: ['50%', '55%'],
       itemStyle: {
-        normal: {color: getItemColor}
+        color: getItemColor
       },
       data: [
         {value: 0, name: 'WA'},
         {value: 0, name: 'AC'}
       ],
       label: {
-        normal: {
-          position: 'inner',
-          show: true,
-          formatter: '{b}: {c}\n {d}%',
-          textStyle: {
-            fontWeight: 'bold'
-          }
+        position: 'inner',
+        show: true,
+        formatter: '{b}: {c}\n {d}%',
+        textStyle: {
+          fontWeight: 'bold'
         }
       }
     }
@@ -49,14 +47,10 @@ const pie = {
 const largePie = {
   legend: {
     left: 'center',
-    top:
-      '10',
-    orient:
-      'horizontal',
-    itemGap:
-      20,
-    data:
-      ['AC', 'RE', 'WA', 'TLE', 'PAC', 'MLE']
+    top: '10',
+    orient: 'horizontal',
+    itemGap: 20,
+    data: ['AC', 'RE', 'WA', 'TLE', 'PAC', 'MLE']
   },
   series: [
     {
@@ -65,7 +59,7 @@ const largePie = {
       radius: ['45%', '70%'],
       center: ['50%', '55%'],
       itemStyle: {
-        normal: {color: getItemColor}
+        color: getItemColor
       },
       data: [
         {value: 0, name: 'RE'},
@@ -76,13 +70,9 @@ const largePie = {
         {value: 0, name: 'PAC'}
       ],
       label: {
-        normal: {
-          formatter: '{b}: {c}\n {d}%'
-        }
+        formatter: '{b}: {c}\n {d}%'
       },
-      labelLine: {
-        normal: {}
-      }
+      labelLine: {}
     },
     {
       name: 'Summary',
@@ -90,17 +80,15 @@ const largePie = {
       radius: '30%',
       center: ['50%', '55%'],
       itemStyle: {
-        normal: {color: getItemColor}
+        color: getItemColor
       },
       data: [
-        {value: '0', name: 'WA'},
+        {value: 0, name: 'WA'},
         {value: 0, name: 'AC', selected: true}
       ],
       label: {
-        normal: {
-          position: 'inner',
-          formatter: '{b}: {c}\n {d}%'
-        }
+        position: 'inner',
+        formatter: '{b}: {c}\n {d}%'
       }
     }
   ]

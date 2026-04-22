@@ -1,158 +1,120 @@
 <template>
-  <div class="learning-report">
-    <h2>{{$t('m.Learning_Report')}}</h2>
+  <div class="learning-report-elegant">
 
     <!-- 整体概览卡片（四列） -->
-    <el-row :gutter="20" class="stats-cards">
-      <el-col :span="6">
-        <el-card shadow="hover">
-          <div class="stat-value">{{ stats.total_submissions }}</div>
-          <div class="stat-label">{{$t('m.Total_Submissions')}}</div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover">
-          <div class="stat-value">{{ stats.total_ac }}</div>
-          <div class="stat-label">{{$t('m.Total_Accepted')}}</div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover">
-          <div class="stat-value">{{ stats.accuracy }}%</div>
-          <div class="stat-label">{{$t('m.Accuracy')}}</div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card shadow="hover">
-          <div class="stat-value">{{ stats.beat_percent }}%</div>
-          <div class="stat-label">{{$t('m.Beat_Percent', { percent: stats.beat_percent })}}</div>
-        </el-card>
-      </el-col>
-    </el-row>
+    <div class="stats-cards">
+      <div class="stat-card">
+        <div class="stat-value">{{ stats.total_submissions }}</div>
+        <div class="stat-label">{{ $t('m.Total_Submissions') }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{{ stats.total_ac }}</div>
+        <div class="stat-label">{{ $t('m.Total_Accepted') }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{{ stats.accuracy }}%</div>
+        <div class="stat-label">{{ $t('m.Accuracy') }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{{ stats.beat_percent }}%</div>
+        <div class="stat-label">{{ $t('m.Beat_Percent', { percent: stats.beat_percent }) }}</div>
+      </div>
+    </div>
 
     <!-- 两栏布局（左侧推荐，右侧雷达图） -->
-    <el-row :gutter="20">
+    <div class="main-content">
       <!-- 推荐题目区域 -->
-      <el-col :span="14">
-        <el-card class="box-card">
-          <div slot="header" class="clearfix">
-            <span>{{$t('m.Recommended_For_You')}}</span>
-          </div>
-          <div v-if="recommendations.length">
-            <el-table :data="recommendations" style="width: 100%">
-              <el-table-column prop="_id" :label="$t('m.Problem_ID')" width="100"></el-table-column>
-              <el-table-column prop="title" :label="$t('m.Problem')"></el-table-column>
-              <el-table-column :label="$t('m.Difficulty')" width="100">
-                <template slot-scope="scope">
-                  <Tag :color="getDifficultyColor(scope.row.difficulty)">
-                    {{ $t('m.' + scope.row.difficulty) }}
-                  </Tag>
-                </template>
-              </el-table-column>
-              <el-table-column :label="$t('m.Knowledge_Points')">
-                <template slot-scope="scope">
-                   {{ translateTags(scope.row.tags) }}
-                </template>
-              </el-table-column>
-              <el-table-column :label="$t('m.Recommendation_Reason')" min-width="150">
-                <template slot-scope="scope">
-                  {{ scope.row.reason }}
-                </template>
-              </el-table-column>
-              <el-table-column :label="$t('m.Operation')" width="100">
-                <template slot-scope="scope">
-                  <el-button type="text" @click="goToProblem(scope.row._id)">{{$t('m.Start_Solving')}}</el-button>
-                </template>
-              </el-table-column>
-            </el-table>
-            <!-- 分页组件 -->
-            <el-pagination
-              @size-change="handleSizeChange"
-              @current-change="handleCurrentChange"
-              :current-page="recommendPage"
-              :page-sizes="[5, 10, 20]"
-              :page-size="recommendLimit"
-              layout="total, sizes, prev, pager, next, jumper"
+      <div class="recommendations-section">
+        <div class="section-header">
+          <Icon type="ios-lightbulb" />
+          <span>{{ $t('m.Recommended_For_You') }}</span>
+        </div>
+        <div v-if="recommendations.length" class="table-container">
+          <Table :data="recommendations" :columns="recommendColumns" class="recommend-table" disabled-hover></Table>
+          <!-- 分页组件 -->
+          <div class="pagination-wrapper">
+            <Pagination
               :total="recommendTotal"
-              style="margin-top: 15px; text-align: center;">
-            </el-pagination>
+              :page-size.sync="recommendLimit"
+              :current.sync="recommendPage"
+              @on-change="onRecommendPageChange"
+              @on-page-size-change="onRecommendPageSizeChange"
+              show-sizer>
+            </Pagination>
           </div>
-          <div v-else>{{$t('m.No_Recommendations')}}</div>
-        </el-card>
-      </el-col>
+        </div>
+        <div v-else class="no-data">
+          <Icon type="ios-inbox" size="48" />
+          <p>{{ $t('m.No_Recommendations') }}</p>
+        </div>
+      </div>
 
       <!-- 右侧雷达图 -->
-        <el-col :span="10">
-            <el-card class="box-card">
-                <div slot="header" class="clearfix">
-                <span>{{$t('m.Knowledge_Mastery_Radar')}}</span>
-                </div>
-                <div id="radar-chart" style="height: 400px;"></div>
-                <!-- 切换按钮（正确位置） -->
-                <div style="text-align: center; margin-top: 15px;">
-                <el-button-group>
-                    <el-button 
-                    :type="currentRadarType === 'knowledge' ? 'primary' : 'default'"
-                    @click="switchRadarType('knowledge')">
-                    知识点
-                    </el-button>
-                    <el-button 
-                    :type="currentRadarType === 'language' ? 'primary' : 'default'"
-                    @click="switchRadarType('language')">
-                    语言
-                    </el-button>
-                </el-button-group>
-                </div>
-            </el-card>
-        </el-col>
-    </el-row>
+      <div class="radar-section">
+        <div class="section-header">
+          <Icon type="ios-radar" />
+          <span>{{ $t('m.Knowledge_Mastery_Radar') }}</span>
+        </div>
+        <div id="radar-chart" class="chart-container"></div>
+        <!-- 切换按钮 -->
+        <div class="radar-toggle">
+          <Button 
+            :type="currentRadarType === 'knowledge' ? 'primary' : 'default'"
+            @click="switchRadarType('knowledge')"
+            size="small">
+            {{ $t('m.Knowledge_Points') }}
+          </Button>
+          <Button 
+            :type="currentRadarType === 'language' ? 'primary' : 'default'"
+            @click="switchRadarType('language')"
+            size="small">
+            {{ $t('m.Language') }}
+          </Button>
+        </div>
+      </div>
+    </div>
 
     <!-- 学习趋势折线图 -->
-    <el-card class="box-card" style="margin-top: 20px;">
-      <div slot="header" class="clearfix">
-        <span>{{$t('m.Learning_Trend')}}</span>
+    <div class="trend-section">
+      <div class="section-header">
+        <Icon type="ios-trending-up" />
+        <span>{{ $t('m.Learning_Trend') }}</span>
       </div>
-      <div id="trend-chart" style="height: 300px;"></div>
-    </el-card>
+      <div id="trend-chart" class="chart-container-large"></div>
+    </div>
 
     <!-- 薄弱知识点建议 -->
-    <el-card class="box-card" style="margin-top: 20px;">
-      <div slot="header" class="clearfix">
-        <span>{{$t('m.Learning_Advice')}}</span>
+    <div class="advice-section">
+      <div class="section-header">
+        <Icon type="ios-chatbubbles" />
+        <span>{{ $t('m.Learning_Advice') }}</span>
       </div>
-      <div style="font-size: 16px; color: #666;">
-        {{ getWeaknessAdvice() }}
+      <div class="advice-content">
+        <Icon type="ios-information-circle" class="advice-icon" />
+        <p>{{ getWeaknessAdvice() }}</p>
       </div>
-    </el-card>
+    </div>
 
     <!-- 知识点掌握详情表格 -->
-    <el-card class="box-card" style="margin-top: 20px;">
-      <div slot="header" class="clearfix">
-        <span>{{$t('m.Knowledge_Mastery_Details')}}</span>
+    <div class="mastery-section">
+      <div class="section-header">
+        <Icon type="ios-analytics" />
+        <span>{{ $t('m.Knowledge_Mastery_Details') }}</span>
       </div>
-      <el-table :data="stats.tags" style="width: 100%">
-        <el-table-column :label="$t('m.Knowledge_Point')">
-          <template slot-scope="scope">
-             {{ translateTag(scope.row.tag_name) }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="total" :label="$t('m.Submission_Count')"></el-table-column>
-        <el-table-column prop="ac" :label="$t('m.Accepted_Count')"></el-table-column>
-        <el-table-column :label="$t('m.Accuracy')" width="180">
-          <template slot-scope="scope">
-            <el-progress :percentage="scope.row.accuracy" :color="progressColor(scope.row.accuracy)"></el-progress>
-          </template>
-        </el-table-column>
-      </el-table>
-    </el-card>
+      <Table :data="stats.tags" :columns="masteryColumns" class="mastery-table" disabled-hover></Table>
+    </div>
   </div>
 </template>
 
 <script>
 import axios from 'axios'
 import * as echarts from 'echarts'
+import Pagination from '@oj/components/Pagination'
 
 export default {
+  components: {
+    Pagination
+  },
   data() {
     return {
       stats: {
@@ -171,7 +133,95 @@ export default {
         dates: [],
         rates: []
       },
-      currentRadarType: 'knowledge', 
+      currentRadarType: 'knowledge',
+      recommendColumns: [
+        {
+          title: this.$t('m.Problem_ID'),
+          key: '_id',
+          width: 100,
+          align: 'center'
+        },
+        {
+          title: this.$t('m.Problem'),
+          key: 'title',
+          ellipsis: true,
+          tooltip: true
+        },
+        {
+          title: this.$t('m.Difficulty'),
+          key: 'difficulty',
+          width: 100,
+          align: 'center',
+          render: (h, params) => {
+            return h('Tag', {
+              props: {
+                color: this.getDifficultyColor(params.row.difficulty)
+              }
+            }, this.$t('m.' + params.row.difficulty))
+          }
+        },
+        {
+          title: this.$t('m.Knowledge_Points'),
+          key: 'tags',
+          render: (h, params) => {
+            return h('span', this.translateTags(params.row.tags))
+          }
+        },
+        {
+          title: this.$t('m.Recommendation_Reason'),
+          key: 'reason',
+          ellipsis: true,
+          tooltip: true
+        },
+        {
+          title: this.$t('m.Operation'),
+          width: 120,
+          align: 'center',
+          render: (h, params) => {
+            return h('Button', {
+              props: {
+                type: 'primary',
+                size: 'small'
+              },
+              on: {
+                click: () => this.goToProblem(params.row._id)
+              }
+            }, this.$t('m.Start_Solving'))
+          }
+        }
+      ],
+      masteryColumns: [
+        {
+          title: this.$t('m.Knowledge_Point'),
+          key: 'tag_name',
+          render: (h, params) => {
+            return h('span', this.translateTag(params.row.tag_name))
+          }
+        },
+        {
+          title: this.$t('m.Submission_Count'),
+          key: 'total',
+          align: 'center'
+        },
+        {
+          title: this.$t('m.Accepted_Count'),
+          key: 'ac',
+          align: 'center'
+        },
+        {
+          title: this.$t('m.Accuracy'),
+          key: 'accuracy',
+          width: 180,
+          render: (h, params) => {
+            return h('Progress', {
+              props: {
+                percent: params.row.accuracy,
+                status: params.row.accuracy < 30 ? 'wrong' : params.row.accuracy < 70 ? 'normal' : 'success'
+              }
+            })
+          }
+        }
+      ]
     }
   },
   mounted() {
@@ -226,13 +276,13 @@ export default {
         })
         .catch(err => console.error(err))
     },
-    handleSizeChange(val) {
-      this.recommendLimit = val
-      this.recommendPage = 1
+    onRecommendPageChange(page) {
+      this.recommendPage = page
       this.fetchRecommendations()
     },
-    handleCurrentChange(val) {
-      this.recommendPage = val
+    onRecommendPageSizeChange(pageSize) {
+      this.recommendLimit = pageSize
+      this.recommendPage = 1
       this.fetchRecommendations()
     },
     fetchTrendData() {
@@ -256,27 +306,29 @@ export default {
             return;
         }
 
+        let existingChart = echarts.getInstanceByDom(chartDom);
+        if (existingChart) {
+            existingChart.dispose();
+        }
+
         let radarData = [];
         let indicator = [];
 
         if (this.currentRadarType === 'knowledge') {
             radarData = this.stats.tags || [];
             indicator = radarData.map(tag => ({
-            name: this.translateTag(tag.tag_name),  // 使用翻译函数
+            name: this.translateTag(tag.tag_name),
             max: 100
             }));
         } else {
             radarData = this.stats.lang_stats || [];
             indicator = radarData.map(lang => ({
-            name: lang.lang_name,   // 语言名称直接显示（如 C++、Python）
+            name: lang.lang_name,
             max: 100
             }));
         }
 
-        // 无数据时清空图表并返回
         if (!radarData.length) {
-            const chart = echarts.init(chartDom);
-            chart.clear();
             return;
         }
 
@@ -359,21 +411,218 @@ export default {
 }
 </script>
 
-<style scoped>
-.learning-report {
-  padding: 20px;
+<style scoped lang="less">
+.learning-report-elegant {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  min-height: calc(100vh - 60px);
+  background: linear-gradient(180deg, #f0f4f8 0%, #f8fafc 100%);
 }
+
+/* 页面标题 */
+.page-header {
+  text-align: center;
+  margin-bottom: 40px;
+  animation: fadeInDown 0.6s ease-out;
+
+  .page-title {
+    font-size: 2.2rem;
+    font-weight: 600;
+    color: #1e3a8a;
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 12px;
+
+    .title-line {
+      width: 60px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #1e3a8a, #3b82f6, transparent);
+      border-radius: 1px;
+    }
+  }
+
+  .page-subtitle {
+    font-size: 1rem;
+    color: #64748b;
+    letter-spacing: 0.1em;
+    font-weight: 400;
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 统计卡片 */
 .stats-cards {
-  margin-bottom: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 40px;
 }
-.stat-value {
-  font-size: 32px;
-  font-weight: bold;
+
+.stat-card {
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
   text-align: center;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(30, 58, 138, 0.12);
+  }
+
+  .stat-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #1e3a8a;
+    margin-bottom: 8px;
+  }
+
+  .stat-label {
+    font-size: 0.9rem;
+    color: #64748b;
+    font-weight: 500;
+  }
 }
-.stat-label {
-  text-align: center;
-  color: #909399;
-  margin-top: 10px;
+
+/* 主内容区 */
+.main-content {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+/* 区域通用样式 */
+.recommendations-section,
+.radar-section,
+.trend-section,
+.advice-section,
+.mastery-section {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  padding: 24px;
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #1e3a8a;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f1f5f9;
+
+    .ivu-icon {
+      font-size: 20px;
+    }
+  }
+}
+
+/* 推荐表格 */
+.recommendations-section {
+  .table-container {
+    .recommend-table {
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .pagination-wrapper {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+    }
+  }
+
+  .no-data {
+    text-align: center;
+    padding: 60px 20px;
+    color: #94a3b8;
+
+    .ivu-icon {
+      margin-bottom: 16px;
+    }
+
+    p {
+      font-size: 16px;
+      margin: 0;
+    }
+  }
+}
+
+/* 雷达图 */
+.radar-section {
+  .chart-container {
+    height: 350px;
+    margin-bottom: 16px;
+  }
+
+  .radar-toggle {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+  }
+}
+
+/* 趋势图 */
+.trend-section {
+  margin-bottom: 40px;
+
+  .chart-container-large {
+    height: 350px;
+  }
+}
+
+/* 建议区域 */
+.advice-section {
+  margin-bottom: 40px;
+
+  .advice-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px;
+    background: #f8fafc;
+    border-radius: 12px;
+    border-left: 4px solid #3b82f6;
+
+    .advice-icon {
+      font-size: 24px;
+      color: #3b82f6;
+      flex-shrink: 0;
+    }
+
+    p {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.8;
+      color: #334155;
+    }
+  }
+}
+
+/* 知识点掌握详情 */
+.mastery-section {
+  .mastery-table {
+    border-radius: 8px;
+    overflow: hidden;
+  }
 }
 </style>

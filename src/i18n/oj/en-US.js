@@ -669,5 +669,8 @@ export const m = {
   Weakness_Advice_Need_Improve: 'Your accuracy for "{tag}" is only {accuracy}%, need more practice.',
   Problem_ID_Not_Exist_Message: 'If you find the following problem id does not exist,<br> try to click the button.',
   Regenerate_Button: 'regenerate',
-  Update_Successfully: 'Update successfully'
+  Update_Successfully: 'Update successfully',
+  Learning_Path: 'Learning Path',
+  Lesson_Plans: 'Lesson Plans',
+  Lesson_Plan_Management: 'Lesson Plan Management'
 }

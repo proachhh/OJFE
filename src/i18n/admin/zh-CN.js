@@ -17,6 +17,8 @@ export const m = {
   Contest: '比赛&练习',
   Contest_List: '比赛列表',
   Create_Contest: '创建比赛',
+  Lesson_Plan: '教案管理',
+  Lesson_Plan_Management: '教案列表',
   // User.vue
   User_User: '用户',
   Import_User: '导入用户',
