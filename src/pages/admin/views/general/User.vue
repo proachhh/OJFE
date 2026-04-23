@@ -421,6 +421,24 @@
 </script>
 
 <style scoped lang="less">
+  .view {
+    padding: 20px;
+    min-height: calc(100vh - 60px);
+    background: linear-gradient(180deg, #f0f4f8 0%, #f8fafc 100%);
+    animation: fadeInDown 0.6s ease-out;
+  }
+
+  @keyframes fadeInDown {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
   .import-user-icon {
     color: #555555;
     margin-left: 4px;

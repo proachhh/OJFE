@@ -1,5 +1,5 @@
 <template>
-  <div class="data-dashboard">
+  <div class="data-dashboard" v-loading="loading">
     <div class="page-header">
       <h2>数据看板</h2>
       <p>Data Dashboard</p>
@@ -102,21 +102,21 @@
       </div>
     </div>
 
-    <div class="charts-row">
-      <div class="chart-panel full-width">
-        <h3>每日提交趋势（最近7天）</h3>
-        <div id="daily-chart" class="chart-container-wide"></div>
-      </div>
+    <div class="daily-chart-panel">
+      <h3>每日提交趋势（最近7天）</h3>
+      <div ref="dailyChart" class="chart-container-wide"></div>
     </div>
 
     <div class="tables-row">
       <div class="table-panel">
         <h3>完成率最高题目 Top 10</h3>
         <Table :data="mostCompleted" :columns="problemColumns" size="small" disabled-hover></Table>
+        <div v-if="!mostCompleted.length" class="no-data">暂无数据</div>
       </div>
       <div class="table-panel">
         <h3>完成率最低题目 Top 10</h3>
         <Table :data="leastCompleted" :columns="problemColumns" size="small" disabled-hover></Table>
+        <div v-if="!leastCompleted.length" class="no-data">暂无数据</div>
       </div>
     </div>
 
@@ -124,6 +124,7 @@
       <div class="table-panel">
         <h3>用户排名 Top 20</h3>
         <Table :data="userRanking" :columns="userColumns" size="small" disabled-hover></Table>
+        <div v-if="!userRanking.length" class="no-data">暂无数据</div>
       </div>
     </div>
 
@@ -131,10 +132,12 @@
       <div class="table-panel">
         <h3>历史提交最多用户</h3>
         <Table :data="topSubmittersAllTime" :columns="submitterColumns" size="small" disabled-hover></Table>
+        <div v-if="!topSubmittersAllTime.length" class="no-data">暂无数据</div>
       </div>
       <div class="table-panel">
         <h3>本周提交最多用户</h3>
         <Table :data="topSubmittersWeek" :columns="submitterWeekColumns" size="small" disabled-hover></Table>
+        <div v-if="!topSubmittersWeek.length" class="no-data">暂无数据</div>
       </div>
     </div>
   </div>
@@ -198,7 +201,8 @@ export default {
           key: 'pass_rate',
           width: 100,
           render: (h, params) => {
-            return h('span', params.row.pass_rate.toFixed(1) + '%')
+            const rate = params.row.pass_rate || 0
+            return h('span', rate.toFixed(1) + '%')
           }
         }
       ],
@@ -218,7 +222,8 @@ export default {
           key: 'real_name',
           width: 120,
           render: (h, params) => {
-            return h('span', params.row.real_name || '-')
+              const rate = params.row.pass_rate || 0
+              return h('span', rate.toFixed(1) + '%')
           }
         },
         {
@@ -236,7 +241,8 @@ export default {
           key: 'ac_rate',
           width: 80,
           render: (h, params) => {
-            return h('span', params.row.ac_rate.toFixed(1) + '%')
+              const rate = params.row.pass_rate || 0
+              return h('span', rate.toFixed(1) + '%')
           }
         },
         {
@@ -256,7 +262,8 @@ export default {
           key: 'real_name',
           width: 120,
           render: (h, params) => {
-            return h('span', params.row.real_name || '-')
+              const rate = params.row.pass_rate || 0
+              return h('span', rate.toFixed(1) + '%')
           }
         },
         {
@@ -304,6 +311,10 @@ export default {
   },
   mounted () {
     this.fetchData()
+    window.addEventListener('resize', this.handleResize)
+  },
+  beforeDestroy () {
+    window.removeEventListener('resize', this.handleResize)
   },
   methods: {
     fetchData () {
@@ -317,20 +328,24 @@ export default {
         this.topSubmitters = data.top_submitters || {}
         this.userRanking = data.user_ranking || []
         this.submissionStats = data.submission_stats || {}
-        this.mostCompleted = this.problemCompletion.most_completed || []
-        this.leastCompleted = this.problemCompletion.least_completed || []
-        this.topSubmittersAllTime = this.topSubmitters.all_time || []
-        this.topSubmittersWeek = this.topSubmitters.this_week || []
+        // 确保字段名匹配，并转换为纯对象避免 iView Table 响应式兼容问题
+        this.mostCompleted = (this.problemCompletion.most_completed || []).map(item => ({ ...item }))
+        this.leastCompleted = (this.problemCompletion.least_completed || []).map(item => ({ ...item }))
+        this.topSubmittersAllTime = (this.topSubmitters.all_time || []).map(item => ({ ...item }))
+        this.topSubmittersWeek = (this.topSubmitters.this_week || []).map(item => ({ ...item }))
+        this.userRanking = (this.userRanking || []).map(item => ({ ...item }))
         this.loading = false
+        console.log('赋值后的 mostCompleted:', this.mostCompleted)
+        console.log('赋值后的 leastCompleted:', this.leastCompleted)
+        console.log('赋值后的 userRanking:', this.userRanking)
         this.$nextTick(() => {
-          this.$nextTick(() => {
+          setTimeout(() => {
             this.drawDifficultyChart()
             this.drawResultChart()
             this.drawLanguageChart()
             this.drawTagChart()
             this.drawDailyChart()
-            window.addEventListener('resize', this.handleResize)
-          })
+          }, 100)
         })
       }).catch(() => {
         this.loading = false
@@ -345,7 +360,7 @@ export default {
       const labelMap = { Low: '简单', Mid: '中等', High: '困难' }
       const colorMap = { Low: '#67c23a', Mid: '#e6a23c', High: '#f56c6c' }
       chart.setOption({
-        tooltip: { trigger: 'item', formatter: '{b}: {c}题 (通过率 {d}%)' },
+        tooltip: { trigger: 'item', formatter: '{b}: {c}题' },
         series: [{
           type: 'pie',
           radius: ['40%', '70%'],
@@ -355,7 +370,6 @@ export default {
           data: this.difficultyDistribution.map(item => ({
             name: labelMap[item.name] || item.name,
             value: item.count,
-            passRate: item.pass_rate,
             itemStyle: { color: colorMap[item.name] || '#409eff' }
           }))
         }]
@@ -414,7 +428,7 @@ export default {
       const tagsDistribution = this.problemStats.tags_distribution || []
       chart.setOption({
         tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-        grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
+        grid: { left: '15%', right: '5%', bottom: '3%', containLabel: true },
         xAxis: { type: 'value' },
         yAxis: {
           type: 'category',
@@ -436,7 +450,7 @@ export default {
       })
     },
     drawDailyChart () {
-      const chartDom = document.getElementById('daily-chart')
+      const chartDom = this.$refs.dailyChart
       if (!chartDom) return
       const existingChart = echarts.getInstanceByDom(chartDom)
       if (existingChart) existingChart.dispose()
@@ -445,11 +459,12 @@ export default {
       chart.setOption({
         tooltip: { trigger: 'axis' },
         legend: { data: ['总提交', '通过'], left: 'center' },
-        grid: { left: '50px', right: '30px', bottom: '40px', top: '50px' },
+        grid: { left: '60px', right: '40px', bottom: '40px', top: '60px', containLabel: true },
         xAxis: {
           type: 'category',
           boundaryGap: false,
-          data: dailySubmissions.map(item => item.date)
+          data: dailySubmissions.map(item => item.date),
+          axisLabel: { rotate: 0, interval: 0 }
         },
         yAxis: { type: 'value' },
         series: [
@@ -471,13 +486,11 @@ export default {
           }
         ]
       })
-      setTimeout(() => {
-        chart.resize()
-      }, 200)
+      setTimeout(() => chart.resize(), 300)
     },
     handleResize () {
-      const charts = ['difficulty-chart', 'result-chart', 'language-chart', 'tag-chart', 'daily-chart']
-      charts.forEach(id => {
+      const ids = ['difficulty-chart', 'result-chart', 'language-chart', 'tag-chart', 'daily-chart']
+      ids.forEach(id => {
         const chartDom = document.getElementById(id)
         if (chartDom) {
           const chart = echarts.getInstanceByDom(chartDom)
@@ -485,9 +498,6 @@ export default {
         }
       })
     }
-  },
-  beforeDestroy () {
-    window.removeEventListener('resize', this.handleResize)
   }
 }
 </script>
@@ -648,13 +658,28 @@ export default {
 .chart-container {
   height: 350px;
   width: 100%;
-  min-width: 400px;
 }
 
 .chart-container-wide {
-  height: 300px;
+  height: 350px;
   width: 100%;
-  min-width: 600px;
+  display: block;
+}
+
+.daily-chart-panel {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  margin-bottom: 30px;
+  width: 100%;
+
+  h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0 0 16px 0;
+  }
 }
 
 .tables-row {
@@ -676,5 +701,12 @@ export default {
     color: #1e293b;
     margin: 0 0 16px 0;
   }
+}
+
+.no-data {
+  text-align: center;
+  padding: 30px 0;
+  color: #909399;
+  font-size: 14px;
 }
 </style>

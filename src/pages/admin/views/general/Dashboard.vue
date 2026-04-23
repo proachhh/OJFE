@@ -186,22 +186,43 @@
 <style lang="less">
   .admin-info {
     margin-bottom: 20px;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(30, 58, 138, 0.08);
+    border: 1px solid #e2e8f0;
+    transition: box-shadow 0.3s ease;
+
+    &:hover {
+      box-shadow: 0 12px 40px rgba(30, 58, 138, 0.12);
+    }
+
     &-name {
       font-size: 24px;
-      font-weight: 700;
+      font-weight: 600;
       margin-bottom: 10px;
-      color: #409EFF;
+      color: #1e3a8a;
     }
     .avatar {
       max-width: 100%;
+      border-radius: 50%;
+      border: 4px solid #f0f4f8;
     }
     .last-info {
       &-title {
         font-size: 16px;
+        font-weight: 600;
+        color: #1e3a8a;
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #f1f5f9;
       }
       &-body {
         .el-form-item {
           margin-bottom: 5px;
+          
+          .el-form-item__label {
+            color: #64748b;
+            font-weight: 500;
+          }
         }
       }
     }
@@ -215,6 +236,16 @@
       flex: 1 0 auto;
       min-width: 200px;
       margin-bottom: 10px;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(30, 58, 138, 0.08);
+      border: 1px solid #e2e8f0;
+      transition: all 0.2s ease;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(30, 58, 138, 0.12);
+        border-color: #1e3a8a;
+      }
     }
   }
 

@@ -94,7 +94,7 @@
     font-weight: 400;
     height: 100%;
     -webkit-font-smoothing: antialiased;
-    background-color: #EDECEC;
+    background: linear-gradient(180deg, #f0f4f8 0%, #f8fafc 100%);
     overflow-y: scroll;
     min-width: 1000px;
   }
@@ -109,7 +109,10 @@
     padding-right: 30px;
     line-height: 50px;
     height: 50px;
-    background: #F9FAFC;
+    background: linear-gradient(90deg, #f8fafc 0%, #ffffff 100%);
+    box-shadow: 0 2px 8px rgba(30, 58, 138, 0.06);
+    border-bottom: 1px solid #e2e8f0;
+    
     .screen-full {
       margin-right: 8px;
     }
@@ -125,6 +128,7 @@
     margin: 15px;
     text-align: center;
     font-size: small;
+    color: #64748b;
   }
 
   @keyframes fadeInUp {
@@ -145,9 +149,11 @@
 
   .katex-editor {
     margin-right: 5px;
-    /*font-size: 18px;*/
+    cursor: pointer;
+    transition: color 0.2s ease;
+    
+    &:hover {
+      color: #1e3a8a;
+    }
   }
-
-
-
 </style>

@@ -3,8 +3,8 @@
     <section class="content-section">
       <KnowledgeGraphSection />
       <div class="hero-text">
-        <h1 class="hero-title">探索 · 知识星海</h1>
-        <p class="hero-subtitle">From Zero to Hero，构建你的专属学习路径</p>
+        <h1 class="hero-title">{{ $t('m.Home_Hero_Title') }}</h1>
+        <p class="hero-subtitle">{{ $t('m.Home_Hero_Subtitle') }}</p>
       </div>
     </section>
 
@@ -12,7 +12,7 @@
 
     <section class="announcement-section">
       <div class="section-header animate-on-scroll" data-animation="fade-up">
-        <h2 class="section-title">最新公告</h2>
+        <h2 class="section-title">{{ $t('m.Home_Announcements') }}</h2>
       </div>
       <div class="animate-on-scroll" data-animation="fade-up">
         <Announcements />
@@ -21,8 +21,8 @@
 
     <section class="features-section">
       <div class="section-header animate-on-scroll" data-animation="fade-up">
-        <h2 class="section-title">为什么选择我们</h2>
-        <p class="section-subtitle">专业、高效、智能的算法学习平台</p>
+        <h2 class="section-title">{{ $t('m.Home_Features_Title') }}</h2>
+        <p class="section-subtitle">{{ $t('m.Home_Features_Subtitle') }}</p>
       </div>
       <div class="feature-row" v-for="(feature, index) in features" :key="index" :class="{ 'reverse': index % 2 === 1, 'animate-on-scroll': true }" :data-animation="index % 2 === 0 ? 'slide-left' : 'slide-right'">
         <div class="feature-info">
@@ -49,14 +49,14 @@
 
     <section class="cta-section">
       <div class="cta-content animate-on-scroll" data-animation="fade-up">
-        <h2 class="cta-title">准备好开始了吗？</h2>
-        <p class="cta-subtitle">加入数名开发者，一起提升算法能力</p>
+        <h2 class="cta-title">{{ $t('m.Home_CTA_Title') }}</h2>
+        <p class="cta-subtitle">{{ $t('m.Home_CTA_Subtitle') }}</p>
         <div class="cta-buttons">
           <Button type="primary" size="large" class="cta-btn" @click="goToProblems">
-            <Icon type="ios-rocket" /> 开始刷题
+            <Icon type="ios-rocket" /> {{ $t('m.Home_CTA_Button') }}
           </Button>
           <Button size="large" class="cta-btn-outline" @click="goToLearningPath">
-            <Icon type="ios-map" /> 学习路径
+            <Icon type="ios-map" /> {{ $t('m.Home_CTA_Button_Outline') }}
           </Button>
         </div>
       </div>
@@ -73,49 +73,64 @@ export default {
   components: { KnowledgeGraphSection, Announcements },
   data() {
     return {
-      features: [
+      featureKeys: [
         {
           icon: 'ios-analytics',
-          title: '智能知识图谱',
-          desc: '可视化展示知识点关联，帮助你系统性地学习和理解算法体系',
+          titleKey: 'm.Feature_Knowledge_Graph',
+          descKey: 'm.Feature_Knowledge_Graph_Desc',
           color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
           screenshot: require('../../../../../static/pictures/graph.png')
         },
         {
           icon: 'ios-trending-up',
-          title: '个性化推荐',
-          desc: '基于你的学习数据，智能推荐适合你的题目，高效提升',
+          titleKey: 'm.Feature_Recommendation',
+          descKey: 'm.Feature_Recommendation_Desc',
           color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
           screenshot: require('../../../../../static/pictures/recommend.png')
         },
         {
           icon: 'ios-speedometer',
-          title: '实时评测系统',
-          desc: '支持多种编程语言，秒级评测结果，详细的错误反馈帮助你快速定位问题',
+          titleKey: 'm.Feature_Evaluation',
+          descKey: 'm.Feature_Evaluation_Desc',
           color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
           screenshot: require('../../../../../static/pictures/languages.png')
         },
         {
           icon: 'ios-robot',
-          title: 'AI生成题目',
-          desc: 'AI智能生成个性化练习题，针对薄弱知识点精准强化',
+          titleKey: 'm.Feature_AI_Gen',
+          descKey: 'm.Feature_AI_Gen_Desc',
           color: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
           screenshot: require('../../../../../static/pictures/AI4problem.png')
         },
         {
           icon: 'ios-book',
-          title: '教案辅导',
-          desc: '系统化教案与智能辅导，帮助你循序渐进掌握每个知识点',
+          titleKey: 'm.Feature_Lesson',
+          descKey: 'm.Feature_Lesson_Desc',
           color: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
           screenshot: require('../../../../../static/pictures/lesson.png')
         }
       ],
-      stats: [
-        { number: '1000+', label: '精选题目' },
-        { number: '50+', label: '活跃用户' },
-        { number: '500+', label: '总提交数' },
-        { number: '99.9%', label: '系统稳定性' }
+      statKeys: [
+        { number: '1000+', labelKey: 'm.Stat_Selected_Problems' },
+        { number: '50+', labelKey: 'm.Stat_Active_Users' },
+        { number: '500+', labelKey: 'm.Stat_Total_Submissions' },
+        { number: '99.9%', labelKey: 'm.Stat_System_Stability' }
       ]
+    }
+  },
+  computed: {
+    features() {
+      return this.featureKeys.map(f => ({
+        ...f,
+        title: this.$t(f.titleKey),
+        desc: this.$t(f.descKey)
+      }))
+    },
+    stats() {
+      return this.statKeys.map(s => ({
+        ...s,
+        label: this.$t(s.labelKey)
+      }))
     }
   },
   methods: {

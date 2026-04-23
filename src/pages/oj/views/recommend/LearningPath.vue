@@ -10,7 +10,7 @@
       <!-- 标题 -->
       <div class="content-header">
         <h1 class="page-title">{{ $t('m.Learning_Path') }}</h1>
-        <p class="page-subtitle">选择起点和目标，生成你的专属学习路径</p>
+        <p class="page-subtitle">{{ $t('m.Learning_Path_Subtitle') }}</p>
       </div>
 
       <!-- 搜索 -->
@@ -198,7 +198,7 @@ export default {
         if (nodes && nodes.length > 0) {
           this.allTopics = nodes.map(n => n.name).sort()
         } else {
-          this.error = '暂无知识点数据'
+          this.error = this.$t('m.No_Knowledge_Data')
         }
       }).catch(err => {
         console.error('knowledge-graph 请求失败:', err)

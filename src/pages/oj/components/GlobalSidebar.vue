@@ -18,20 +18,20 @@
         <div class="menu-icon" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
           <Icon type="ios-code" size="18" color="#fff" />
         </div>
-        <span class="menu-text">代码编辑器</span>
+        <span class="menu-text">{{ $t('m.Code_Editor') }}</span>
       </div>
     </div>
 
     <!-- AI Chat 面板 -->
     <div v-if="showAIChat" class="side-panel ai-panel">
       <div class="panel-header">
-        <h3>星火 AI 助手</h3>
+        <h3>{{ $t('m.Spark_AI_Assistant') }}</h3>
         <div class="panel-actions">
-          <Button type="text" size="small" @click="openFullscreen('ai')" title="全屏">
-            <Icon type="ios-expand" />
+          <Button type="text" size="small" @click="openFullscreen('ai')" :title="$t('m.Fullscreen')">
+            <Icon type="ios-expand" size="16" color="#fff" />
           </Button>
           <Button type="text" size="small" @click="closeAIChat">
-            <Icon type="ios-close" />
+            <Icon type="ios-close" size="16" color="#fff" />
           </Button>
         </div>
       </div>
@@ -39,27 +39,27 @@
         <div class="message-container" ref="aiMessageList">
           <div v-if="aiMessages.length === 0" class="welcome-section">
             <div class="welcome-icon">
-              <img src="/static/pictures/xh.png" alt="星火" />
+              <img src="/static/pictures/xh.png" :alt="$t('m.Spark_AI')" />
             </div>
-            <h3>你好！我是星火 AI 助手</h3>
-            <p>我可以帮你解答编程问题、算法思路、代码调试等各种技术问题</p>
+            <h3>{{ $t('m.Hello_I_Am_Spark_AI') }}</h3>
+            <p>{{ $t('m.Spark_AI_Description') }}</p>
           </div>
           <template v-else>
             <div v-for="(msg, idx) in aiMessages" :key="idx" :class="['message-item', msg.role]">
               <div class="message-avatar">
                 <Avatar v-if="msg.role === 'user'" icon="ios-person" style="background: #2d8cf0" />
                 <div v-else class="ai-avatar">
-                  <img src="/static/pictures/xh.png" alt="星火" />
+                  <img src="/static/pictures/xh.png" :alt="$t('m.Spark_AI')" />
                 </div>
               </div>
               <div class="message-content">
                 <div class="message-header">
-                  <span class="sender-name">{{ msg.role === 'user' ? '我' : '星火 AI' }}</span>
+                  <span class="sender-name">{{ msg.role === 'user' ? $t('m.Me') : $t('m.Spark_AI') }}</span>
                 </div>
                 <div class="message-body">
                   <div v-if="msg.role === 'loading'" class="loading-indicator">
                     <Spin size="small" />
-                    <span>AI 正在思考...</span>
+                    <span>{{ $t('m.AI_Thinking') }}</span>
                   </div>
                   <div v-else class="message-text" v-html="formatMessage(msg.content)"></div>
                 </div>
@@ -68,9 +68,9 @@
           </template>
         </div>
         <div class="input-area">
-          <Input v-model="aiInputText" type="textarea" :rows="3" :placeholder="aiMessages.length === 0 ? '输入你的问题开始对话...' : '输入你的问题...'" />
+          <Input v-model="aiInputText" type="textarea" :rows="3" :placeholder="aiMessages.length === 0 ? $t('m.Enter_Your_Question_Start') : $t('m.Enter_Your_Question')" />
           <Button type="primary" long @click="sendAIMessage" :loading="aiSending" :disabled="!aiInputText.trim()">
-            <Icon type="ios-send" /> 发送
+            <Icon type="ios-send" /> {{ $t('m.Send') }}
           </Button>
         </div>
       </div>
@@ -79,13 +79,13 @@
     <!-- 代码编辑器面板 -->
     <div v-if="showCodeEditor" class="side-panel editor-panel">
       <div class="panel-header">
-        <h3>代码编辑器</h3>
+        <h3>{{ $t('m.Code_Editor') }}</h3>
         <div class="panel-actions">
-          <Button type="text" size="small" @click="openFullscreen('editor')" title="全屏">
-            <Icon type="ios-expand" />
+          <Button type="text" size="small" @click="openFullscreen('editor')" :title="$t('m.Fullscreen')">
+            <Icon type="ios-expand" size="16" color="#fff" />
           </Button>
           <Button type="text" size="small" @click="closeCodeEditor">
-            <Icon type="ios-close" />
+            <Icon type="ios-close" size="16" color="#fff" />
           </Button>
         </div>
       </div>
@@ -106,101 +106,18 @@
         <codemirror v-model="editorCode" :options="editorOptions" ref="codeEditor" class="code-editor" />
         <div class="editor-actions">
           <Button type="primary" @click="runCode" :loading="runningCode">
-            <Icon type="ios-play" /> 运行代码
+            <Icon type="ios-play" /> {{ $t('m.Run_Code') }}
           </Button>
           <Button @click="clearCode">
-            <Icon type="ios-trash" /> 清空
+            <Icon type="ios-trash" /> {{ $t('m.Clear') }}
           </Button>
         </div>
         <div v-if="runResult" class="run-result">
-          <h4>运行结果</h4>
+          <h4>{{ $t('m.Run_Result') }}</h4>
           <pre :class="runResult.error ? 'error' : 'success'">{{ runResult.output }}</pre>
         </div>
       </div>
     </div>
-
-    <!-- 全屏弹窗 -->
-    <Modal v-model="showFullscreen" :fullscreen="true" :closable="false" :mask-closable="false" class="fullscreen-modal">
-      <div class="fullscreen-container">
-        <div class="fullscreen-header">
-          <h3>{{ fullscreenType === 'ai' ? '星火 AI 助手' : '代码编辑器' }}</h3>
-          <Button type="text" size="large" @click="closeFullscreen">
-            <Icon type="ios-close" size="24" />
-          </Button>
-        </div>
-
-        <!-- 全屏 AI Chat -->
-        <div v-if="fullscreenType === 'ai'" class="fullscreen-ai-chat">
-          <div class="message-container" ref="fsAiMessageList">
-            <div v-if="aiMessages.length === 0" class="welcome-section">
-              <div class="welcome-icon">
-                <img src="/static/pictures/xh.png" alt="星火" />
-              </div>
-              <h3>你好！我是星火 AI 助手</h3>
-              <p>我可以帮你解答编程问题、算法思路、代码调试等各种技术问题</p>
-            </div>
-            <template v-else>
-              <div v-for="(msg, idx) in aiMessages" :key="'fs-'+idx" :class="['message-item', msg.role]">
-                <div class="message-avatar">
-                  <Avatar v-if="msg.role === 'user'" icon="ios-person" style="background: #2d8cf0; width: 40px; height: 40px;" />
-                  <div v-else class="ai-avatar">
-                    <img src="/static/pictures/xh.png" alt="星火" />
-                  </div>
-                </div>
-                <div class="message-content">
-                  <div class="message-header">
-                    <span class="sender-name">{{ msg.role === 'user' ? '我' : '星火 AI' }}</span>
-                  </div>
-                  <div class="message-body">
-                    <div v-if="msg.role === 'loading'" class="loading-indicator">
-                      <Spin size="large" />
-                      <span>AI 正在思考...</span>
-                    </div>
-                    <div v-else class="message-text" v-html="formatMessage(msg.content)"></div>
-                  </div>
-                </div>
-              </div>
-            </template>
-          </div>
-          <div class="input-area">
-            <Input v-model="aiInputText" type="textarea" :rows="3" placeholder="输入你的问题..." />
-            <Button type="primary" long @click="sendAIMessage" :loading="aiSending" :disabled="!aiInputText.trim()">
-              <Icon type="ios-send" /> 发送
-            </Button>
-          </div>
-        </div>
-
-        <!-- 全屏代码编辑器 -->
-        <div v-if="fullscreenType === 'editor'" class="fullscreen-editor">
-          <div class="editor-controls">
-            <Select v-model="editorLanguage" style="width: 140px;">
-              <Option value="C++">C++</Option>
-              <Option value="C">C</Option>
-              <Option value="Java">Java</Option>
-              <Option value="Python">Python</Option>
-            </Select>
-            <Select v-model="editorTheme" style="width: 140px;">
-              <Option value="monokai">Monokai</Option>
-              <Option value="solarized">Solarized</Option>
-              <Option value="material">Material</Option>
-            </Select>
-          </div>
-          <codemirror v-model="editorCode" :options="editorOptions" ref="fsCodeEditor" class="code-editor-fullscreen" />
-          <div class="editor-actions">
-            <Button type="primary" size="large" @click="runCode" :loading="runningCode">
-              <Icon type="ios-play" /> 运行代码
-            </Button>
-            <Button size="large" @click="clearCode">
-              <Icon type="ios-trash" /> 清空
-            </Button>
-          </div>
-          <div v-if="runResult" class="run-result">
-            <h4>运行结果</h4>
-            <pre :class="runResult.error ? 'error' : 'success'">{{ runResult.output }}</pre>
-          </div>
-        </div>
-      </div>
-    </Modal>
   </div>
 </template>
 
@@ -229,14 +146,11 @@ export default {
       aiInputText: '',
       aiSending: false,
 
-      editorCode: '// 在这里编写代码\n',
+      editorCode: this.$t('m.Write_Code_Here'),
       editorLanguage: 'C++',
       editorTheme: 'monokai',
       runningCode: false,
-      runResult: null,
-
-      showFullscreen: false,
-      fullscreenType: ''
+      runResult: null
     }
   },
   computed: {
@@ -307,12 +221,11 @@ export default {
     },
 
     openFullscreen (type) {
-      this.fullscreenType = type
-      this.showFullscreen = true
-    },
-
-    closeFullscreen () {
-      this.showFullscreen = false
+      if (type === 'ai') {
+        this.$router.push({ name: 'ai-chat-fullscreen' })
+      } else if (type === 'editor') {
+        this.$router.push({ name: 'code-editor-fullscreen' })
+      }
     },
 
     async sendAIMessage () {
@@ -323,7 +236,7 @@ export default {
       this.aiInputText = ''
       this.aiSending = true
 
-      this.aiMessages.push({ role: 'loading', content: 'AI正在思考...' })
+      this.aiMessages.push({ role: 'loading', content: this.$t('m.AI_Thinking_Text') })
       this.scrollToBottom()
 
       try {
@@ -337,13 +250,13 @@ export default {
 
         if (response.ok) {
           const data = await response.json()
-          this.aiMessages.push({ role: 'assistant', content: data.reply || data.message || '无回复' })
+          this.aiMessages.push({ role: 'assistant', content: data.reply || data.message || this.$t('m.No_Reply') })
         } else {
-          this.aiMessages.push({ role: 'assistant', content: '请求失败，请稍后重试' })
+          this.aiMessages.push({ role: 'assistant', content: this.$t('m.Request_Failed') })
         }
       } catch (e) {
         this.aiMessages.splice(this.aiMessages.length - 1, 1)
-        this.aiMessages.push({ role: 'assistant', content: '网络错误，请检查网络连接' })
+        this.aiMessages.push({ role: 'assistant', content: this.$t('m.Network_Error_Text') })
       } finally {
         this.aiSending = false
         this.scrollToBottom()
@@ -388,13 +301,13 @@ export default {
       .then(res => res.json())
       .then(data => {
         this.runResult = {
-          output: data.output || data.result || '无输出',
+          output: data.output || data.result || this.$t('m.No_Output'),
           error: data.error || data.status !== 'success'
         }
       })
       .catch(err => {
         this.runResult = {
-          output: '运行失败: ' + err.message,
+          output: this.$t('m.Run_Failed') + ': ' + err.message,
           error: true
         }
       })
@@ -404,7 +317,7 @@ export default {
     },
 
     clearCode () {
-      this.editorCode = '// 在这里编写代码\n'
+      this.editorCode = this.$t('m.Write_Code_Here')
       this.runResult = null
     }
   }
@@ -415,7 +328,7 @@ export default {
 .global-sidebar {
   position: fixed;
   left: 16px;
-  top: 50%;
+  top: 70%;
   transform: translateY(-50%);
   width: 160px;
   background: rgba(30, 30, 50, 0.75);
@@ -522,7 +435,7 @@ export default {
   left: 180px;
   top: 50%;
   transform: translateY(-50%);
-  width: 420px;
+  width: 380px;
   max-height: 80vh;
   background: rgba(30, 30, 50, 0.75);
   backdrop-filter: blur(24px) saturate(180%);
@@ -534,7 +447,7 @@ export default {
   flex-direction: column;
   z-index: 1000;
   animation: slideIn 0.3s ease;
-  overflow: hidden;
+  pointer-events: auto;
 
   .panel-header {
     display: flex;
@@ -543,6 +456,11 @@ export default {
     padding: 14px 20px;
     background: rgba(255, 255, 255, 0.05);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px 20px 0 0;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 10;
+    overflow: visible;
 
     h3 {
       font-size: 15px;
@@ -556,13 +474,31 @@ export default {
       display: flex;
       align-items: center;
       gap: 4px;
+      position: relative;
+      z-index: 10;
 
       button {
-        color: rgba(255, 255, 255, 0.8);
+        color: rgba(255, 255, 255, 0.9) !important;
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+
+        i {
+          font-size: 16px;
+          color: rgba(255, 255, 255, 0.9) !important;
+        }
 
         &:hover {
-          background: rgba(255, 255, 255, 0.15);
-          color: white;
+          background: rgba(255, 255, 255, 0.25) !important;
+
+          i {
+            color: white !important;
+          }
         }
       }
     }
@@ -573,6 +509,7 @@ export default {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    border-radius: 0 0 20px 20px;
   }
 }
 
@@ -851,302 +788,6 @@ export default {
         background: rgba(237, 64, 20, 0.15);
         color: #ff6b6b;
         border: 1px solid rgba(237, 64, 20, 0.3);
-      }
-    }
-  }
-}
-
-// 全屏弹窗样式
-.fullscreen-container {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background: #1a1a2e;
-}
-
-.fullscreen-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 24px;
-  background: rgba(255, 255, 255, 0.05);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-
-  h3 {
-    font-size: 18px;
-    font-weight: 600;
-    color: rgba(255, 255, 255, 0.9);
-    margin: 0;
-  }
-
-  button {
-    color: rgba(255, 255, 255, 0.7);
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.1);
-      color: white;
-    }
-  }
-}
-
-.fullscreen-ai-chat {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-
-  .message-container {
-    flex: 1;
-    overflow-y: auto;
-    padding: 24px;
-
-    &::-webkit-scrollbar {
-      width: 8px;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 4px;
-    }
-
-    .welcome-section {
-      text-align: center;
-      padding: 60px 20px;
-
-      .welcome-icon {
-        width: 100px;
-        height: 100px;
-        margin: 0 auto 20px;
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
-        overflow: hidden;
-
-        img {
-          width: 70%;
-          height: 70%;
-          object-fit: contain;
-        }
-      }
-
-      h3 {
-        font-size: 28px;
-        font-weight: 700;
-        color: rgba(255, 255, 255, 0.95);
-        margin-bottom: 12px;
-      }
-
-      p {
-        font-size: 16px;
-        color: rgba(255, 255, 255, 0.6);
-        max-width: 500px;
-        margin: 0 auto;
-      }
-    }
-
-    .message-item {
-      display: flex;
-      gap: 14px;
-      margin-bottom: 20px;
-      animation: fadeIn 0.3s ease;
-
-      &.user {
-        flex-direction: row-reverse;
-
-        .message-content {
-          align-items: flex-end;
-
-          .message-body {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border-radius: 20px 20px 6px 20px;
-          }
-        }
-      }
-
-      &.assistant {
-        .message-body {
-          background: rgba(255, 255, 255, 0.08);
-          border: 1px solid rgba(255, 255, 255, 0.12);
-          border-radius: 20px 20px 20px 6px;
-        }
-      }
-
-      &.loading {
-        .message-body {
-          background: rgba(255, 247, 230, 0.1);
-          border: 1px solid rgba(255, 213, 145, 0.2);
-          border-radius: 20px 20px 20px 6px;
-        }
-      }
-    }
-
-    .message-avatar {
-      flex-shrink: 0;
-
-      .ai-avatar {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-
-        img {
-          width: 70%;
-          height: 70%;
-          object-fit: contain;
-        }
-      }
-    }
-
-    .message-content {
-      display: flex;
-      flex-direction: column;
-      max-width: 70%;
-
-      .message-header {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 6px;
-
-        .sender-name {
-          font-size: 13px;
-          font-weight: 600;
-          color: rgba(255, 255, 255, 0.7);
-        }
-      }
-
-      .message-body {
-        padding: 14px 18px;
-        font-size: 15px;
-        line-height: 1.7;
-        color: rgba(255, 255, 255, 0.9);
-
-        .loading-indicator {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          color: rgba(255, 255, 255, 0.7);
-        }
-
-        .message-text {
-          /deep/ pre {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 14px;
-            border-radius: 10px;
-            overflow-x: auto;
-            margin: 8px 0;
-
-            code {
-              font-family: 'Courier New', monospace;
-              font-size: 14px;
-              color: rgba(255, 255, 255, 0.9);
-            }
-          }
-
-          /deep/ code {
-            background: rgba(0, 0, 0, 0.3);
-            padding: 3px 8px;
-            border-radius: 5px;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            color: rgba(255, 255, 255, 0.9);
-          }
-        }
-      }
-    }
-  }
-
-  .input-area {
-    padding: 20px 24px;
-    background: rgba(255, 255, 255, 0.03);
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-
-    /deep/ .ivu-input {
-      background: rgba(255, 255, 255, 0.08) !important;
-      border-color: rgba(255, 255, 255, 0.15) !important;
-      color: rgba(255, 255, 255, 0.9) !important;
-
-      &::placeholder {
-        color: rgba(255, 255, 255, 0.4) !important;
-      }
-    }
-
-    .ivu-btn {
-      margin-top: 10px;
-    }
-  }
-}
-
-.fullscreen-editor {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 20px 24px;
-  overflow-y: auto;
-
-  .editor-controls {
-    display: flex;
-    gap: 14px;
-    margin-bottom: 16px;
-  }
-
-  .code-editor-fullscreen {
-    /deep/ .CodeMirror {
-      min-height: 500px;
-      border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      font-size: 15px;
-    }
-  }
-
-  .editor-actions {
-    display: flex;
-    gap: 14px;
-    margin-top: 16px;
-  }
-
-  .run-result {
-    margin-top: 16px;
-    padding: 16px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-
-    h4 {
-      font-size: 15px;
-      font-weight: 600;
-      color: rgba(255, 255, 255, 0.9);
-      margin: 0 0 10px;
-    }
-
-    pre {
-      padding: 14px;
-      border-radius: 8px;
-      font-size: 14px;
-      font-family: 'Courier New', monospace;
-      white-space: pre-wrap;
-      word-break: break-all;
-      max-height: 300px;
-      overflow-y: auto;
-
-      &.success {
-        background: rgba(25, 190, 107, 0.12);
-        color: #19be6b;
-        border: 1px solid rgba(25, 190, 107, 0.25);
-      }
-
-      &.error {
-        background: rgba(237, 64, 20, 0.12);
-        color: #ff6b6b;
-        border: 1px solid rgba(237, 64, 20, 0.25);
       }
     }
   }

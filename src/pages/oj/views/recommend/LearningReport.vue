@@ -343,7 +343,7 @@ export default {
             type: 'radar',
             data: [{
                 value: radarData.map(item => item.accuracy),
-                name: this.currentRadarType === 'knowledge' ? this.$t('m.Accuracy') : '正确率'
+                name: this.$t('m.Accuracy')
             }],
             areaStyle: { color: 'rgba(64, 158, 255, 0.2)' },
             lineStyle: { color: '#409EFF', width: 2 },
@@ -399,8 +399,7 @@ export default {
     return this.$t('m.Weakness_Advice_No_Practice', { tag: tagDisplay });
   }
   if (weakest.accuracy === 0 && weakest.total > 0) {
-    // 可选：添加更细致的提示
-    return `「${tagDisplay}」知识点您已提交 ${weakest.total} 次，但尚未通过任何一题，建议加强练习。`;
+    return this.$t('m.Weakness_Advice_No_Submission', { total: weakest.total });
   }
   if (weakest.accuracy < 100) {
     return this.$t('m.Weakness_Advice_Need_Improve', { tag: tagDisplay, accuracy: weakest.accuracy });
@@ -548,6 +547,8 @@ export default {
       margin-top: 20px;
       display: flex;
       justify-content: center;
+      position: relative;
+      z-index: 1001;
     }
   }
 
@@ -578,6 +579,14 @@ export default {
     display: flex;
     justify-content: center;
     gap: 12px;
+    position: relative;
+    z-index: 10;
+    padding-top: 8px;
+
+    .ivu-btn {
+      position: relative;
+      z-index: 10;
+    }
   }
 }
 

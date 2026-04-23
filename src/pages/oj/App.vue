@@ -12,21 +12,18 @@
       </div>
     </div>
     <BackTop></BackTop>
-    <AIChatWindow></AIChatWindow>
   </div>
 </template>
 
 <script>
   import { mapActions, mapState } from 'vuex'
   import NavBar from '@oj/components/NavBar.vue'
-  import AIChatWindow from '@oj/views/chat/Chat.vue'
   import GlobalSidebar from '@oj/components/GlobalSidebar.vue'
 
   export default {
     name: 'app',
     components: {
       NavBar,
-      AIChatWindow,
       GlobalSidebar
     },
     data () {

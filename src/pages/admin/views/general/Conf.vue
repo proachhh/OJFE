@@ -158,3 +158,9 @@
     }
   }
 </script>
+
+<style lang="less" scoped>
+.view {
+  padding: 20px;
+}
+</style>

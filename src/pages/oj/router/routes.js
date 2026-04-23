@@ -214,5 +214,19 @@ export default [
     name: 'lesson-plan-details',
     meta: {title: 'Lesson Plan Study'},
     component: () => import('@oj/views/lesson/LessonPlanStudy.vue')
+  },
+
+  // fullscreen pages
+  {
+    path: '/ai-chat-fullscreen',
+    name: 'ai-chat-fullscreen',
+    meta: {title: 'AI Chat'},
+    component: () => import('@oj/views/chat/AIChatFullscreen.vue')
+  },
+  {
+    path: '/code-editor-fullscreen',
+    name: 'code-editor-fullscreen',
+    meta: {title: '代码编辑器'},
+    component: () => import('@oj/views/editor/CodeEditorFullscreen.vue')
   }
 ]
