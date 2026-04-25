@@ -167,7 +167,7 @@ export default {
           const data = await response.json()
           this.messages.push({ 
             role: 'assistant', 
-            content: data.reply || data.message || this.$t('m.No_Reply'),
+            content: data.answer || data.reply || data.message || this.$t('m.No_Reply'),
             time: this.getCurrentTime()
           })
         } else {

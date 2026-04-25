@@ -79,35 +79,35 @@ export default {
           titleKey: 'm.Feature_Knowledge_Graph',
           descKey: 'm.Feature_Knowledge_Graph_Desc',
           color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          screenshot: require('../../../../../static/pictures/graph.png')
+          screenshot: '/static/pictures/graph.png'
         },
         {
           icon: 'ios-trending-up',
           titleKey: 'm.Feature_Recommendation',
           descKey: 'm.Feature_Recommendation_Desc',
           color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-          screenshot: require('../../../../../static/pictures/recommend.png')
+          screenshot: '/static/pictures/recommend.png'
         },
         {
           icon: 'ios-speedometer',
           titleKey: 'm.Feature_Evaluation',
           descKey: 'm.Feature_Evaluation_Desc',
           color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-          screenshot: require('../../../../../static/pictures/languages.png')
+          screenshot: '/static/pictures/languages.png'
         },
         {
           icon: 'ios-robot',
           titleKey: 'm.Feature_AI_Gen',
           descKey: 'm.Feature_AI_Gen_Desc',
           color: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
-          screenshot: require('../../../../../static/pictures/AI4problem.png')
+          screenshot: '/static/pictures/AI4problem.png'
         },
         {
           icon: 'ios-book',
           titleKey: 'm.Feature_Lesson',
           descKey: 'm.Feature_Lesson_Desc',
           color: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-          screenshot: require('../../../../../static/pictures/lesson.png')
+          screenshot: '/static/pictures/lesson.png'
         }
       ],
       statKeys: [
@@ -193,7 +193,7 @@ html, body {
 
   .hero-text {
     position: absolute;
-    left: 60px;
+    left: 100px;
     top: 50%;
     transform: translateY(-50%);
     color: white;

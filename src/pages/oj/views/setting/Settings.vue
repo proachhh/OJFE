@@ -1,14 +1,5 @@
 <template>
   <div class="settings-elegant">
-    <!-- 页面标题区 -->
-    <div class="page-header">
-      <h1 class="page-title">
-        <span class="title-line"></span>
-        {{ $t('m.Settings') }}
-        <span class="title-line"></span>
-      </h1>
-      <p class="page-subtitle">Manage Your Account</p>
-    </div>
 
     <div class="settings-panel">
       <div class="flex-container">

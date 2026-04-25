@@ -607,7 +607,7 @@ export default {
     background-color: transparent;
 
     .logo .logo-img {
-      filter: brightness(0) invert(1);
+      /* 移除滤镜，显示原始 logo 颜色 */
     }
     
     .oj-menu {

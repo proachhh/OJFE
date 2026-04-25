@@ -31,12 +31,13 @@
         </div>
         <div v-if="recommendations.length" class="table-container">
           <Table :data="recommendations" :columns="recommendColumns" class="recommend-table" disabled-hover></Table>
-          <!-- 分页组件 -->
+          <!-- 分页组件，增加每页条数选项 -->
           <div class="pagination-wrapper">
             <Pagination
               :total="recommendTotal"
               :page-size.sync="recommendLimit"
               :current.sync="recommendPage"
+              :page-size-opts="[4, 8, 12, 16]"
               @on-change="onRecommendPageChange"
               @on-page-size-change="onRecommendPageSizeChange"
               show-sizer>
@@ -49,7 +50,7 @@
         </div>
       </div>
 
-      <!-- 右侧雷达图 -->
+      <!-- 右侧雷达图（高度增加） -->
       <div class="radar-section">
         <div class="section-header">
           <Icon type="ios-radar" />
@@ -127,14 +128,19 @@ export default {
       },
       recommendations: [],
       recommendPage: 1,
-      recommendLimit: 5,
+      recommendLimit: 4,          // 默认每页显示 4 条
       recommendTotal: 0,
       trendData: {
         dates: [],
         rates: []
       },
-      currentRadarType: 'knowledge',
-      recommendColumns: [
+      currentRadarType: 'knowledge'
+    }
+  },
+  computed: {
+    // 将表格列配置改为计算属性，确保国际化实时生效
+    recommendColumns() {
+      return [
         {
           title: this.$t('m.Problem_ID'),
           key: '_id',
@@ -170,7 +176,7 @@ export default {
         {
           title: this.$t('m.Recommendation_Reason'),
           key: 'reason',
-          ellipsis: true,
+          minWidth: 200,
           tooltip: true
         },
         {
@@ -189,8 +195,10 @@ export default {
             }, this.$t('m.Start_Solving'))
           }
         }
-      ],
-      masteryColumns: [
+      ]
+    },
+    masteryColumns() {
+      return [
         {
           title: this.$t('m.Knowledge_Point'),
           key: 'tag_name',
@@ -228,7 +236,6 @@ export default {
     this.fetchStats()
     this.fetchRecommendations()
     this.fetchTrendData()
-    // 延迟重绘图表，确保 DOM 已渲染
     this.$nextTick(() => {
       setTimeout(() => {
         this.drawRadar()
@@ -238,23 +245,21 @@ export default {
   },
   methods: {
     translateTag(tagName) {
-        if (!tagName) return '';
-        const key = `m.tag.${tagName}`;
-        // 尝试获取翻译，如果翻译结果等于 key 本身（说明无对应翻译），则返回原始标签名
-        const translated = this.$t(key);
-        return translated === key ? tagName : translated;
+      if (!tagName) return '';
+      const key = `m.tag.${tagName}`;
+      const translated = this.$t(key);
+      return translated === key ? tagName : translated;
     },
     translateTags(tags) {
-    if (!tags || !tags.length) return '';
-    // 直接使用 translateTag 处理每个标签
-    return tags.map(tag => this.translateTag(tag)).join(', ');
+      if (!tags || !tags.length) return '';
+      return tags.map(tag => this.translateTag(tag)).join(', ');
     },
     switchRadarType(type) {
-        if (this.currentRadarType === type) return;
-        this.currentRadarType = type;
-        this.$nextTick(() => {
-            this.drawRadar();
-        });
+      if (this.currentRadarType === type) return;
+      this.currentRadarType = type;
+      this.$nextTick(() => {
+        this.drawRadar();
+      });
     },
     fetchStats() {
       axios.get('/learning-stats/')
@@ -300,56 +305,56 @@ export default {
         .catch(err => console.error(err))
     },
     drawRadar() {
-        const chartDom = document.getElementById('radar-chart');
-        if (!chartDom) {
-            console.warn('Radar chart DOM not found');
-            return;
-        }
+      const chartDom = document.getElementById('radar-chart');
+      if (!chartDom) {
+        console.warn('Radar chart DOM not found');
+        return;
+      }
 
-        let existingChart = echarts.getInstanceByDom(chartDom);
-        if (existingChart) {
-            existingChart.dispose();
-        }
+      let existingChart = echarts.getInstanceByDom(chartDom);
+      if (existingChart) {
+        existingChart.dispose();
+      }
 
-        let radarData = [];
-        let indicator = [];
+      let radarData = [];
+      let indicator = [];
 
-        if (this.currentRadarType === 'knowledge') {
-            radarData = this.stats.tags || [];
-            indicator = radarData.map(tag => ({
-            name: this.translateTag(tag.tag_name),
-            max: 100
-            }));
-        } else {
-            radarData = this.stats.lang_stats || [];
-            indicator = radarData.map(lang => ({
-            name: lang.lang_name,
-            max: 100
-            }));
-        }
+      if (this.currentRadarType === 'knowledge') {
+        radarData = this.stats.tags || [];
+        indicator = radarData.map(tag => ({
+          name: this.translateTag(tag.tag_name),
+          max: 100
+        }));
+      } else {
+        radarData = this.stats.lang_stats || [];
+        indicator = radarData.map(lang => ({
+          name: lang.lang_name,
+          max: 100
+        }));
+      }
 
-        if (!radarData.length) {
-            return;
-        }
+      if (!radarData.length) {
+        return;
+      }
 
-        const chart = echarts.init(chartDom);
-        chart.setOption({
-            radar: {
-            indicator: indicator,
-            shape: 'circle',
-            name: { textStyle: { fontSize: 12, color: '#333' } }
-            },
-            series: [{
-            type: 'radar',
-            data: [{
-                value: radarData.map(item => item.accuracy),
-                name: this.$t('m.Accuracy')
-            }],
-            areaStyle: { color: 'rgba(64, 158, 255, 0.2)' },
-            lineStyle: { color: '#409EFF', width: 2 },
-            itemStyle: { color: '#409EFF' }
-            }]
-        });
+      const chart = echarts.init(chartDom);
+      chart.setOption({
+        radar: {
+          indicator: indicator,
+          shape: 'circle',
+          name: { textStyle: { fontSize: 14, color: '#333' } }
+        },
+        series: [{
+          type: 'radar',
+          data: [{
+            value: radarData.map(item => item.accuracy),
+            name: this.$t('m.Accuracy')
+          }],
+          areaStyle: { color: 'rgba(64, 158, 255, 0.2)' },
+          lineStyle: { color: '#409EFF', width: 2 },
+          itemStyle: { color: '#409EFF' }
+        }]
+      });
     },
     drawTrendChart() {
       const chartDom = document.getElementById('trend-chart');
@@ -361,8 +366,8 @@ export default {
       const chart = echarts.init(chartDom)
       chart.setOption({
         tooltip: { trigger: 'axis' },
-        xAxis: { type: 'category', data: this.trendData.dates },
-        yAxis: { type: 'value', name: this.$t('m.Accuracy') + ' (%)', min: 0, max: 100 },
+        xAxis: { type: 'category', data: this.trendData.dates, axisLabel: { fontSize: 13 } },
+        yAxis: { type: 'value', name: this.$t('m.Accuracy') + ' (%)', min: 0, max: 100, nameTextStyle: { fontSize: 13 }, axisLabel: { fontSize: 12 } },
         series: [{
           type: 'line',
           data: this.trendData.rates,
@@ -389,23 +394,23 @@ export default {
       this.$router.push({ name: 'problem-details', params: { problemID: id } })
     },
     getWeaknessAdvice() {
-  if (!this.stats.tags || this.stats.tags.length === 0) {
-    return this.$t('m.No_Knowledge_Data');  // 需在翻译文件中添加该字段
-  }
-  const weakest = this.stats.tags[0];  // 已按正确率升序
-  const tagDisplay = this.translateTag(weakest.tag_name);
+      if (!this.stats.tags || this.stats.tags.length === 0) {
+        return this.$t('m.No_Knowledge_Data');
+      }
+      const weakest = this.stats.tags[0];
+      const tagDisplay = this.translateTag(weakest.tag_name);
 
-  if (weakest.total === 0) {
-    return this.$t('m.Weakness_Advice_No_Practice', { tag: tagDisplay });
-  }
-  if (weakest.accuracy === 0 && weakest.total > 0) {
-    return this.$t('m.Weakness_Advice_No_Submission', { total: weakest.total });
-  }
-  if (weakest.accuracy < 100) {
-    return this.$t('m.Weakness_Advice_Need_Improve', { tag: tagDisplay, accuracy: weakest.accuracy });
-  }
-  return this.$t('m.Weakness_Advice_Excellent');
-}
+      if (weakest.total === 0) {
+        return this.$t('m.Weakness_Advice_No_Practice', { tag: tagDisplay });
+      }
+      if (weakest.accuracy === 0 && weakest.total > 0) {
+        return this.$t('m.Weakness_Advice_No_Submission', { total: weakest.total });
+      }
+      if (weakest.accuracy < 100) {
+        return this.$t('m.Weakness_Advice_Need_Improve', { tag: tagDisplay, accuracy: weakest.accuracy });
+      }
+      return this.$t('m.Weakness_Advice_Excellent');
+    }
   }
 }
 </script>
@@ -417,9 +422,10 @@ export default {
   padding: 40px 20px;
   min-height: calc(100vh - 60px);
   background: linear-gradient(180deg, #f0f4f8 0%, #f8fafc 100%);
+  font-size: 16px;
 }
 
-/* 页面标题 */
+/* 页面标题（未使用但保留） */
 .page-header {
   text-align: center;
   margin-bottom: 40px;
@@ -485,14 +491,14 @@ export default {
   }
 
   .stat-value {
-    font-size: 2.5rem;
+    font-size: 2.8rem;
     font-weight: 700;
     color: #1e3a8a;
     margin-bottom: 8px;
   }
 
   .stat-label {
-    font-size: 0.9rem;
+    font-size: 1rem;
     color: #64748b;
     font-weight: 500;
   }
@@ -516,21 +522,21 @@ export default {
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
   overflow: hidden;
-  padding: 24px;
+  padding: 28px;
 
   .section-header {
     display: flex;
     align-items: center;
     gap: 12px;
-    font-size: 1.2rem;
+    font-size: 1.3rem;
     font-weight: 600;
     color: #1e3a8a;
-    margin-bottom: 20px;
-    padding-bottom: 12px;
+    margin-bottom: 24px;
+    padding-bottom: 14px;
     border-bottom: 2px solid #f1f5f9;
 
     .ivu-icon {
-      font-size: 20px;
+      font-size: 22px;
     }
   }
 }
@@ -541,10 +547,29 @@ export default {
     .recommend-table {
       border-radius: 8px;
       overflow: hidden;
+
+      /deep/ .ivu-table {
+        font-size: 15px;
+
+        th {
+          font-size: 15px;
+          padding: 12px 8px;
+        }
+
+        td {
+          padding: 10px 8px;
+          line-height: 1.5;
+        }
+      }
+
+      /deep/ td {
+        white-space: normal !important;
+        word-break: break-word;
+      }
     }
 
     .pagination-wrapper {
-      margin-top: 20px;
+      margin-top: 24px;
       display: flex;
       justify-content: center;
       position: relative;
@@ -568,10 +593,10 @@ export default {
   }
 }
 
-/* 雷达图 */
+/* 雷达图容器高度增加 */
 .radar-section {
   .chart-container {
-    height: 350px;
+    height: 450px;          /* 原来 350px，增大到 450px */
     margin-bottom: 16px;
   }
 
@@ -586,6 +611,7 @@ export default {
     .ivu-btn {
       position: relative;
       z-index: 10;
+      font-size: 14px;
     }
   }
 }
@@ -607,31 +633,45 @@ export default {
     display: flex;
     align-items: flex-start;
     gap: 16px;
-    padding: 20px;
+    padding: 24px;
     background: #f8fafc;
     border-radius: 12px;
     border-left: 4px solid #3b82f6;
 
     .advice-icon {
-      font-size: 24px;
+      font-size: 28px;
       color: #3b82f6;
       flex-shrink: 0;
     }
 
     p {
       margin: 0;
-      font-size: 15px;
+      font-size: 16px;
       line-height: 1.8;
       color: #334155;
     }
   }
 }
 
-/* 知识点掌握详情 */
+/* 知识点掌握详情表格 */
 .mastery-section {
   .mastery-table {
     border-radius: 8px;
     overflow: hidden;
+
+    /deep/ .ivu-table {
+      font-size: 15px;
+
+      th {
+        font-size: 15px;
+        padding: 12px 8px;
+      }
+
+      td {
+        padding: 10px 8px;
+        line-height: 1.5;
+      }
+    }
   }
 }
 </style>

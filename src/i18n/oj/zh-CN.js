@@ -845,5 +845,10 @@ export const m = {
   Network_Error_Text: '网络错误，请检查网络连接',
   // GlobalSidebar.vue
   Run_Failed: '运行失败',
-  No_Output: '无输出'
+  No_Output: '无输出',
+  // Top-level tag keys
+  'Sorting': '排序',
+  'Dynamic Programming': '动态规划',
+  'Binary Tree': '二叉树',
+  'Prefix Sum': '前缀和'
 }

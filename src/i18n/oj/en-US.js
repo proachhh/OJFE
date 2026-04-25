@@ -1,5 +1,9 @@
 export const m = {
   tag: {
+    'Sorting': 'Sorting',
+    'Dynamic Programming': 'Dynamic Programming',
+    'Binary Tree': 'Binary Tree',
+    'Prefix Sum': 'Prefix Sum',
     'PrefixSum': 'Prefix Sum',
     'Math': 'Math',
     'DynamicProgramming': 'Dynamic Programming',
@@ -374,6 +378,11 @@ export const m = {
     'wholsThief': 'Who is the Thief',
     'word': 'Word',
   },
+  // Top-level tag keys
+  'Sorting': 'Sorting',
+  'Dynamic Programming': 'Dynamic Programming',
+  'Binary Tree': 'Binary Tree',
+  'Prefix Sum': 'Prefix Sum',
   // 404.vue
   Go_Home: 'Go Home',
   // Problem.vue

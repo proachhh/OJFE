@@ -1,30 +1,38 @@
 <template>
-  <div class="global-sidebar" :class="{ collapsed: isCollapsed }">
-    <!-- 收起/展开按钮 -->
-    <div class="sidebar-toggle" @click="toggleSidebarLocal">
-      <Icon :type="isCollapsed ? 'ios-arrow-forward' : 'ios-arrow-back'" size="16" />
-    </div>
-
-    <!-- 菜单内容 -->
-    <div class="sidebar-content">
-      <div class="menu-item" @click="openAIChat">
-        <div class="menu-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">
-          <Icon type="chatbubble-working" size="18" color="#fff" />
-        </div>
-        <span class="menu-text">AI Chat</span>
+  <div class="global-sidebar-container">
+    <!-- 侧边栏主体 -->
+    <div class="global-sidebar" :class="{ collapsed: isCollapsed }">
+      <div class="sidebar-toggle" @click="toggleSidebarLocal">
+        <Icon :type="isCollapsed ? 'ios-arrow-forward' : 'ios-arrow-back'" size="16" />
       </div>
-
-      <div class="menu-item" @click="openCodeEditor">
-        <div class="menu-icon" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
-          <Icon type="ios-code" size="18" color="#fff" />
+      <div class="sidebar-content">
+        <div class="menu-item" @click="openAIChat">
+          <div class="menu-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+            <Icon type="chatbubble-working" size="18" color="#fff" />
+          </div>
+          <span class="menu-text">AI Chat</span>
         </div>
-        <span class="menu-text">{{ $t('m.Code_Editor') }}</span>
+        <div class="menu-item" @click="openCodeEditor">
+          <div class="menu-icon" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
+            <Icon type="ios-code" size="18" color="#fff" />
+          </div>
+          <span class="menu-text">{{ $t('m.Code_Editor') }}</span>
+        </div>
       </div>
     </div>
 
     <!-- AI Chat 面板 -->
-    <div v-if="showAIChat" class="side-panel ai-panel">
-      <div class="panel-header">
+    <div
+      v-if="showAIChat"
+      class="side-panel ai-panel"
+      :style="`
+        left: ${aiPanelPos.x}px !important;
+        top: ${aiPanelPos.y}px !important;
+        width: ${aiPanelSize.w}px !important;
+        height: ${aiPanelSize.h}px !important;
+      `"
+    >
+      <div class="panel-header" @mousedown="startDrag($event, 'ai')">
         <h3>{{ $t('m.Spark_AI_Assistant') }}</h3>
         <div class="panel-actions">
           <Button type="text" size="small" @click="openFullscreen('ai')" :title="$t('m.Fullscreen')">
@@ -74,11 +82,23 @@
           </Button>
         </div>
       </div>
+      <div class="resize-handle resize-right" @mousedown="startResize($event, 'ai', 'right')"></div>
+      <div class="resize-handle resize-bottom" @mousedown="startResize($event, 'ai', 'bottom')"></div>
+      <div class="resize-handle resize-corner" @mousedown="startResize($event, 'ai', 'corner')"></div>
     </div>
 
     <!-- 代码编辑器面板 -->
-    <div v-if="showCodeEditor" class="side-panel editor-panel">
-      <div class="panel-header">
+    <div
+      v-if="showCodeEditor"
+      class="side-panel editor-panel"
+      :style="`
+        left: ${editorPanelPos.x}px !important;
+        top: ${editorPanelPos.y}px !important;
+        width: ${editorPanelSize.w}px !important;
+        height: ${editorPanelSize.h}px !important;
+      `"
+    >
+      <div class="panel-header" @mousedown="startDrag($event, 'editor')">
         <h3>{{ $t('m.Code_Editor') }}</h3>
         <div class="panel-actions">
           <Button type="text" size="small" @click="openFullscreen('editor')" :title="$t('m.Fullscreen')">
@@ -104,6 +124,10 @@
           </Select>
         </div>
         <codemirror v-model="editorCode" :options="editorOptions" ref="codeEditor" class="code-editor" />
+        <div class="editor-input-area">
+          <label>Input (stdin)</label>
+          <Input v-model="editorInput" type="textarea" :rows="2" placeholder="输入你的测试数据..." />
+        </div>
         <div class="editor-actions">
           <Button type="primary" @click="runCode" :loading="runningCode">
             <Icon type="ios-play" /> {{ $t('m.Run_Code') }}
@@ -117,6 +141,9 @@
           <pre :class="runResult.error ? 'error' : 'success'">{{ runResult.output }}</pre>
         </div>
       </div>
+      <div class="resize-handle resize-right" @mousedown="startResize($event, 'editor', 'right')"></div>
+      <div class="resize-handle resize-bottom" @mousedown="startResize($event, 'editor', 'bottom')"></div>
+      <div class="resize-handle resize-corner" @mousedown="startResize($event, 'editor', 'corner')"></div>
     </div>
   </div>
 </template>
@@ -145,12 +172,26 @@ export default {
       aiMessages: [],
       aiInputText: '',
       aiSending: false,
+      aiPanelPos: { x: 180, y: 80 },
+      aiPanelSize: { w: 380, h: 520 },
 
       editorCode: this.$t('m.Write_Code_Here'),
       editorLanguage: 'C++',
       editorTheme: 'monokai',
       runningCode: false,
-      runResult: null
+      runResult: null,
+      editorPanelPos: { x: 180, y: 80 },
+      editorPanelSize: { w: 380, h: 520 },
+
+      dragging: null,
+      dragStart: { x: 0, y: 0, panelX: 0, panelY: 0 },
+      resizing: null,
+      resizeStart: { x: 0, y: 0, w: 0, h: 0 },
+
+      pollingTimer: null,
+      pollingTimeout: null,
+
+      editorInput: '',   // 新增：用户输入
     }
   },
   computed: {
@@ -181,8 +222,22 @@ export default {
       }
     }
   },
+  beforeDestroy () {
+    this.clearPollingTimer()
+  },
   methods: {
     ...mapActions(['toggleSidebar']),
+
+    clearPollingTimer () {
+      if (this.pollingTimer) {
+        clearInterval(this.pollingTimer)
+        this.pollingTimer = null
+      }
+      if (this.pollingTimeout) {
+        clearTimeout(this.pollingTimeout)
+        this.pollingTimeout = null
+      }
+    },
 
     toggleSidebarLocal () {
       this.isCollapsed = !this.isCollapsed
@@ -192,20 +247,24 @@ export default {
       }
     },
 
-    openAIChat () {
+    openAIChat() {
       if (this.isCollapsed) {
         this.isCollapsed = false
       }
+      this.aiPanelPos = { x: 180, y: 80 }
+      this.aiPanelSize = { w: 380, h: 520 }
       this.showAIChat = !this.showAIChat
       if (this.showAIChat) {
         this.showCodeEditor = false
       }
     },
 
-    openCodeEditor () {
+    openCodeEditor() {
       if (this.isCollapsed) {
         this.isCollapsed = false
       }
+      this.editorPanelPos = { x: 180, y: 80 }
+      this.editorPanelSize = { w: 380, h: 520 }
       this.showCodeEditor = !this.showCodeEditor
       if (this.showCodeEditor) {
         this.showAIChat = false
@@ -218,12 +277,24 @@ export default {
 
     closeCodeEditor () {
       this.showCodeEditor = false
+      this.clearPollingTimer()
+      this.runningCode = false
+    },
+
+    clearCode () {
+      this.editorCode = this.$t('m.Write_Code_Here')
+      this.editorInput = ''
+      this.runResult = null
+      this.clearPollingTimer()
+      this.runningCode = false
     },
 
     openFullscreen (type) {
       if (type === 'ai') {
+        this.closeAIChat()
         this.$router.push({ name: 'ai-chat-fullscreen' })
       } else if (type === 'editor') {
+        this.closeCodeEditor()
         this.$router.push({ name: 'code-editor-fullscreen' })
       }
     },
@@ -250,7 +321,7 @@ export default {
 
         if (response.ok) {
           const data = await response.json()
-          this.aiMessages.push({ role: 'assistant', content: data.reply || data.message || this.$t('m.No_Reply') })
+          this.aiMessages.push({ role: 'assistant', content: data.answer || data.reply || data.message || this.$t('m.No_Reply') })
         } else {
           this.aiMessages.push({ role: 'assistant', content: this.$t('m.Request_Failed') })
         }
@@ -279,46 +350,235 @@ export default {
         .replace(/\n/g, '<br>')
     },
 
+    startDrag (e, panel) {
+      if (e.target.closest('.panel-actions')) return
+      e.preventDefault()
+      const pos = panel === 'ai' ? this.aiPanelPos : this.editorPanelPos
+      this.dragging = panel
+      this.dragStart = { x: e.clientX, y: e.clientY, panelX: pos.x, panelY: pos.y }
+      document.addEventListener('mousemove', this.onDrag)
+      document.addEventListener('mouseup', this.stopDrag)
+    },
+
+    onDrag (e) {
+      if (!this.dragging) return
+      const dx = e.clientX - this.dragStart.x
+      const dy = e.clientY - this.dragStart.y
+      const pos = this.dragging === 'ai' ? this.aiPanelPos : this.editorPanelPos
+      pos.x = Math.max(0, this.dragStart.panelX + dx)
+      pos.y = Math.max(0, this.dragStart.panelY + dy)
+    },
+
+    stopDrag () {
+      this.dragging = null
+      document.removeEventListener('mousemove', this.onDrag)
+      document.removeEventListener('mouseup', this.stopDrag)
+    },
+
+    startResize (e, panel, direction) {
+      e.preventDefault()
+      e.stopPropagation()
+      const size = panel === 'ai' ? this.aiPanelSize : this.editorPanelSize
+      const pos = panel === 'ai' ? this.aiPanelPos : this.editorPanelPos
+      this.resizing = { panel, direction }
+      this.resizeStart = { x: e.clientX, y: e.clientY, w: size.w, h: size.h, left: pos.x, top: pos.y }
+      document.addEventListener('mousemove', this.onResize)
+      document.addEventListener('mouseup', this.stopResize)
+    },
+
+    onResize (e) {
+      if (!this.resizing) return
+      const { panel, direction } = this.resizing
+      const size = panel === 'ai' ? this.aiPanelSize : this.editorPanelSize
+      const pos = panel === 'ai' ? this.aiPanelPos : this.editorPanelPos
+      const dx = e.clientX - this.resizeStart.x
+      const dy = e.clientY - this.resizeStart.y
+      const minWidth = 300
+      const minHeight = 300
+
+      if (direction === 'right' || direction === 'corner') {
+        size.w = Math.max(minWidth, this.resizeStart.w + dx)
+      }
+      if (direction === 'bottom' || direction === 'corner') {
+        size.h = Math.max(minHeight, this.resizeStart.h + dy)
+      }
+    },
+
+    stopResize () {
+      this.resizing = null
+      document.removeEventListener('mousemove', this.onResize)
+      document.removeEventListener('mouseup', this.stopResize)
+    },
+
     runCode () {
+      if (this.runningCode) return
       this.runningCode = true
       this.runResult = null
 
       const langMap = {
-        'C++': 'cpp',
-        'C': 'c',
-        'Java': 'java',
-        'Python': 'python'
+        'C++': 'C++',
+        'C': 'C',
+        'Java': 'Java',
+        'Python': 'Python3',   // 必须与后端 SysOptions.languages 中的名称一致
+        'JavaScript': 'JavaScript',
+        'Go': 'Go'
       }
+      const language = langMap[this.editorLanguage] || 'C++'
+      const code = this.editorCode
+      const input = this.editorInput
 
-      fetch('/api/compiler/run/', {
+      fetch('/api/code_run/', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          code: this.editorCode,
-          language: langMap[this.editorLanguage] || 'cpp'
-        })
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': this.getCsrfToken()
+        },
+        body: JSON.stringify({ language, code, input })  // input 字段即使后端暂不用，可保留
       })
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(res.statusText)
+        return res.json()
+      })
       .then(data => {
-        this.runResult = {
-          output: data.output || data.result || this.$t('m.No_Output'),
-          error: data.error || data.status !== 'success'
+        if (data.error) {
+          this.runResult = { output: data.error, error: true }
+          this.runningCode = false
+          return
         }
+        const codeRunId = data.data.code_run_id
+        this.pollResult(codeRunId)
       })
       .catch(err => {
         this.runResult = {
-          output: this.$t('m.Run_Failed') + ': ' + err.message,
+          output: err.message || this.$t('m.Run_Failed'),
           error: true
         }
-      })
-      .finally(() => {
         this.runningCode = false
       })
     },
 
-    clearCode () {
-      this.editorCode = this.$t('m.Write_Code_Here')
-      this.runResult = null
+pollResult (codeRunId) {
+  this.clearPollingTimer()
+
+  let retryCount = 0
+  const maxRetries = 3
+
+  this.pollingTimer = setInterval(() => {
+    fetch(`/api/code_run/?id=${codeRunId}`)
+      .then(res => {
+        if (!res.ok) throw new Error('Network response was not ok')
+        return res.json()
+      })
+      .then(res => {
+        retryCount = 0
+        const data = res.data
+        if (data.result === 6 || data.result === 7) {
+          return
+        }
+
+        this.clearPollingTimer()
+        this.runningCode = false
+
+        const statisticInfo = data.statistic_info || {}
+
+        if (data.result === 0) {
+          const output = statisticInfo.output || 'No output'
+          this.runResult = { output, error: false }
+        } else if (data.result === -2) {
+          const errInfo = statisticInfo.err_info || 'Compile Error'
+          this.runResult = { output: errInfo, error: true }
+        } else {
+          const errInfo = statisticInfo.err_info || ('Error code: ' + data.result)
+          this.runResult = { output: errInfo, error: true }
+        }
+      })
+      .catch(() => {
+        retryCount++
+        if (retryCount >= maxRetries) {
+          this.clearPollingTimer()
+          this.runningCode = false
+          this.runResult = { output: this.$t('m.Network_Error_Text'), error: true }
+        }
+      })
+  }, 500)
+
+  this.pollingTimeout = setTimeout(() => {
+    if (this.pollingTimer) {
+      this.clearPollingTimer()
+      this.runningCode = false
+      this.runResult = { output: this.$t('m.Timeout'), error: true }
+    }
+  }, 20000)
+},
+
+    pollResult (codeRunId) {
+      this.clearPollingTimer()
+
+      let retryCount = 0
+      const maxRetries = 3
+
+      this.pollingTimer = setInterval(() => {
+        fetch(`/api/code_run/?id=${codeRunId}`)
+          .then(res => {
+            if (!res.ok) throw new Error('Network response was not ok')
+            return res.json()
+          })
+          .then(res => {
+            retryCount = 0
+            const data = res.data
+            if (data.result === 6 || data.result === 7) {
+              return
+            }
+
+            this.clearPollingTimer()
+            this.runningCode = false
+
+            const statisticInfo = data.statistic_info || {}
+
+            if (data.result === 0) {
+              const output = statisticInfo.output || 'No output'
+              this.runResult = { output, error: false }
+            } else if (data.result === -2) {
+              const errInfo = statisticInfo.err_info || 'Compile Error'
+              this.runResult = { output: errInfo, error: true }
+            } else {
+              const errInfo = statisticInfo.err_info || ('Error code: ' + data.result)
+              this.runResult = { output: errInfo, error: true }
+            }
+          })
+          .catch(() => {
+            retryCount++
+            if (retryCount >= maxRetries) {
+              this.clearPollingTimer()
+              this.runningCode = false
+              this.runResult = { output: this.$t('m.Network_Error_Text'), error: true }
+            }
+          })
+      }, 500)
+
+      this.pollingTimeout = setTimeout(() => {
+        if (this.pollingTimer) {
+          this.clearPollingTimer()
+          this.runningCode = false
+          this.runResult = { output: this.$t('m.Timeout'), error: true }
+        }
+      }, 20000)
+    },
+
+    getCsrfToken () {
+      const name = 'csrftoken'
+      let cookieValue = null
+      if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';')
+        for (let i = 0; i < cookies.length; i++) {
+          const cookie = cookies[i].trim()
+          if (cookie.substring(0, name.length + 1) === (name + '=')) {
+            cookieValue = decodeURIComponent(cookie.substring(name.length + 1))
+            break
+          }
+        }
+      }
+      return cookieValue || ''
     }
   }
 }
@@ -431,23 +691,23 @@ export default {
 
 // 侧边面板
 .side-panel {
-  position: absolute;
-  left: 180px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 380px;
-  max-height: 80vh;
+  position: fixed !important;
+  max-height: none !important;
+  min-height: 0 !important;
   background: rgba(30, 30, 50, 0.75);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 20px;
   box-shadow: 0 12px 48px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  display: flex;
-  flex-direction: column;
-  z-index: 1000;
+  display: flex !important;
+  flex-direction: column !important;
+  z-index: 10000;
   animation: slideIn 0.3s ease;
   pointer-events: auto;
+  user-select: none;
+  box-sizing: border-box;
+  overflow: visible !important;
 
   .panel-header {
     display: flex;
@@ -509,24 +769,57 @@ export default {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    min-height: 0;
+    box-sizing: border-box;
     border-radius: 0 0 20px 20px;
+  }
+}
+
+// 拖拽调整大小手柄
+.resize-handle {
+  position: absolute;
+  z-index: 1001;
+
+  &.resize-right {
+    right: -3px;
+    top: 0;
+    width: 6px;
+    height: 100%;
+    cursor: ew-resize;
+  }
+
+  &.resize-bottom {
+    bottom: -3px;
+    left: 0;
+    width: 100%;
+    height: 6px;
+    cursor: ns-resize;
+  }
+
+  &.resize-corner {
+    bottom: -3px;
+    right: -3px;
+    width: 16px;
+    height: 16px;
+    cursor: nwse-resize;
   }
 }
 
 @keyframes slideIn {
   from {
     opacity: 0;
-    transform: translateY(-50%) translateX(-20px);
+    transform: translateX(-20px);
   }
   to {
     opacity: 1;
-    transform: translateY(-50%) translateX(0);
+    transform: translateX(0);
   }
 }
 
 // AI Chat 面板
 .ai-panel .message-container {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 16px;
 
@@ -789,6 +1082,24 @@ export default {
         color: #ff6b6b;
         border: 1px solid rgba(237, 64, 20, 0.3);
       }
+    }
+  }
+}
+
+.editor-input-area {
+  margin-top: 12px;
+  label {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 4px;
+    display: block;
+  }
+  /deep/ .ivu-input {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.5) !important;
     }
   }
 }

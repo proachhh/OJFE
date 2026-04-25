@@ -2,7 +2,7 @@
   <div id="header" :class="{ 'header-transparent': isHome && !scrolled, 'header-scrolled': !isHome || scrolled }">
     <div class="header-content">
       <div class="logo">
-        <img src="@/assets/logo2.png" alt="学校标志" class="logo-img" />
+        <img :src="logoSrc" alt="学校标志" class="logo-img" />
       </div>
       
       <Menu theme="light" mode="horizontal" @on-select="handleRoute" :active-name="activeMenu" class="oj-menu">
@@ -141,6 +141,11 @@
     },
     computed: {
       ...mapGetters(['website', 'modalStatus', 'user', 'isAuthenticated', 'isAdminRole']),
+      logoSrc () {
+        // 首页未滚动时显示 logo.png，学习页面（透明背景）也显示 logo.png，其他情况显示 logo2.png
+        const isLearningPath = this.$route.path === '/learning-path'
+        return (this.isHome && !this.scrolled) || (isLearningPath && !this.scrolled) ? require('@/assets/logo.png') : require('@/assets/logo2.png')
+      },
       activeMenu () {
         const path = this.$route.path
         // 处理各种路由匹配
@@ -192,10 +197,6 @@
 
       .header-content {
         background-color: transparent;
-
-        .logo .logo-img {
-          filter: brightness(0) invert(1);
-        }
         
         .oj-menu {
           border-bottom: none !important;

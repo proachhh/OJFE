@@ -2,7 +2,7 @@
   <el-menu class="vertical_menu"
            :router="true" :default-active="currentPath">
     <div class="logo">
-      <img src="../../../assets/logo.png" alt="oj admin"/>
+      <img src="../../../assets/logo3.png" alt="oj admin"/>
     </div>
     <el-menu-item index="/"><i class="el-icon-fa-dashboard"></i>{{$t('m.Dashboard')}}</el-menu-item>
     <el-menu-item index="/data-dashboard" v-if="isSuperAdmin"><i class="el-icon-fa-bar-chart"></i>数据看板</el-menu-item>
