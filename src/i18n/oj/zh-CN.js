@@ -760,8 +760,10 @@ export const m = {
   Select_Start_Topic: '请选择起点（留空为薄弱点）',
   Lesson_Plans: '教案学习',
   Lesson_Plan_Management: '教案管理',
-  // GlobalSidebar.vue
+  // GlobalSidebar.vue & AIChatFullscreen.vue
   Code_Editor: '代码编辑器',
+  Hello_I_Am_DeepSeek: '你好！我是 DeepSeek V4 PRO',
+  DeepSeek_Description: '我可以帮你解答编程问题、算法思路、代码调试等各种技术问题',
   Spark_AI_Assistant: '星火 AI 助手',
   Spark_AI: '星火',
   Hello_I_Am_Spark_AI: '你好！我是星火 AI 助手',
@@ -850,5 +852,17 @@ export const m = {
   'Sorting': '排序',
   'Dynamic Programming': '动态规划',
   'Binary Tree': '二叉树',
-  'Prefix Sum': '前缀和'
+  'Prefix Sum': '前缀和',
+  // Missing keys added
+  FromFile: '来自文件',
+  IOMode: '输入输出模式',
+  No_Tags: '暂无标签',
+  None: '无',
+  Problem_Submissions: '题目提交',
+  Test_Cases: '测试用例',
+  Timeout: '超时',
+  Title: '标题',
+  ToFile: '输出到文件',
+  User_User: '用户',
+  Your_Code: '你的代码'
 }

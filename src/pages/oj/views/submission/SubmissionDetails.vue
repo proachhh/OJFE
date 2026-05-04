@@ -1,14 +1,5 @@
 <template>
   <div class="submission-details-elegant">
-    <!-- 页面标题区 -->
-    <div class="page-header">
-      <h1 class="page-title">
-        <span class="title-line"></span>
-        {{ $t('m.Submission_Details') }}
-        <span class="title-line"></span>
-      </h1>
-      <p class="page-subtitle">View Your Code & Results</p>
-    </div>
 
     <div class="details-panel">
       <!-- 状态信息 -->
@@ -58,6 +49,28 @@
           {{$t('m.Share')}}
         </Button>
       </div>
+
+      <!-- AI 错误分析 -->
+      <AICard
+        v-if="isFailed"
+        title="AI 错误分析"
+        icon="ios-bug"
+        iconColor="#ed4014"
+        btnText="AI 分析错误"
+        btnType="error"
+        :fetchFn="fetchErrorAnalysis"
+      />
+
+      <!-- AI 代码审查 -->
+      <AICard
+        v-if="isAccepted"
+        title="AI 代码审查"
+        icon="ios-code-working"
+        iconColor="#19be6b"
+        btnText="AI 审查代码"
+        btnType="success"
+        :fetchFn="fetchCodeReview"
+      />
     </div>
   </div>
 </template>
@@ -67,11 +80,13 @@
   import {JUDGE_STATUS} from '@/utils/constants'
   import utils from '@/utils/utils'
   import Highlight from '@/pages/oj/components/Highlight'
+  import AICard from '@/pages/oj/components/AICard'
 
   export default {
     name: 'submissionDetails',
     components: {
-      Highlight
+      Highlight,
+      AICard
     },
     data () {
       return {
@@ -126,6 +141,12 @@
       this.getSubmission()
     },
     methods: {
+      fetchErrorAnalysis () {
+        return api.analyzeError({ submission_id: this.submission.id })
+      },
+      fetchCodeReview () {
+        return api.codeReview({ submission_id: this.submission.id })
+      },
       getSubmission () {
         this.loading = true
         api.getSubmission(this.$route.params.id).then(res => {
@@ -189,6 +210,12 @@
       },
       isAdminRole () {
         return this.$store.getters.isAdminRole
+      },
+      isFailed () {
+        return this.submission.result !== undefined && this.submission.result !== 0 && this.submission.result !== -2
+      },
+      isAccepted () {
+        return this.submission.result === 0
       }
     }
   }

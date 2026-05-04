@@ -118,6 +118,30 @@
         <Icon type="ios-warning" size="18" />
         <span>{{ error }}</span>
       </div>
+
+      <!-- AI 知识点总结 -->
+      <div class="topic-summary-section">
+        <div class="summary-header">
+          <Icon type="ios-book" size="18" color="#9c27b0" />
+          <span>AI 知识点总结</span>
+          <Input 
+            v-model="summaryTopic" 
+            placeholder="输入知识点名称, 如 BFS..."
+            size="small"
+            class="summary-input"
+          />
+        </div>
+        <AICard
+          v-if="summaryTopic"
+          :title="`知识点总结: ${summaryTopic}`"
+          icon="ios-book"
+          iconColor="#9c27b0"
+          btnText="AI 生成总结"
+          btnType="primary"
+          :fetchFn="fetchTopicSummary"
+          :key="summaryTopic"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -125,11 +149,13 @@
 <script>
 import api from '@oj/api'
 import KnowledgeGraphSection from '../general/KnowledgeGraphSection.vue'
+import AICard from '@oj/components/AICard'
 
 export default {
   name: 'LearningPath',
   components: {
-    KnowledgeGraphSection
+    KnowledgeGraphSection,
+    AICard
   },
   data () {
     return {
@@ -139,7 +165,8 @@ export default {
       startTopic: '',
       targetTopic: '',
       searchQuery: '',
-      pathData: null
+      pathData: null,
+      summaryTopic: ''
     }
   },
   computed: {
@@ -245,6 +272,9 @@ export default {
           this.error = this.$i18n.t('m.Network_Error')
         }
       })
+    },
+    fetchTopicSummary () {
+      return api.getTopicSummary({ topic: this.summaryTopic })
     },
     getDifficultyColor (difficulty) {
       const map = { 'Low': 'success', 'Mid': 'warning', 'High': 'error' }
@@ -588,6 +618,36 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+// AI 知识点总结区域
+.topic-summary-section {
+  max-width: 900px;
+  margin: 20px auto 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+
+  .summary-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #17233d;
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 12px;
+
+    .summary-input {
+      flex: 1;
+      max-width: 300px;
+    }
+  }
+
+  /deep/ .ai-response-card {
+    margin-top: 0;
+  }
 }
 </style>
 

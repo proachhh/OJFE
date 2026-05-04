@@ -33,8 +33,18 @@
       `"
     >
       <div class="panel-header" @mousedown="startDrag($event, 'ai')">
-        <h3>{{ $t('m.Spark_AI_Assistant') }}</h3>
+        <h3>{{ aiFullName }}</h3>
         <div class="panel-actions">
+          <Select v-model="aiModel" size="small" class="model-select" @on-change="onModelChange">
+            <Option value="spark">
+              <img src="/static/pictures/xh.png" class="model-option-icon" />
+              Spark
+            </Option>
+            <Option value="deepseek">
+              <img src="/static/pictures/ds.png" class="model-option-icon" />
+              DeepSeek
+            </Option>
+          </Select>
           <Button type="text" size="small" @click="openFullscreen('ai')" :title="$t('m.Fullscreen')">
             <Icon type="ios-expand" size="16" color="#fff" />
           </Button>
@@ -47,22 +57,22 @@
         <div class="message-container" ref="aiMessageList">
           <div v-if="aiMessages.length === 0" class="welcome-section">
             <div class="welcome-icon">
-              <img src="/static/pictures/xh.png" :alt="$t('m.Spark_AI')" />
+              <img :src="aiAvatar" :alt="aiDisplayName" />
             </div>
-            <h3>{{ $t('m.Hello_I_Am_Spark_AI') }}</h3>
-            <p>{{ $t('m.Spark_AI_Description') }}</p>
+            <h3>{{ aiWelcomeTitle }}</h3>
+            <p>{{ aiWelcomeDesc }}</p>
           </div>
           <template v-else>
             <div v-for="(msg, idx) in aiMessages" :key="idx" :class="['message-item', msg.role]">
               <div class="message-avatar">
                 <Avatar v-if="msg.role === 'user'" icon="ios-person" style="background: #2d8cf0" />
                 <div v-else class="ai-avatar">
-                  <img src="/static/pictures/xh.png" :alt="$t('m.Spark_AI')" />
+                  <img :src="aiAvatar" :alt="aiDisplayName" />
                 </div>
               </div>
               <div class="message-content">
                 <div class="message-header">
-                  <span class="sender-name">{{ msg.role === 'user' ? $t('m.Me') : $t('m.Spark_AI') }}</span>
+                  <span class="sender-name">{{ msg.role === 'user' ? $t('m.Me') : aiDisplayName }}</span>
                 </div>
                 <div class="message-body">
                   <div v-if="msg.role === 'loading'" class="loading-indicator">
@@ -169,6 +179,7 @@ export default {
       showAIChat: false,
       showCodeEditor: false,
 
+      aiModel: 'spark',
       aiMessages: [],
       aiInputText: '',
       aiSending: false,
@@ -203,6 +214,21 @@ export default {
       set (val) {
         this.toggleSidebar({ collapsed: val })
       }
+    },
+    aiAvatar () {
+      return this.aiModel === 'deepseek' ? '/static/pictures/ds.png' : '/static/pictures/xh.png'
+    },
+    aiDisplayName () {
+      return this.aiModel === 'deepseek' ? 'DeepSeek' : this.$t('m.Spark_AI')
+    },
+    aiFullName () {
+      return this.aiModel === 'deepseek' ? 'DeepSeek V4 PRO' : this.$t('m.Spark_AI_Assistant')
+    },
+    aiWelcomeTitle () {
+      return this.aiModel === 'deepseek' ? this.$t('m.Hello_I_Am_DeepSeek') : this.$t('m.Hello_I_Am_Spark_AI')
+    },
+    aiWelcomeDesc () {
+      return this.aiModel === 'deepseek' ? this.$t('m.DeepSeek_Description') : this.$t('m.Spark_AI_Description')
     },
     editorOptions () {
       const modeMap = {
@@ -292,11 +318,15 @@ export default {
     openFullscreen (type) {
       if (type === 'ai') {
         this.closeAIChat()
-        this.$router.push({ name: 'ai-chat-fullscreen' })
+        this.$router.push({ name: 'ai-chat-fullscreen', query: { model: this.aiModel } })
       } else if (type === 'editor') {
         this.closeCodeEditor()
         this.$router.push({ name: 'code-editor-fullscreen' })
       }
+    },
+
+    onModelChange () {
+      this.aiMessages = []
     },
 
     async sendAIMessage () {
@@ -314,7 +344,7 @@ export default {
         const response = await fetch('/api/spark/chat/', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: text })
+          body: JSON.stringify({ message: text, model: this.aiModel })
         })
 
         this.aiMessages.splice(this.aiMessages.length - 1, 1)
@@ -737,6 +767,28 @@ pollResult (codeRunId) {
       position: relative;
       z-index: 10;
 
+      .model-select {
+        width: 130px;
+
+        /deep/ .ivu-select-selection {
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          color: rgba(255, 255, 255, 0.9);
+          border-radius: 6px;
+          height: 30px;
+          line-height: 30px;
+
+          .ivu-select-placeholder,
+          .ivu-select-selected-value {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 12px;
+          }
+        }
+        /deep/ .ivu-select-arrow {
+          color: rgba(255, 255, 255, 0.7);
+        }
+      }
+
       button {
         color: rgba(255, 255, 255, 0.9) !important;
         width: 28px;
@@ -840,12 +892,12 @@ pollResult (codeRunId) {
       width: 70px;
       height: 70px;
       margin: 0 auto 14px;
-      background: linear-gradient(135deg, #667eea, #764ba2);
+      background: #fff;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
       overflow: hidden;
 
       img {
@@ -925,7 +977,7 @@ pollResult (codeRunId) {
       width: 28px;
       height: 28px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #667eea, #764ba2);
+      background: #fff;
       display: flex;
       align-items: center;
       justify-content: center;

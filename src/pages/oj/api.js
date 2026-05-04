@@ -283,6 +283,21 @@ export default {
   },
   getLessonPlanDetail (id) {
     return ajax('lesson_plan', 'get', { params: { id } })
+  },
+  analyzeError (data) {
+    return ajax('spark/analyze-error/', 'post', { data })
+  },
+  getProblemHint (data) {
+    return ajax('spark/problem-hint/', 'post', { data })
+  },
+  getLearningAdvice () {
+    return ajax('spark/learning-advice/', 'get')
+  },
+  codeReview (data) {
+    return ajax('spark/code-review/', 'post', { data })
+  },
+  getTopicSummary (data) {
+    return ajax('spark/topic-summary/', 'post', { data })
   }
 }
 

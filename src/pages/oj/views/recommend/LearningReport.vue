@@ -96,6 +96,17 @@
       </div>
     </div>
 
+    <!-- AI 个性化学习建议 -->
+    <AICard
+      title="AI 个性化学习建议"
+      icon="ios-school"
+      iconColor="#9c27b0"
+      btnText="AI 生成学习建议"
+      btnType="primary"
+      :fetchFn="fetchLearningAdvice"
+      class="ai-section"
+    />
+
     <!-- 知识点掌握详情表格 -->
     <div class="mastery-section">
       <div class="section-header">
@@ -111,10 +122,13 @@
 import axios from 'axios'
 import * as echarts from 'echarts'
 import Pagination from '@oj/components/Pagination'
+import AICard from '@oj/components/AICard'
+import api from '@oj/api'
 
 export default {
   components: {
-    Pagination
+    Pagination,
+    AICard
   },
   data() {
     return {
@@ -244,6 +258,9 @@ export default {
     })
   },
   methods: {
+    fetchLearningAdvice () {
+      return api.getLearningAdvice()
+    },
     translateTag(tagName) {
       if (!tagName) return '';
       const key = `m.tag.${tagName}`;
@@ -651,6 +668,10 @@ export default {
       color: #334155;
     }
   }
+}
+
+.ai-section {
+  margin-bottom: 40px;
 }
 
 /* 知识点掌握详情表格 */

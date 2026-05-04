@@ -1,14 +1,5 @@
 <template>
   <div class="user-home-elegant">
-    <!-- 页面标题区 -->
-    <div class="page-header">
-      <h1 class="page-title">
-        <span class="title-line"></span>
-        {{ profile.user ? profile.user.username : $t('m.User_Home') }}
-        <span class="title-line"></span>
-      </h1>
-      <p class="page-subtitle">{{ profile.school || 'Coder Profile' }}</p>
-    </div>
 
     <div class="profile-panel">
       <div class="avatar-section">

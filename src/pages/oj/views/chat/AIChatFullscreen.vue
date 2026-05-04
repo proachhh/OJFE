@@ -6,8 +6,20 @@
           <Icon type="ios-arrow-back" size="20" />
           <span>{{ $t('m.Back') }}</span>
         </Button>
-        <img src="/static/pictures/xh.png" :alt="$t('m.Spark_AI')" class="header-avatar" />
-        <span class="header-title">{{ $t('m.Spark_AI_Assistant') }}</span>
+        <img :src="aiAvatar" :alt="aiDisplayName" class="header-avatar" />
+        <span class="header-title">{{ aiFullName }}</span>
+      </div>
+      <div class="header-right">
+        <Select v-model="aiModel" size="small" class="model-select" @on-change="onModelChange">
+          <Option value="spark">
+            <img src="/static/pictures/xh.png" class="model-option-icon" />
+            Spark
+          </Option>
+          <Option value="deepseek">
+            <img src="/static/pictures/ds.png" class="model-option-icon" />
+            DeepSeek
+          </Option>
+        </Select>
       </div>
     </div>
 
@@ -15,10 +27,10 @@
       <div class="message-container" ref="messageList">
         <div v-if="messages.length === 0" class="welcome-section">
           <div class="welcome-icon">
-            <img src="/static/pictures/xh.png" :alt="$t('m.Spark_AI')" />
+            <img :src="aiAvatar" :alt="aiDisplayName" />
           </div>
-          <h3>{{ $t('m.Hello_I_Am_Spark_AI') }}</h3>
-          <p>{{ $t('m.Spark_AI_Description') }}</p>
+          <h3>{{ aiWelcomeTitle }}</h3>
+          <p>{{ aiWelcomeDesc }}</p>
           <div class="quick-questions">
             <div 
               v-for="(question, idx) in quickQuestions" 
@@ -44,13 +56,13 @@
                 style="background: #2d8cf0"
               />
               <div v-else class="ai-avatar">
-                <img src="/static/pictures/xh.png" :alt="$t('m.Spark_AI')" />
+                <img :src="aiAvatar" :alt="aiDisplayName" />
               </div>
             </div>
             <div class="message-content">
               <div class="message-header">
                 <span class="sender-name">
-                  {{ msg.role === 'user' ? $t('m.Me') : $t('m.Spark_AI') }}
+                  {{ msg.role === 'user' ? $t('m.Me') : aiDisplayName }}
                 </span>
                 <span class="message-time" v-if="msg.time">{{ msg.time }}</span>
               </div>
@@ -107,6 +119,7 @@ export default {
   name: 'AIChatFullscreen',
   data() {
     return {
+      aiModel: 'spark',
       messages: [],
       inputText: '',
       sending: false,
@@ -121,11 +134,29 @@ export default {
   computed: {
     quickQuestions() {
       return this.quickQuestionsKeys.map(key => this.$t(key))
+    },
+    aiAvatar () {
+      return this.aiModel === 'deepseek' ? '/static/pictures/ds.png' : '/static/pictures/xh.png'
+    },
+    aiDisplayName () {
+      return this.aiModel === 'deepseek' ? 'DeepSeek' : this.$t('m.Spark_AI')
+    },
+    aiFullName () {
+      return this.aiModel === 'deepseek' ? 'DeepSeek V4 PRO' : this.$t('m.Spark_AI_Assistant')
+    },
+    aiWelcomeTitle () {
+      return this.aiModel === 'deepseek' ? this.$t('m.Hello_I_Am_DeepSeek') : this.$t('m.Hello_I_Am_Spark_AI')
+    },
+    aiWelcomeDesc () {
+      return this.aiModel === 'deepseek' ? this.$t('m.DeepSeek_Description') : this.$t('m.Spark_AI_Description')
     }
   },
   methods: {
     goBack() {
       this.$router.go(-1)
+    },
+    onModelChange () {
+      this.messages = []
     },
     sendQuickQuestion(question) {
       this.inputText = question
@@ -158,7 +189,7 @@ export default {
         const response = await fetch('/api/spark/chat/', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: text })
+          body: JSON.stringify({ message: text, model: this.aiModel })
         })
 
         this.messages.splice(this.messages.length - 1, 1)
@@ -206,6 +237,11 @@ export default {
         .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
         .replace(/`([^`]+)`/g, '<code>$1</code>')
         .replace(/\n/g, '<br>')
+    }
+  },
+  created () {
+    if (this.$route.query.model) {
+      this.aiModel = this.$route.query.model
     }
   }
 }
@@ -257,13 +293,32 @@ export default {
       height: 36px;
       border-radius: 50%;
       object-fit: contain;
-      background: rgba(255, 255, 255, 0.2);
+      background: #fff;
       padding: 2px;
     }
 
     .header-title {
       font-size: 18px;
       font-weight: 600;
+    }
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+
+    .model-select {
+      width: 150px;
+      color: #fff;
+
+      /deep/ .ivu-select-selection {
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: #fff;
+      }
+      /deep/ .ivu-select-arrow {
+        color: rgba(255, 255, 255, 0.8);
+      }
     }
   }
 }
@@ -300,12 +355,12 @@ export default {
     width: 100px;
     height: 100px;
     margin: 0 auto 20px;
-    background: linear-gradient(135deg, #2d8cf0 0%, #1a6fc4 100%);
+    background: #fff;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 8px 24px rgba(45, 140, 240, 0.3);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
     overflow: hidden;
 
     img {
@@ -413,7 +468,7 @@ export default {
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #2d8cf0 0%, #1a6fc4 100%);
+    background: #fff;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -546,5 +601,16 @@ export default {
       }
     }
   }
+}
+</style>
+
+<style lang="less">
+.model-option-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: contain;
+  vertical-align: middle;
+  margin-right: 6px;
 }
 </style>

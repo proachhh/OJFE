@@ -49,6 +49,17 @@
         </div>
       </Panel>
       <!--problem main end-->
+
+      <!-- AI 解题提示 -->
+      <AICard
+        title="AI 解题提示"
+        icon="ios-bulb"
+        iconColor="#ff9900"
+        btnText="获取提示"
+        btnType="warning"
+        :fetchFn="fetchHint"
+      />
+
       <Card :padding="20" id="submit-code" dis-hover>
         <CodeMirror :value.sync="code"
                     :languages="problem.languages"
@@ -202,6 +213,7 @@
   import {mapGetters, mapActions} from 'vuex'
   import {types} from '../../../../store'
   import CodeMirror from '@oj/components/CodeMirror.vue'
+  import AICard from '@oj/components/AICard.vue'
   import storage from '@/utils/storage'
   import {FormMixin} from '@oj/components/mixins'
   import {JUDGE_STATUS, CONTEST_STATUS, buildProblemCodeKey} from '@/utils/constants'
@@ -214,7 +226,8 @@
   export default {
     name: 'Problem',
     components: {
-      CodeMirror
+      CodeMirror,
+      AICard
     },
     mixins: [FormMixin],
     data () {
@@ -276,6 +289,12 @@
     },
     methods: {
       ...mapActions(['changeDomTitle']),
+      fetchHint () {
+        return api.getProblemHint({
+          problem_id: this.problemID,
+          hint_level: 1
+        })
+      },
       init () {
         this.$Loading.start()
         this.contestID = this.$route.params.contestID
