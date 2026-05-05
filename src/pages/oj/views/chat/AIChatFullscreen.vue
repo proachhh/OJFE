@@ -6,7 +6,7 @@
           <Icon type="ios-arrow-back" size="20" />
           <span>{{ $t('m.Back') }}</span>
         </Button>
-        <img :src="aiAvatar" :alt="aiDisplayName" class="header-avatar" />
+        <img :src="aiAvatar" :alt="aiDisplayName" class="header-avatar" :key="aiAvatar" />
         <span class="header-title">{{ aiFullName }}</span>
       </div>
       <div class="header-right">
@@ -27,7 +27,7 @@
       <div class="message-container" ref="messageList">
         <div v-if="messages.length === 0" class="welcome-section">
           <div class="welcome-icon">
-            <img :src="aiAvatar" :alt="aiDisplayName" />
+            <img :src="aiAvatar" :alt="aiDisplayName" :key="'welcome-' + aiAvatar" />
           </div>
           <h3>{{ aiWelcomeTitle }}</h3>
           <p>{{ aiWelcomeDesc }}</p>
@@ -56,7 +56,7 @@
                 style="background: #2d8cf0"
               />
               <div v-else class="ai-avatar">
-                <img :src="aiAvatar" :alt="aiDisplayName" />
+                <img :src="aiAvatar" :alt="aiDisplayName" :key="'msg-' + aiAvatar" />
               </div>
             </div>
             <div class="message-content">
@@ -366,6 +366,8 @@ export default {
     img {
       width: 70%;
       height: 70%;
+      max-width: 100%;
+      max-height: 100%;
       object-fit: contain;
     }
   }
@@ -477,6 +479,8 @@ export default {
     img {
       width: 70%;
       height: 70%;
+      max-width: 100%;
+      max-height: 100%;
       object-fit: contain;
     }
   }
@@ -606,8 +610,8 @@ export default {
 
 <style lang="less">
 .model-option-icon {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   object-fit: contain;
   vertical-align: middle;

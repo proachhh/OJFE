@@ -1,18 +1,23 @@
 <template>
   <div class="global-sidebar-container">
     <!-- 侧边栏主体 -->
-    <div class="global-sidebar" :class="{ collapsed: isCollapsed }">
-      <div class="sidebar-toggle" @click="toggleSidebarLocal">
-        <Icon :type="isCollapsed ? 'ios-arrow-forward' : 'ios-arrow-back'" size="16" />
+    <div
+      class="global-sidebar"
+      :class="{ collapsed: isCollapsed, dragging: sidebarDragging }"
+      :style="{ top: sidebarPos.y + 'px', left: sidebarPos.x + 'px' }"
+      @mousedown="onSidebarMouseDown"
+    >
+      <div class="sidebar-toggle" :class="{ 'toggle-left': sidebarSnapped === 'right' }" @click.stop="toggleSidebarLocal">
+        <Icon :type="sidebarSnapped === 'left' ? (isCollapsed ? 'ios-arrow-forward' : 'ios-arrow-back') : (isCollapsed ? 'ios-arrow-back' : 'ios-arrow-forward')" size="16" />
       </div>
       <div class="sidebar-content">
-        <div class="menu-item" @click="openAIChat">
+        <div class="menu-item" @click.stop="openAIChat">
           <div class="menu-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">
             <Icon type="chatbubble-working" size="18" color="#fff" />
           </div>
           <span class="menu-text">AI Chat</span>
         </div>
-        <div class="menu-item" @click="openCodeEditor">
+        <div class="menu-item" @click.stop="openCodeEditor">
           <div class="menu-icon" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
             <Icon type="ios-code" size="18" color="#fff" />
           </div>
@@ -57,7 +62,7 @@
         <div class="message-container" ref="aiMessageList">
           <div v-if="aiMessages.length === 0" class="welcome-section">
             <div class="welcome-icon">
-              <img :src="aiAvatar" :alt="aiDisplayName" />
+              <img :src="aiAvatar" :alt="aiDisplayName" :key="aiAvatar" />
             </div>
             <h3>{{ aiWelcomeTitle }}</h3>
             <p>{{ aiWelcomeDesc }}</p>
@@ -67,7 +72,7 @@
               <div class="message-avatar">
                 <Avatar v-if="msg.role === 'user'" icon="ios-person" style="background: #2d8cf0" />
                 <div v-else class="ai-avatar">
-                  <img :src="aiAvatar" :alt="aiDisplayName" />
+                  <img :src="aiAvatar" :alt="aiDisplayName" :key="'msg-avatar-' + aiAvatar" />
                 </div>
               </div>
               <div class="message-content">
@@ -179,6 +184,11 @@ export default {
       showAIChat: false,
       showCodeEditor: false,
 
+      sidebarPos: { x: 16, y: 0 },
+      sidebarDragging: false,
+      sidebarDragStart: { x: 0, y: 0, barX: 0, barY: 0 },
+      sidebarSnapped: 'left',
+
       aiModel: 'spark',
       aiMessages: [],
       aiInputText: '',
@@ -248,11 +258,28 @@ export default {
       }
     }
   },
+  watch: {
+    isCollapsed () {
+      this.$nextTick(() => {
+        this.snapToEdge()
+      })
+    }
+  },
   beforeDestroy () {
     this.clearPollingTimer()
+    window.removeEventListener('resize', this.onWindowResize)
+  },
+  mounted () {
+    this.sidebarPos.y = window.innerHeight * 0.5 - 80
+    this.snapToEdge()
+    window.addEventListener('resize', this.onWindowResize)
   },
   methods: {
     ...mapActions(['toggleSidebar']),
+
+    onWindowResize () {
+      this.snapToEdge()
+    },
 
     clearPollingTimer () {
       if (this.pollingTimer) {
@@ -273,11 +300,68 @@ export default {
       }
     },
 
+    onSidebarMouseDown (e) {
+      if (this.isCollapsed) {
+        e.preventDefault()
+        this.toggleSidebarLocal()
+        return
+      }
+      this.startSidebarDrag(e)
+    },
+
+    startSidebarDrag (e) {
+      if (this.isCollapsed) return
+      if (e.target.closest('.menu-item') || e.target.closest('.sidebar-toggle')) return
+      e.preventDefault()
+      this.sidebarDragging = true
+      this.sidebarDragStart = {
+        x: e.clientX,
+        y: e.clientY,
+        barX: this.sidebarPos.x,
+        barY: this.sidebarPos.y
+      }
+      document.addEventListener('mousemove', this.onSidebarDrag)
+      document.addEventListener('mouseup', this.stopSidebarDrag)
+    },
+
+    onSidebarDrag (e) {
+      if (!this.sidebarDragging) return
+      const dx = e.clientX - this.sidebarDragStart.x
+      const dy = e.clientY - this.sidebarDragStart.y
+      this.sidebarPos.x = this.sidebarDragStart.barX + dx
+      this.sidebarPos.y = this.sidebarDragStart.barY + dy
+    },
+
+    stopSidebarDrag (e) {
+      this.sidebarDragging = false
+      document.removeEventListener('mousemove', this.onSidebarDrag)
+      document.removeEventListener('mouseup', this.stopSidebarDrag)
+      this.snapToEdge()
+    },
+
+    snapToEdge () {
+      const sidebarWidth = this.isCollapsed ? 48 : 160
+      const halfW = window.innerWidth / 2
+      const centerX = this.sidebarPos.x + sidebarWidth / 2
+      if (centerX < halfW) {
+        this.sidebarPos.x = 16
+        this.sidebarSnapped = 'left'
+      } else {
+        this.sidebarPos.x = window.innerWidth - sidebarWidth - 16
+        this.sidebarSnapped = 'right'
+      }
+      this.sidebarPos.y = Math.max(60, Math.min(window.innerHeight - 200, this.sidebarPos.y))
+    },
+
     openAIChat() {
       if (this.isCollapsed) {
         this.isCollapsed = false
       }
-      this.aiPanelPos = { x: 180, y: 80 }
+      const sidebarRight = this.sidebarPos.x + 160 + 8
+      this.aiPanelPos = {
+        x: this.sidebarSnapped === 'left' ? sidebarRight : Math.max(0, this.sidebarPos.x - 396),
+        y: Math.max(0, this.sidebarPos.y)
+      }
       this.aiPanelSize = { w: 380, h: 520 }
       this.showAIChat = !this.showAIChat
       if (this.showAIChat) {
@@ -289,7 +373,11 @@ export default {
       if (this.isCollapsed) {
         this.isCollapsed = false
       }
-      this.editorPanelPos = { x: 180, y: 80 }
+      const sidebarRight = this.sidebarPos.x + 160 + 8
+      this.editorPanelPos = {
+        x: this.sidebarSnapped === 'left' ? sidebarRight : Math.max(0, this.sidebarPos.x - 396),
+        y: Math.max(0, this.sidebarPos.y)
+      }
       this.editorPanelSize = { w: 380, h: 520 }
       this.showCodeEditor = !this.showCodeEditor
       if (this.showCodeEditor) {
@@ -617,9 +705,6 @@ pollResult (codeRunId) {
 <style lang="less" scoped>
 .global-sidebar {
   position: fixed;
-  left: 16px;
-  top: 70%;
-  transform: translateY(-50%);
   width: 160px;
   background: rgba(30, 30, 50, 0.75);
   backdrop-filter: blur(24px) saturate(180%);
@@ -628,21 +713,37 @@ pollResult (codeRunId) {
   border-radius: 20px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
   z-index: 999;
-  transition: all 0.3s ease;
+  transition: top 0.25s ease, left 0.25s ease, width 0.3s ease, height 0.3s ease, border-radius 0.3s ease;
   overflow: visible;
   padding: 12px 8px;
+  cursor: grab;
+  user-select: none;
+
+  &.dragging {
+    cursor: grabbing;
+    transition: none;
+    opacity: 0.9;
+  }
 
   &.collapsed {
-    width: 52px;
-    padding: 12px 6px;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
 
     .sidebar-content {
       opacity: 0;
       pointer-events: none;
     }
 
-    .side-panel {
-      display: none;
+    .sidebar-toggle {
+      position: static;
+      transform: none;
+      margin: 0;
     }
   }
 }
@@ -665,6 +766,11 @@ pollResult (codeRunId) {
   z-index: 1000;
   transition: all 0.2s ease;
   color: rgba(255, 255, 255, 0.9);
+
+  &.toggle-left {
+    right: auto;
+    left: -14px;
+  }
 
   &:hover {
     background: rgba(30, 30, 50, 0.9);
@@ -903,6 +1009,8 @@ pollResult (codeRunId) {
       img {
         width: 70%;
         height: 70%;
+        max-width: 100%;
+        max-height: 100%;
         object-fit: contain;
       }
     }
@@ -986,6 +1094,8 @@ pollResult (codeRunId) {
       img {
         width: 70%;
         height: 70%;
+        max-width: 100%;
+        max-height: 100%;
         object-fit: contain;
       }
     }
@@ -1154,5 +1264,16 @@ pollResult (codeRunId) {
       color: rgba(255, 255, 255, 0.5) !important;
     }
   }
+}
+</style>
+
+<style lang="less">
+.model-option-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  object-fit: contain;
+  vertical-align: middle;
+  margin-right: 6px;
 }
 </style>
