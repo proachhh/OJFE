@@ -64,6 +64,7 @@
 
         <div v-else class="contest-cards">
           <div v-for="contest in contests" :key="contest.id" class="contest-card" @click="goContest(contest)">
+            <div class="card-click-overlay"></div>
             <div class="contest-header">
               <div class="contest-icon">
                 <img src="../../../../assets/Cup.png" alt="trophy" />
@@ -361,12 +362,19 @@ export default {
 }
 
 .contest-card {
+  position: relative;
   background: white;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 20px;
   cursor: pointer;
   transition: all 0.3s ease;
+
+  .card-click-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+  }
 
   &:hover {
     transform: translateY(-4px);

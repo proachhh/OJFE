@@ -74,7 +74,7 @@
         <template v-else>
           <Dropdown class="drop-menu" @on-click="handleRoute" placement="bottom" trigger="click">
             <div class="user-info">
-              <img :src="user.avatar || '/static/avatar/default.png'" class="user-avatar" />
+              <img :src="profile.avatar" class="user-avatar" />
               <span class="user-name">{{ user.username }}</span>
             </div>
             <Dropdown-menu slot="list">
@@ -140,7 +140,7 @@
       }
     },
     computed: {
-      ...mapGetters(['website', 'modalStatus', 'user', 'isAuthenticated', 'isAdminRole']),
+      ...mapGetters(['website', 'modalStatus', 'user', 'profile', 'isAuthenticated', 'isAdminRole']),
       logoSrc () {
         // 首页未滚动时显示 logo.png，学习页面（透明背景）也显示 logo.png，其他情况显示 logo2.png
         const isLearningPath = this.$route.path === '/learning-path'

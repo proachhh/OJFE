@@ -110,12 +110,12 @@
     <div class="tables-row">
       <div class="table-panel">
         <h3>完成率最高题目 Top 10</h3>
-        <Table :data="mostCompleted" :columns="problemColumns" size="small" disabled-hover></Table>
+        <Table :data="mostCompleted" :columns="problemColumns" :key="'t1-'+tableKey" size="small" disabled-hover></Table>
         <div v-if="!mostCompleted.length" class="no-data">暂无数据</div>
       </div>
       <div class="table-panel">
         <h3>完成率最低题目 Top 10</h3>
-        <Table :data="leastCompleted" :columns="problemColumns" size="small" disabled-hover></Table>
+        <Table :data="leastCompleted" :columns="problemColumns" :key="'t2-'+tableKey" size="small" disabled-hover></Table>
         <div v-if="!leastCompleted.length" class="no-data">暂无数据</div>
       </div>
     </div>
@@ -123,7 +123,7 @@
     <div class="tables-row">
       <div class="table-panel">
         <h3>用户排名 Top 20</h3>
-        <Table :data="userRanking" :columns="userColumns" size="small" disabled-hover></Table>
+        <Table :data="userRanking" :columns="userColumns" :key="'t3-'+tableKey" size="small" disabled-hover></Table>
         <div v-if="!userRanking.length" class="no-data">暂无数据</div>
       </div>
     </div>
@@ -131,12 +131,12 @@
     <div class="tables-row">
       <div class="table-panel">
         <h3>历史提交最多用户</h3>
-        <Table :data="topSubmittersAllTime" :columns="submitterColumns" size="small" disabled-hover></Table>
+        <Table :data="topSubmittersAllTime" :columns="submitterColumns" :key="'t4-'+tableKey" size="small" disabled-hover></Table>
         <div v-if="!topSubmittersAllTime.length" class="no-data">暂无数据</div>
       </div>
       <div class="table-panel">
         <h3>本周提交最多用户</h3>
-        <Table :data="topSubmittersWeek" :columns="submitterWeekColumns" size="small" disabled-hover></Table>
+        <Table :data="topSubmittersWeek" :columns="submitterWeekColumns" :key="'t5-'+tableKey" size="small" disabled-hover></Table>
         <div v-if="!topSubmittersWeek.length" class="no-data">暂无数据</div>
       </div>
     </div>
@@ -152,6 +152,7 @@ export default {
   data () {
     return {
       loading: false,
+      tableKey: 0,
       overview: {},
       problemStats: {},
       difficultyDistribution: [],
@@ -222,8 +223,7 @@ export default {
           key: 'real_name',
           width: 120,
           render: (h, params) => {
-              const rate = params.row.pass_rate || 0
-              return h('span', rate.toFixed(1) + '%')
+            return h('span', params.row.real_name || '-')
           }
         },
         {
@@ -241,8 +241,8 @@ export default {
           key: 'ac_rate',
           width: 80,
           render: (h, params) => {
-              const rate = params.row.pass_rate || 0
-              return h('span', rate.toFixed(1) + '%')
+            const rate = params.row.ac_rate || 0
+            return h('span', (typeof rate === 'number' ? rate.toFixed(1) : rate) + '%')
           }
         },
         {
@@ -262,8 +262,7 @@ export default {
           key: 'real_name',
           width: 120,
           render: (h, params) => {
-              const rate = params.row.pass_rate || 0
-              return h('span', rate.toFixed(1) + '%')
+            return h('span', params.row.real_name || '-')
           }
         },
         {
@@ -320,7 +319,8 @@ export default {
     fetchData () {
       this.loading = true
       api.getDataDashboard().then(res => {
-        const data = res.data.data
+        const data = res.data.data || res.data
+        console.log('Dashboard raw data:', data)
         this.overview = data.overview || {}
         this.problemStats = data.problem_stats || {}
         this.difficultyDistribution = data.difficulty_distribution || []
@@ -328,16 +328,19 @@ export default {
         this.topSubmitters = data.top_submitters || {}
         this.userRanking = data.user_ranking || []
         this.submissionStats = data.submission_stats || {}
-        // 确保字段名匹配，并转换为纯对象避免 iView Table 响应式兼容问题
         this.mostCompleted = (this.problemCompletion.most_completed || []).map(item => ({ ...item }))
         this.leastCompleted = (this.problemCompletion.least_completed || []).map(item => ({ ...item }))
         this.topSubmittersAllTime = (this.topSubmitters.all_time || []).map(item => ({ ...item }))
         this.topSubmittersWeek = (this.topSubmitters.this_week || []).map(item => ({ ...item }))
-        this.userRanking = (this.userRanking || []).map(item => ({ ...item }))
+        this.userRanking = (data.user_ranking || []).map(item => ({ ...item }))
         this.loading = false
-        console.log('赋值后的 mostCompleted:', this.mostCompleted)
+        this.tableKey = Date.now()
+        this.$forceUpdate()
+        console.log('赋值后的 mostCompleted:', JSON.stringify(this.mostCompleted))
         console.log('赋值后的 leastCompleted:', this.leastCompleted)
         console.log('赋值后的 userRanking:', this.userRanking)
+        console.log('赋值后的 topSubmittersAllTime:', this.topSubmittersAllTime)
+        console.log('赋值后的 topSubmittersWeek:', this.topSubmittersWeek)
         this.$nextTick(() => {
           setTimeout(() => {
             this.drawDifficultyChart()
@@ -347,7 +350,8 @@ export default {
             this.drawDailyChart()
           }, 100)
         })
-      }).catch(() => {
+      }).catch((err) => {
+        console.error('Dashboard fetch error:', err)
         this.loading = false
       })
     },

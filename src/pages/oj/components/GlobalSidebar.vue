@@ -186,7 +186,9 @@ export default {
 
       sidebarPos: { x: 16, y: 0 },
       sidebarDragging: false,
-      sidebarDragStart: { x: 0, y: 0, barX: 0, barY: 0 },
+      sideDragPending: false,
+      sideDragStart: { x: 0, y: 0, barX: 0, barY: 0 },
+      sideDragTimer: null,
       sidebarSnapped: 'left',
 
       aiModel: 'spark',
@@ -205,6 +207,8 @@ export default {
       editorPanelSize: { w: 380, h: 520 },
 
       dragging: null,
+      panelDragPending: null,
+      panelDragTimer: null,
       dragStart: { x: 0, y: 0, panelX: 0, panelY: 0 },
       resizing: null,
       resizeStart: { x: 0, y: 0, w: 0, h: 0 },
@@ -301,42 +305,54 @@ export default {
     },
 
     onSidebarMouseDown (e) {
-      if (this.isCollapsed) {
-        e.preventDefault()
-        this.toggleSidebarLocal()
-        return
-      }
-      this.startSidebarDrag(e)
-    },
-
-    startSidebarDrag (e) {
-      if (this.isCollapsed) return
       if (e.target.closest('.menu-item') || e.target.closest('.sidebar-toggle')) return
       e.preventDefault()
-      this.sidebarDragging = true
-      this.sidebarDragStart = {
-        x: e.clientX,
-        y: e.clientY,
-        barX: this.sidebarPos.x,
-        barY: this.sidebarPos.y
-      }
+      this.sideDragPending = true
+      this.sideDragStart = { x: e.clientX, y: e.clientY, barX: this.sidebarPos.x, barY: this.sidebarPos.y }
+      this.sideDragTimer = setTimeout(() => {
+        this.activateSidebarDrag()
+      }, 300)
       document.addEventListener('mousemove', this.onSidebarDrag)
       document.addEventListener('mouseup', this.stopSidebarDrag)
     },
 
-    onSidebarDrag (e) {
-      if (!this.sidebarDragging) return
-      const dx = e.clientX - this.sidebarDragStart.x
-      const dy = e.clientY - this.sidebarDragStart.y
-      this.sidebarPos.x = this.sidebarDragStart.barX + dx
-      this.sidebarPos.y = this.sidebarDragStart.barY + dy
+    activateSidebarDrag () {
+      if (!this.sideDragPending) return
+      this.sideDragPending = false
+      if (this.sideDragTimer) {
+        clearTimeout(this.sideDragTimer)
+        this.sideDragTimer = null
+      }
+      this.sidebarDragging = true
     },
 
-    stopSidebarDrag (e) {
-      this.sidebarDragging = false
+    onSidebarDrag (e) {
+      if (!this.sideDragPending && !this.sidebarDragging) return
+      const dx = e.clientX - this.sideDragStart.x
+      const dy = e.clientY - this.sideDragStart.y
+      if (this.sideDragPending && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
+        this.activateSidebarDrag()
+      }
+      if (this.sidebarDragging) {
+        this.sidebarPos.x = this.sideDragStart.barX + dx
+        this.sidebarPos.y = this.sideDragStart.barY + dy
+      }
+    },
+
+    stopSidebarDrag () {
       document.removeEventListener('mousemove', this.onSidebarDrag)
       document.removeEventListener('mouseup', this.stopSidebarDrag)
-      this.snapToEdge()
+      if (this.sideDragTimer) {
+        clearTimeout(this.sideDragTimer)
+        this.sideDragTimer = null
+      }
+      if (this.sidebarDragging) {
+        this.sidebarDragging = false
+        this.snapToEdge()
+      } else if (this.isCollapsed) {
+        this.toggleSidebarLocal()
+      }
+      this.sideDragPending = false
     },
 
     snapToEdge () {
@@ -472,22 +488,45 @@ export default {
       if (e.target.closest('.panel-actions')) return
       e.preventDefault()
       const pos = panel === 'ai' ? this.aiPanelPos : this.editorPanelPos
-      this.dragging = panel
+      this.panelDragPending = panel
       this.dragStart = { x: e.clientX, y: e.clientY, panelX: pos.x, panelY: pos.y }
+      this.panelDragTimer = setTimeout(() => {
+        this.activatePanelDrag()
+      }, 300)
       document.addEventListener('mousemove', this.onDrag)
       document.addEventListener('mouseup', this.stopDrag)
     },
 
+    activatePanelDrag () {
+      if (!this.panelDragPending) return
+      this.dragging = this.panelDragPending
+      this.panelDragPending = null
+      if (this.panelDragTimer) {
+        clearTimeout(this.panelDragTimer)
+        this.panelDragTimer = null
+      }
+    },
+
     onDrag (e) {
-      if (!this.dragging) return
+      if (!this.panelDragPending && !this.dragging) return
       const dx = e.clientX - this.dragStart.x
       const dy = e.clientY - this.dragStart.y
-      const pos = this.dragging === 'ai' ? this.aiPanelPos : this.editorPanelPos
-      pos.x = Math.max(0, this.dragStart.panelX + dx)
-      pos.y = Math.max(0, this.dragStart.panelY + dy)
+      if (this.panelDragPending && (Math.abs(dx) > 3 || Math.abs(dy) > 3)) {
+        this.activatePanelDrag()
+      }
+      if (this.dragging) {
+        const pos = this.dragging === 'ai' ? this.aiPanelPos : this.editorPanelPos
+        pos.x = Math.max(0, this.dragStart.panelX + dx)
+        pos.y = Math.max(0, this.dragStart.panelY + dy)
+      }
     },
 
     stopDrag () {
+      if (this.panelDragTimer) {
+        clearTimeout(this.panelDragTimer)
+        this.panelDragTimer = null
+      }
+      this.panelDragPending = null
       this.dragging = null
       document.removeEventListener('mousemove', this.onDrag)
       document.removeEventListener('mouseup', this.stopDrag)
