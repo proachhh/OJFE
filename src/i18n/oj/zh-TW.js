@@ -750,6 +750,7 @@ export const m = {
   Regenerate_Button: '重新生成',
   Update_Successfully: '更新成功',
   Learning_Path: '學習路徑',
+  Immersive_Practice: '沉浸式刷題',
   Target_Topic: '目標知識點',
   Select_Target_Topic: '請選擇目標知識點',
   Generate_Path: '生成路徑',

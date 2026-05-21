@@ -755,6 +755,7 @@ export const m = {
   Regenerate_Button: 'regenerate',
   Update_Successfully: 'Update successfully',
   Learning_Path: 'Learning Path',
+  Immersive_Practice: 'Immersive Practice',
   Target_Topic: 'Target Topic',
   Select_Target_Topic: 'Please select target topic',
   Generate_Path: 'Generate Path',

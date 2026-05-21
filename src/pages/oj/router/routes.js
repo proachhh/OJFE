@@ -202,6 +202,14 @@ export default [
     component: () => import('@/pages/oj/views/recommend/LearningPath.vue')
   },
 
+  // immersion practice
+  {
+    path: '/immersion',
+    name: 'immersion-practice',
+    meta: {requiresAuth: true, title: 'Immersive Practice'},
+    component: () => import('@/pages/oj/views/recommend/ImmersionPractice.vue')
+  },
+
   // lesson plans
   {
     path: '/lesson-plan',

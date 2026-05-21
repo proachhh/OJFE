@@ -298,6 +298,9 @@ export default {
   },
   getTopicSummary (data) {
     return ajax('spark/topic-summary/', 'post', { data })
+  },
+  getImmersionRecommendations (params = {}) {
+    return ajax('immersion/recommendations/', 'get', { params })
   }
 }
 

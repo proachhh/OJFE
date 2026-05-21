@@ -745,6 +745,7 @@ export const m = {
   Regenerate_Button: '重新生成',
   Update_Successfully: '更新成功',
   Learning_Path: '学习路径',
+  Immersive_Practice: '沉浸式刷题',
   Target_Topic: '目标知识点',
   Select_Target_Topic: '请选择目标知识点',
   Generate_Path: '生成路径',

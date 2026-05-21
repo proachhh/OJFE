@@ -30,6 +30,10 @@
           <Icon type="ios-book"></Icon>
           {{$t('m.Lesson_Plans')}}
         </Menu-item>
+        <Menu-item name="/immersion">
+          <Icon type="ios-flash"></Icon>
+          {{$t('m.Immersive_Practice')}}
+        </Menu-item>
         <!-- <Submenu name="rank">
           <template slot="title">
             <Icon type="podium"></Icon>
@@ -156,6 +160,7 @@
         if (path.startsWith('/learning-path')) return '/learning-path'
         if (path.startsWith('/lesson-plan')) return '/lesson-plan'
         if (path.startsWith('/chat')) return '/chat'
+        if (path.startsWith('/immersion')) return '/immersion'
         return '/' + path.split('/')[1]
       },
       isHome () {
