@@ -1,9 +1,12 @@
 <template>
   <div class="container">
     <div>
-      <SideMenu></SideMenu>
+      <SideMenu ref="sideMenu"></SideMenu>
     </div>
     <div id="header">
+      <span class="hamburger-btn" @click="toggleSideMenu">
+        <i class="el-icon-menu"></i>
+      </span>
       <i class="el-icon-fa-font katex-editor" @click="katexVisible=true" ></i>
       <screen-full :width="14" :height="14" class="screen-full"></screen-full>
       <el-dropdown @command="handleCommand">
@@ -62,6 +65,11 @@
       })
     },
     methods: {
+      toggleSideMenu () {
+        if (this.$refs.sideMenu) {
+          this.$refs.sideMenu.toggleMenu()
+        }
+      },
       handleCommand (command) {
         if (command === 'logout') {
           api.logout().then(() => {
@@ -96,7 +104,6 @@
     -webkit-font-smoothing: antialiased;
     background: linear-gradient(180deg, #f0f4f8 0%, #f8fafc 100%);
     overflow-y: scroll;
-    min-width: 1000px;
   }
 
   * {
@@ -112,6 +119,20 @@
     background: linear-gradient(90deg, #f8fafc 0%, #ffffff 100%);
     box-shadow: 0 2px 8px rgba(30, 58, 138, 0.06);
     border-bottom: 1px solid #e2e8f0;
+
+    .hamburger-btn {
+      display: none;
+      float: left;
+      margin-left: 12px;
+      cursor: pointer;
+      font-size: 20px;
+      color: #1e3a8a;
+      transition: color 0.2s;
+
+      &:hover {
+        color: #667eea;
+      }
+    }
     
     .screen-full {
       margin-right: 8px;
@@ -122,6 +143,50 @@
     padding-top: 20px;
     padding-right: 10px;
     padding-left: 210px;
+  }
+
+  // ========== 移动端适配 ==========
+
+  // 平板及以下
+  @media screen and (max-width: 1024px) {
+    .container {
+      min-width: auto;
+    }
+
+    #header {
+      padding-left: 10px;
+
+      .hamburger-btn {
+        display: inline-block;
+      }
+    }
+
+    .content-app {
+      padding-left: 10px;
+    }
+  }
+
+  // 小屏手机
+  @media screen and (max-width: 480px) {
+    #header {
+      padding-right: 12px;
+      line-height: 44px;
+      height: 44px;
+
+      .hamburger-btn {
+        font-size: 18px;
+        margin-left: 8px;
+      }
+    }
+
+    .content-app {
+      padding-top: 12px;
+      padding-right: 4px;
+    }
+
+    .footer {
+      font-size: 11px;
+    }
   }
 
   .footer {

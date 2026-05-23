@@ -1,8 +1,15 @@
 <template>
   <div class="data-dashboard" v-loading="loading">
     <div class="page-header">
-      <h2>数据看板</h2>
-      <p>Data Dashboard</p>
+      <div class="header-left">
+        <h2>数据看板</h2>
+        <p>Data Dashboard</p>
+      </div>
+      <div class="header-actions">
+        <Button type="primary" icon="ios-expand" @click="goImmersion" class="immersion-btn">
+          沉浸式观看
+        </Button>
+      </div>
     </div>
 
     <div class="overview-cards">
@@ -316,6 +323,10 @@ export default {
     window.removeEventListener('resize', this.handleResize)
   },
   methods: {
+    goImmersion () {
+      const routeData = this.$router.resolve({ name: 'immersion-dashboard' })
+      window.open(routeData.href, '_blank')
+    },
     fetchData () {
       this.loading = true
       api.getDataDashboard().then(res => {
@@ -514,21 +525,45 @@ export default {
 }
 
 .page-header {
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
   margin-bottom: 30px;
 
-  h2 {
-    font-size: 28px;
-    font-weight: 700;
-    color: #1e3a8a;
-    margin: 0 0 8px 0;
+  .header-left {
+    h2 {
+      font-size: 28px;
+      font-weight: 700;
+      color: #1e3a8a;
+      margin: 0 0 8px 0;
+    }
+
+    p {
+      font-size: 14px;
+      color: #94a3b8;
+      margin: 0;
+      letter-spacing: 2px;
+    }
   }
 
-  p {
-    font-size: 14px;
-    color: #94a3b8;
-    margin: 0;
-    letter-spacing: 2px;
+  .header-actions {
+    .immersion-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      border-radius: 12px;
+      padding: 10px 24px;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+      transition: all 0.3s ease;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 25px rgba(102, 126, 234, 0.6);
+      }
+    }
   }
 }
 
