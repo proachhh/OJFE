@@ -103,6 +103,13 @@ export default {
           screenshot: '/static/pictures/AI4problem.png'
         },
         {
+          icon: 'ios-chatbubbles',
+          titleKey: 'm.Feature_AI_Agent',
+          descKey: 'm.Feature_AI_Agent_Desc',
+          color: 'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
+          screenshot: '/static/pictures/chat.png'
+        },
+        {
           icon: 'ios-book',
           titleKey: 'm.Feature_Lesson',
           descKey: 'm.Feature_Lesson_Desc',

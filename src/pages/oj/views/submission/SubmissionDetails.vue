@@ -142,7 +142,7 @@
     },
     methods: {
       fetchErrorAnalysis () {
-        return api.analyzeError({ submission_id: this.submission.id })
+        return api.analyzeError({ message: `我的提交(ID: ${this.submission.id})为什么错了？请帮我分析错误原因。` })
       },
       fetchCodeReview () {
         return api.codeReview({ submission_id: this.submission.id })

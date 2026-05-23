@@ -99,6 +99,47 @@
       <div v-katex v-html="renderedMarkdown"></div>
     </div>
 
+    <!-- 编程题 -->
+    <div v-if="displayType === 'coding_problem'" class="coding-problem-body">
+      <div class="cp-header">
+        <h3>{{ codingProblem.title || '编程题' }}</h3>
+        <div class="cp-meta">
+          <Tag :color="getDifficultyColor(codingProblem.difficulty)">{{ codingProblem.difficulty }}</Tag>
+          <Tag v-for="tag in codingProblem.tags" :key="tag" color="cyan">{{ tag }}</Tag>
+          <span class="cp-limits">⏱ {{ codingProblem.time_limit || 1000 }}ms | 💾 {{ codingProblem.memory_limit || 256 }}MB</span>
+        </div>
+      </div>
+      <div v-if="codingProblem.description" class="cp-section">
+        <h4>题目描述</h4>
+        <div v-html="codingProblem.description"></div>
+      </div>
+      <div v-if="codingProblem.input_description" class="cp-section">
+        <h4>输入说明</h4>
+        <div v-html="codingProblem.input_description"></div>
+      </div>
+      <div v-if="codingProblem.output_description" class="cp-section">
+        <h4>输出说明</h4>
+        <div v-html="codingProblem.output_description"></div>
+      </div>
+      <div v-if="codingProblem.samples && codingProblem.samples.length" class="cp-section">
+        <h4>样例</h4>
+        <div v-for="(sample, i) in codingProblem.samples" :key="i" class="cp-sample">
+          <div class="sample-block">
+            <div class="sample-label">输入</div>
+            <pre>{{ sample.input }}</pre>
+          </div>
+          <div class="sample-block">
+            <div class="sample-label">输出</div>
+            <pre>{{ sample.output }}</pre>
+          </div>
+        </div>
+      </div>
+      <div v-if="codingProblem.hint" class="cp-section">
+        <h4>提示</h4>
+        <div v-html="codingProblem.hint"></div>
+      </div>
+    </div>
+
     <!-- 加载状态 -->
     <div v-if="loading" class="loading-block">
       <Spin>
@@ -152,9 +193,14 @@ export default {
         'mindmap': '思维导图',
         'exercise': '练习题',
         'reading': '阅读清单',
-        'code_example': '代码案例'
+        'code_example': '代码案例',
+        'coding_problem': '编程题'
       }
       return map[this.data.resource_type] || '资源'
+    },
+    codingProblem () {
+      if (typeof this.data.content === 'object') return this.data.content
+      return {}
     },
     renderedMarkdown () {
       if (!this.content || typeof this.content !== 'string') return ''
@@ -177,6 +223,10 @@ export default {
       navigator.clipboard.writeText(text).then(() => {
         this.$Message.success('已复制')
       })
+    },
+    getDifficultyColor (diff) {
+      const map = { 'Low': 'success', 'Mid': 'warning', 'High': 'error' }
+      return map[diff] || 'default'
     }
   }
 }
@@ -367,5 +417,58 @@ export default {
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+.coding-problem-body {
+  .cp-header {
+    margin-bottom: 16px;
+    h3 {
+      color: #e6f1ff;
+      margin: 0 0 8px;
+      font-size: 18px;
+    }
+    .cp-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      .cp-limits {
+        color: #8892b0;
+        font-size: 13px;
+      }
+    }
+  }
+  .cp-section {
+    margin-bottom: 16px;
+    h4 {
+      color: #64ffda;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+    div { color: #ccd6f6; font-size: 14px; line-height: 1.6; }
+  }
+  .cp-sample {
+    display: flex;
+    gap: 12px;
+    .sample-block {
+      flex: 1;
+      background: #0a192f;
+      border-radius: 8px;
+      padding: 12px;
+      .sample-label {
+        color: #64ffda;
+        font-size: 12px;
+        margin-bottom: 6px;
+        font-weight: 600;
+      }
+      pre {
+        margin: 0;
+        color: #a8b2d1;
+        font-size: 13px;
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+    }
+  }
 }
 </style>

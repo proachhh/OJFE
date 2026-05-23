@@ -88,22 +88,31 @@
       <div v-if="pathData" class="result-wrapper">
         <div class="weak-info">
           <span class="label">{{ $t('m.Your_Weakest_Topic') }}:</span>
-          <Tag color="error">{{ translateTopic(pathData.weak_topic) }}</Tag>
+          <Tag color="error">{{ translateTopic(pathData.start) }}</Tag>
+          <span class="goal-label">→ {{ $t('m.Target_Topic') }}:</span>
+          <Tag color="primary">{{ translateTopic(pathData.goal) }}</Tag>
+          <Tag v-if="pathData.fallback" color="warning" size="small">备选路径</Tag>
         </div>
         <Timeline class="path-timeline">
-          <TimelineItem v-for="(item, index) in pathData.path" :key="index">
-            <div class="timeline-node" :class="{ 'is-target': index === pathData.path.length - 1 }">
+          <TimelineItem v-for="(item, index) in pathData.path_plan" :key="index">
+            <div class="timeline-node" :class="{ 'is-target': index === pathData.path_plan.length - 1 }">
               <div class="node-header">
                 <span class="step-badge">{{ index + 1 }}</span>
-                <span class="topic-text">{{ translateTopic(item.topic) }}</span>
-              </div>
-              <div v-if="item.problem" class="problem-info">
-                <router-link :to="`/problem/${item.problem.display_id}`" class="problem-link">
-                  {{ item.problem.title }}
-                  <Tag :color="getDifficultyColor(item.problem.difficulty)" size="small">
-                    {{ item.problem.difficulty }}
+                <span class="topic-text">{{ translateTopic(item.name) }}</span>
+                <div class="node-meta">
+                  <Tag :color="getDifficultyColorNumeric(item.difficulty)" size="small">
+                    难度 {{ formatDifficulty(item.difficulty) }}
                   </Tag>
-                </router-link>
+                  <Tag color="cyan" size="small">
+                    重要度 {{ item.importance.toFixed(0) }}
+                  </Tag>
+                  <Tag v-if="item.problem_count" color="geekblue" size="small">
+                    {{ item.problem_count }} 题
+                  </Tag>
+                </div>
+              </div>
+              <div v-if="item.snippet" class="snippet-info">
+                {{ item.snippet }}
               </div>
               <div v-else class="no-problem">
                 {{ $t('m.No_Problem_Yet') }}
@@ -262,7 +271,7 @@ export default {
       const params = { target_topic: this.targetTopic }
       if (this.startTopic) params.start_topic = this.startTopic
       api.getLearningPath(params).then(res => {
-        this.pathData = res.data.data || res.data
+        this.pathData = res.data
         this.loading = false
       }).catch(err => {
         this.loading = false
@@ -279,6 +288,16 @@ export default {
     getDifficultyColor (difficulty) {
       const map = { 'Low': 'success', 'Mid': 'warning', 'High': 'error' }
       return map[difficulty] || 'default'
+    },
+    getDifficultyColorNumeric (diff) {
+      if (diff <= 2.5) return 'success'
+      if (diff <= 3.5) return 'warning'
+      return 'error'
+    },
+    formatDifficulty (diff) {
+      if (diff <= 2.5) return 'Easy'
+      if (diff <= 3.5) return 'Mid'
+      return 'Hard'
     }
   }
 }
@@ -527,6 +546,12 @@ export default {
       color: #515a6e;
       font-size: 14px;
     }
+
+    .goal-label {
+      color: #515a6e;
+      font-size: 14px;
+      margin-left: 16px;
+    }
   }
 
   .path-timeline {
@@ -584,17 +609,23 @@ export default {
         }
       }
 
-      .problem-info {
+      .node-meta {
+        display: flex;
+        gap: 6px;
         padding-left: 32px;
+        flex-wrap: wrap;
+      }
 
-        .problem-link {
-          color: #2d8cf0;
-          font-size: 14px;
-
-          &:hover {
-            text-decoration: underline;
-          }
-        }
+      .snippet-info {
+        padding-left: 32px;
+        color: #515a6e;
+        font-size: 13px;
+        line-height: 1.6;
+        margin-top: 8px;
+        padding: 10px 16px;
+        background: rgba(45, 140, 240, 0.05);
+        border-radius: 6px;
+        border-left: 3px solid #2d8cf0;
       }
 
       .no-problem {

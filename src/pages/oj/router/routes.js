@@ -210,6 +210,14 @@ export default [
     component: () => import('@/pages/oj/views/recommend/ImmersionPractice.vue')
   },
 
+  // profile onboarding
+  {
+    path: '/profile-onboarding',
+    name: 'profile-onboarding',
+    meta: {requiresAuth: true, title: 'Profile Onboarding'},
+    component: () => import('@/pages/oj/views/recommend/ProfileOnboarding.vue')
+  },
+
   // lesson plans
   {
     path: '/lesson-plan',

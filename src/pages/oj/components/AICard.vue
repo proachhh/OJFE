@@ -97,7 +97,8 @@ export default {
       try {
         const res = await this.fetchFn()
         const data = res.data || res
-        this.result = data.analysis || data.hint || data.advice || data.review || data.summary || ''
+        const agentResult = data.data || data
+        this.result = agentResult.analysis || agentResult.hint || agentResult.advice || agentResult.review || agentResult.summary || agentResult.message || ''
         if (!this.result) {
           this.result = 'AI 暂未返回内容，请重试'
         }

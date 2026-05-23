@@ -270,7 +270,7 @@ export default {
     })
   },
   getLearningPath (params) {
-    return ajax('learning-path', 'get', { params })
+    return ajax('agent/learning-path/', 'get', { params })
   },
   getLearningStats () {
     return ajax('learning-stats', 'get')
@@ -285,10 +285,10 @@ export default {
     return ajax('lesson_plan', 'get', { params: { id } })
   },
   analyzeError (data) {
-    return ajax('spark/analyze-error/', 'post', { data })
+    return ajax('agent/chat/', 'post', { data })
   },
   getProblemHint (data) {
-    return ajax('spark/problem-hint/', 'post', { data })
+    return ajax('agent/chat/', 'post', { data })
   },
   getLearningAdvice () {
     return ajax('spark/learning-advice/', 'get')
@@ -300,7 +300,7 @@ export default {
     return ajax('spark/topic-summary/', 'post', { data })
   },
   getImmersionRecommendations (params = {}) {
-    return ajax('immersion/recommendations/', 'get', { params })
+    return ajax('agent/immersion/', 'get', { params })
   }
 }
 

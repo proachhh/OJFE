@@ -291,7 +291,7 @@ export default {
     },
     fetchRecommendations() {
       const offset = (this.recommendPage - 1) * this.recommendLimit
-      axios.get('/recommend/', { params: { limit: this.recommendLimit, offset } })
+      axios.get('/agent/recommend/', { params: { limit: this.recommendLimit, offset } })
         .then(res => {
           this.recommendations = res.data.recommendations
           this.recommendTotal = res.data.total

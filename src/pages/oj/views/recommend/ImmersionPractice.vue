@@ -156,8 +156,8 @@ export default {
     fetchRecommendations () {
       this.loading = true
       api.getImmersionRecommendations().then(res => {
-        this.problemList = res.data.data.problems || []
-        this.currentIndex = res.data.data.current_index || 0
+        this.problemList = res.data.problems || []
+        this.currentIndex = res.data.current_index || 0
         this.progressMap = {}
         this.loading = false
       }).catch(() => {

@@ -34,6 +34,14 @@
           <Icon type="ios-flash"></Icon>
           {{$t('m.Immersive_Practice')}}
         </Menu-item>
+        <Menu-item name="/chat">
+          <Icon type="ios-chatbubbles"></Icon>
+          {{$t('m.AI_Chat')}}
+        </Menu-item>
+        <Menu-item name="/profile-onboarding">
+          <Icon type="ios-person"></Icon>
+          {{$t('m.Profile_Onboarding')}}
+        </Menu-item>
         <!-- <Submenu name="rank">
           <template slot="title">
             <Icon type="podium"></Icon>
@@ -161,6 +169,7 @@
         if (path.startsWith('/lesson-plan')) return '/lesson-plan'
         if (path.startsWith('/chat')) return '/chat'
         if (path.startsWith('/immersion')) return '/immersion'
+        if (path.startsWith('/profile-onboarding')) return '/profile-onboarding'
         return '/' + path.split('/')[1]
       },
       isHome () {

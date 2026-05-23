@@ -364,25 +364,93 @@ export default {
       this.scrollToBottom();
 
       try {
-        const response = await fetch('/api/spark/chat/', {
+        const response = await fetch('/api/agent/chat/', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message: text })
         });
-        const data = await response.json();
+        const result = await response.json();
         
         this.messages.splice(loadingIndex, 1);
 
-        if (data.answer) {
-          this.messages.push({ 
-            role: 'assistant', 
-            content: data.answer,
-            time: this.getCurrentTime()
-          });
+        if (result.success && result.data) {
+          const agentData = result.data
+          const intent = agentData.intent
+          
+          if (intent === 'profile_onboarding') {
+            this.messages.push({ 
+              role: 'assistant', 
+              content: `**${agentData.question}**\n\n*(第 ${agentData.step}/${agentData.total_steps} 步)*\n\n你可以在这里继续回答，或者前往 [学习画像](/profile-onboarding) 页面完成引导。`,
+              time: this.getCurrentTime()
+            });
+          } else if (intent === 'resource' && agentData.content) {
+            let displayContent = ''
+            if (agentData.display_type === 'markdown' || agentData.display_type === 'lecture') {
+              displayContent = agentData.content
+            } else if (agentData.display_type === 'exercises') {
+              displayContent = `**练习题 — ${agentData.topic}**\n\n`
+              const ex = agentData.content
+              if (ex.choice && ex.choice.stem) {
+                displayContent += `**选择题：** ${ex.choice.stem}\n`
+                displayContent += ex.choice.options.map((o, i) => `  ${o}`).join('\n') + '\n'
+                displayContent += `\n> 答案：${ex.choice.answer}  \n> ${ex.choice.explanation}\n`
+              }
+              if (ex.fill_blank && ex.fill_blank.stem) {
+                displayContent += `\n**填空题：** ${ex.fill_blank.stem}\n> 答案：${ex.fill_blank.answers.join(' / ')}\n`
+              }
+              if (ex.true_false && ex.true_false.stem) {
+                displayContent += `\n**判断题：** ${ex.true_false.stem}\n> 答案：${ex.true_false.answer ? '正确' : '错误'}\n`
+              }
+              if (ex.short_answer && ex.short_answer.stem) {
+                displayContent += `\n**简答题：** ${ex.short_answer.stem}\n> ${ex.short_answer.reference_answer}\n`
+              }
+            } else if (agentData.display_type === 'reading_list') {
+              const rd = agentData.content
+              displayContent = `**推荐阅读清单**\n\n`
+              if (rd.readings) {
+                rd.readings.forEach((r, i) => {
+                  displayContent += `**${i + 1}. ${r.title}**\n- ${r.reason}\n- ${r.summary}\n\n`
+                })
+              }
+            } else if (agentData.display_type === 'mindmap' || agentData.display_type === 'mermaid') {
+              displayContent = '```mermaid\n' + agentData.content + '\n```'
+            } else if (agentData.display_type === 'code_example') {
+              displayContent = agentData.content
+            } else if (typeof agentData.content === 'string') {
+              displayContent = agentData.content
+            } else {
+              displayContent = JSON.stringify(agentData.content, null, 2)
+            }
+            this.messages.push({ role: 'assistant', content: displayContent, time: this.getCurrentTime() })
+          } else if (intent === 'recommend' && agentData.recommendations) {
+            let recText = '**为您推荐以下题目：**\n\n'
+            agentData.recommendations.slice(0, 5).forEach((r, i) => {
+              recText += `**${i + 1}.** [${r.title}](/problem/${r._id}) ` + `\`${r.difficulty}\` — ${r.reason}\n`
+            })
+            this.messages.push({ role: 'assistant', content: recText, time: this.getCurrentTime() })
+          } else if (intent === 'learning_path' && agentData.path_plan) {
+            let pathText = `**学习路径：${agentData.start} → ${agentData.goal}**` +
+              (agentData.fallback ? ' *(备选路径)*' : '') + '\n\n'
+            agentData.path_plan.forEach((n, i) => {
+              const diffLabel = n.difficulty <= 2.5 ? 'Easy' : n.difficulty <= 3.5 ? 'Mid' : 'Hard'
+              pathText += `**${i + 1}.** ${n.name} — 难度: ${diffLabel}, 重要度: ${n.importance.toFixed(0)}, ${n.problem_count}题\n`
+            })
+            this.messages.push({ role: 'assistant', content: pathText, time: this.getCurrentTime() })
+          } else if (intent === 'hint' && agentData.hint) {
+            this.messages.push({ role: 'assistant', content: agentData.hint, time: this.getCurrentTime() })
+          } else if (intent === 'analyze_error' && agentData.analysis) {
+            this.messages.push({ role: 'assistant', content: agentData.analysis, time: this.getCurrentTime() })
+          } else if (intent === 'general') {
+            this.messages.push({ role: 'assistant', content: '抱歉，我没太明白你的意思。你可以试试问我：推荐题目、规划学习路径、生成练习题、解题提示、或者分析错误。', time: this.getCurrentTime() })
+          } else if (agentData.message) {
+            this.messages.push({ role: 'assistant', content: agentData.message, time: this.getCurrentTime() })
+          } else {
+            this.messages.push({ role: 'assistant', content: JSON.stringify(agentData, null, 2), time: this.getCurrentTime() })
+          }
         } else {
           this.messages.push({ 
             role: 'assistant', 
-            content: '抱歉，我暂时无法回答。请稍后再试。',
+            content: (result.data && result.data.error) || result.error || '抱歉，我暂时无法回答。请稍后再试。',
             time: this.getCurrentTime()
           });
         }

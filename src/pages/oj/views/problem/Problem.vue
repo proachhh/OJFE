@@ -292,7 +292,7 @@
       fetchHint () {
         return api.getProblemHint({
           problem_id: this.problemID,
-          hint_level: 1
+          message: `题目《${this.problem.title || ''}》(ID: ${this.problemID}) 怎么做？请给我解题提示。`
         })
       },
       init () {

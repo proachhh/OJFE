@@ -445,7 +445,7 @@ export default {
       this.scrollToBottom()
 
       try {
-        const response = await fetch('/api/spark/chat/', {
+        const response = await fetch('/api/agent/chat/', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message: text, model: this.aiModel })
@@ -454,8 +454,15 @@ export default {
         this.aiMessages.splice(this.aiMessages.length - 1, 1)
 
         if (response.ok) {
-          const data = await response.json()
-          this.aiMessages.push({ role: 'assistant', content: data.answer || data.reply || data.message || this.$t('m.No_Reply') })
+          const result = await response.json()
+          const agentData = result.data || result
+          let content
+          if (agentData.intent === 'general') {
+            content = '抱歉，我没太明白你的意思。你可以试试问我：推荐题目、规划学习路径、生成练习题、解题提示、或者分析错误。'
+          } else {
+            content = agentData.answer || agentData.message || agentData.analysis || agentData.hint || JSON.stringify(agentData)
+          }
+          this.aiMessages.push({ role: 'assistant', content: content || this.$t('m.No_Reply') })
         } else {
           this.aiMessages.push({ role: 'assistant', content: this.$t('m.Request_Failed') })
         }

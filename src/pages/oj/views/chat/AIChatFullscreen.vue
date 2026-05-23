@@ -186,7 +186,7 @@ export default {
       this.scrollToBottom()
 
       try {
-        const response = await fetch('/api/spark/chat/', {
+        const response = await fetch('/api/agent/chat/', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message: text, model: this.aiModel })
@@ -195,10 +195,44 @@ export default {
         this.messages.splice(this.messages.length - 1, 1)
 
         if (response.ok) {
-          const data = await response.json()
+          const result = await response.json()
+          const agentData = result.data || result
+          const intent = agentData.intent
+          let content = ''
+
+          if (intent === 'resource' && agentData.content) {
+            if (typeof agentData.content === 'string') {
+              content = agentData.content
+            } else {
+              content = JSON.stringify(agentData.content, null, 2)
+            }
+          } else if (intent === 'recommend' && agentData.recommendations) {
+            content = '**为您推荐以下题目：**\n\n'
+            agentData.recommendations.slice(0, 5).forEach((r, i) => {
+              content += `**${i + 1}.** [${r.title}](/problem/${r._id}) ` + `\`${r.difficulty}\` — ${r.reason}\n`
+            })
+          } else if (intent === 'learning_path' && agentData.path_plan) {
+            content = `**学习路径：${agentData.start} → ${agentData.goal}**` +
+              (agentData.fallback ? ' *(备选路径)*' : '') + '\n\n'
+            agentData.path_plan.forEach((n, i) => {
+              const diffLabel = n.difficulty <= 2.5 ? 'Easy' : n.difficulty <= 3.5 ? 'Mid' : 'Hard'
+              content += `**${i + 1}.** ${n.name} — 难度: ${diffLabel}\n`
+            })
+          } else if (intent === 'hint' && agentData.hint) {
+            content = agentData.hint
+          } else if (intent === 'analyze_error' && agentData.analysis) {
+            content = agentData.analysis
+          } else if (intent === 'general') {
+            content = '抱歉，我没太明白你的意思。你可以试试问我：推荐题目、规划学习路径、生成练习题、解题提示、或者分析错误。'
+          } else if (agentData.message) {
+            content = agentData.message
+          } else {
+            content = agentData.answer || agentData.reply || JSON.stringify(agentData, null, 2)
+          }
+
           this.messages.push({ 
             role: 'assistant', 
-            content: data.answer || data.reply || data.message || this.$t('m.No_Reply'),
+            content: content || this.$t('m.No_Reply'),
             time: this.getCurrentTime()
           })
         } else {
