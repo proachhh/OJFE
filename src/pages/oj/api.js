@@ -301,6 +301,12 @@ export default {
   },
   getImmersionRecommendations (params = {}) {
     return ajax('agent/immersion/', 'get', { params })
+  },
+  getRecommendations (params = {}) {
+    return ajax('agent/recommend/', 'get', { params })
+  },
+  getProfile () {
+    return ajax('agent/profile/', 'get')
   }
 }
 

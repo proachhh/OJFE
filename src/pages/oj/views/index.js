@@ -19,19 +19,13 @@ const ResetPassword = () => import(/* webpackChunkName: "password" */ '@oj/views
 
 const Problem = () => import(/* webpackChunkName: "Problem" */ '@oj/views/problem/Problem.vue')
 
-// 使用动态导入方式加载Chat组件
-// 这是一种代码分割的技术，可以实现组件的懒加载
-// 当路由导航到需要该组件的页面时，才会加载对应的JavaScript代码
-const Chat = () => import(/* webpackChunkName: "chat" */ '@oj/views/chat/Chat.vue')
-
 export {
   Home, NotFound, Announcements,
   Logout, UserHome, About, FAQ,
   ProblemList, Problem,
   ACMRank, OIRank,
   SubmissionList, SubmissionDetails,
-  ApplyResetPassword, ResetPassword,
-  Chat
+  ApplyResetPassword, ResetPassword
 }
 /* 组件导出分为两类, 一类常用的直接导出，另一类诸如Login, Logout等用懒加载,懒加载不在此处导出
  *   在对应的route内加载

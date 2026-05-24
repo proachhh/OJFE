@@ -3,103 +3,111 @@
     <div v-if="loading" class="loading-state">
       <Spin size="large">
         <Icon type="ios-loading" size="48" class="spin-icon"></Icon>
-        <div>正在为你挑选题目...</div>
+        <div>{{ $t('m.Immersion_Loading') }}</div>
       </Spin>
     </div>
 
     <div v-else-if="!problemList.length" class="empty-state">
       <Icon type="ios-sad-outline" size="64" />
-      <p>暂无推荐题目，请先做一些题目吧</p>
+      <p>{{ $t('m.No_Recommendations_Immersion') }}</p>
       <Button type="primary" @click="goProblemList">去题目列表</Button>
+      <Button @click="refetch" style="margin-left: 8px">重新加载</Button>
     </div>
 
-    <div v-else class="practice-area">
-      <div class="progress-indicator">
-        <span class="current-pos">{{ currentIndex + 1 }} / {{ problemList.length }}</span>
-        <Progress :percent="progressPercent" :stroke-width="6" :show-text="false" />
-      </div>
-
-      <div class="problem-detail">
-        <div class="problem-header">
-          <h2 class="problem-title">
-            <span class="display-id">{{ currentProblem._id }}. </span>
-            {{ currentProblem.title }}
-          </h2>
-          <div class="problem-meta">
-            <Tag v-for="tag in currentProblem.tags" :key="tag" color="blue">{{ tag }}</Tag>
-            <Tag :color="difficultyColor">{{ currentProblem.difficulty }}</Tag>
-            <span class="meta-divider">|</span>
-            <span class="meta-text">{{ currentProblem.time_limit }}ms / {{ currentProblem.memory_limit }}MB</span>
-            <span class="meta-divider">|</span>
-            <span class="meta-text">通过 {{ currentProblem.accepted_number }}</span>
+    <div v-else class="flex-container">
+      <div id="problem-main">
+        <Panel padding="40" shadow>
+          <div slot="title" class="panel-title-row">
+            <span>{{ currentProblem.title }}</span>
+            <span class="diff-tag" :class="diffClass">{{ diffLabel }}</span>
           </div>
 
-          <div class="reason-badge">
-            <Icon type="ios-bulb-outline" size="16" />
-            {{ currentProblem.reason }}
-          </div>
-        </div>
-
-        <Divider />
-
-        <div class="problem-body">
-          <div class="section">
-            <h3>问题描述</h3>
-            <div class="markdown-content" v-katex v-html="descriptionHTML"></div>
+          <div v-if="currentProblem.reason" class="reason-note">
+            <span class="rn-dot"></span>
+            <span>{{ currentProblem.reason }}</span>
           </div>
 
-          <div class="section">
-            <h3>输入描述</h3>
-            <div class="markdown-content" v-katex v-html="inputDescHTML"></div>
+          <div class="meta-row">
+            <Tag v-for="tag in currentProblem.tags" :key="tag" color="blue" size="small">{{ tag }}</Tag>
+            <span class="meta-text">时限: {{ currentProblem.time_limit || 1000 }}ms</span>
+            <span class="meta-text">内存: {{ currentProblem.memory_limit || 256 }}MB</span>
+            <span class="meta-text">通过: {{ currentProblem.accepted_number || 0 }}</span>
           </div>
 
-          <div class="section">
-            <h3>输出描述</h3>
-            <div class="markdown-content" v-katex v-html="outputDescHTML"></div>
-          </div>
+          <div id="problem-content" class="markdown-body" v-katex>
+            <p class="title">{{ $t('m.Description') }}</p>
+            <p class="content" v-html="currentProblem.description"></p>
 
-          <div class="section" v-if="currentProblem.samples && currentProblem.samples.length">
-            <h3>样例</h3>
-            <div v-for="(sample, idx) in currentProblem.samples" :key="idx" class="sample-block">
-              <div class="sample-item">
-                <div class="sample-label">输入 #{{ idx + 1 }}</div>
-                <pre>{{ sample.input }}</pre>
-              </div>
-              <div class="sample-item">
-                <div class="sample-label">输出 #{{ idx + 1 }}</div>
-                <pre>{{ sample.output }}</pre>
+            <p class="title">{{ $t('m.Input') }}</p>
+            <p class="content" v-html="currentProblem.input_description"></p>
+
+            <p class="title">{{ $t('m.Output') }}</p>
+            <p class="content" v-html="currentProblem.output_description"></p>
+
+            <div v-for="(sample, index) in currentProblem.samples" :key="index">
+              <div class="sample">
+                <div class="sample-input">
+                  <p class="title">{{ $t('m.Sample_Input') }} {{ index + 1 }}</p>
+                  <pre>{{ sample.input }}</pre>
+                </div>
+                <div class="sample-output">
+                  <p class="title">{{ $t('m.Sample_Output') }} {{ index + 1 }}</p>
+                  <pre>{{ sample.output }}</pre>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      <div class="nav-footer">
-        <div class="nav-buttons">
-          <Button type="primary" ghost size="large" @click="gotoDetail" style="margin-right: 16px">
-            <Icon type="ios-code-working" />
-            开始编程
+          <Divider />
+
+          <div class="code-section">
+            <div class="code-header">
+              <span class="code-label">语言:</span>
+              <Select v-model="language" size="small" style="width: 120px">
+                <Option value="C++">C++</Option>
+                <Option value="C">C</Option>
+                <Option value="Java">Java</Option>
+                <Option value="Python">Python</Option>
+              </Select>
+              <span class="code-label" style="margin-left: 16px">主题:</span>
+              <Select v-model="theme" size="small" style="width: 120px">
+                <Option value="monokai">Monokai</Option>
+                <Option value="solarized">Solarized</Option>
+                <Option value="material">Material</Option>
+              </Select>
+            </div>
+            <codemirror v-model="code" :options="editorOptions" class="code-editor" />
+            <div class="submit-row">
+              <div class="submit-status" v-if="submitStatus">
+                <Tag :color="submitStatusColor">{{ submitStatus }}</Tag>
+              </div>
+              <Button type="warning" :loading="submitting" @click="submitCode" :disabled="!code.trim()">
+                <Icon type="edit" /> 提交
+              </Button>
+            </div>
+          </div>
+        </Panel>
+
+        <div class="nav-bottom">
+          <Button @click="prevProblem" :disabled="currentIndex <= 0">
+            <Icon type="ios-arrow-back" /> 上一题
           </Button>
-
-          <Button size="large" @click="handleSkip" :disabled="currentIndex >= problemList.length - 1">
-            下一题
-            <Icon type="ios-arrow-forward" />
+          <div class="nav-center">
+            <div class="dot-nav">
+              <span
+                v-for="(p, idx) in problemList"
+                :key="p._id"
+                class="dot"
+                :class="{ active: idx === currentIndex }"
+                @click="jumpTo(idx)"
+                :title="p._id + '. ' + p.title"
+              ></span>
+            </div>
+            <span class="progress-text">{{ currentIndex + 1 }} / {{ problemList.length }}</span>
+          </div>
+          <Button @click="nextProblem" :disabled="currentIndex >= problemList.length - 1">
+            下一题 <Icon type="ios-arrow-forward" />
           </Button>
-        </div>
-
-        <div class="nav-dots">
-          <span
-            v-for="(p, idx) in problemList"
-            :key="p._id"
-            class="dot"
-            :class="{
-              active: idx === currentIndex,
-              'in-progress': progressMap[idx] === 'in_progress',
-              done: progressMap[idx] === 'done'
-            }"
-            @click="jumpTo(idx)"
-            :title="p._id + '. ' + p.title"
-          ></span>
         </div>
       </div>
     </div>
@@ -109,15 +117,41 @@
 <script>
 import api from '@oj/api'
 import { mapGetters } from 'vuex'
+import { codemirror } from 'vue-codemirror-lite'
+import 'codemirror/theme/monokai.css'
+import 'codemirror/theme/solarized.css'
+import 'codemirror/theme/material.css'
+import 'codemirror/mode/clike/clike.js'
+import 'codemirror/mode/python/python.js'
+import 'codemirror/mode/javascript/javascript.js'
+
+const DEFAULT_CODE = {
+  'C++': '#include <iostream>\nusing namespace std;\n\nint main() {\n    \n    return 0;\n}\n',
+  'C': '#include <stdio.h>\n\nint main() {\n    \n    return 0;\n}\n',
+  'Java': 'public class Main {\n    public static void main(String[] args) {\n        \n    }\n}\n',
+  'Python': '# Write your code here\n'
+}
+
+const MODE_MAP = {
+  'C++': 'text/x-csrc',
+  'C': 'text/x-csrc',
+  'Java': 'text/x-java',
+  'Python': 'text/x-python'
+}
 
 export default {
   name: 'ImmersionPractice',
+  components: { codemirror },
   data () {
     return {
       loading: true,
       problemList: [],
       currentIndex: 0,
-      progressMap: {}
+      code: '',
+      language: 'C++',
+      theme: 'monokai',
+      submitting: false,
+      submitStatus: ''
     }
   },
   computed: {
@@ -125,82 +159,145 @@ export default {
     currentProblem () {
       return this.problemList[this.currentIndex] || {}
     },
-    progressPercent () {
-      if (!this.problemList.length) return 0
-      return Math.round(((this.currentIndex + 1) / this.problemList.length) * 100)
-    },
-    descriptionHTML () {
-      return this.renderMarkdown(this.currentProblem.description || '')
-    },
-    inputDescHTML () {
-      return this.renderMarkdown(this.currentProblem.input_description || '')
-    },
-    outputDescHTML () {
-      return this.renderMarkdown(this.currentProblem.output_description || '')
-    },
-    difficultyColor () {
+    diffLabel () {
       const d = this.currentProblem.difficulty
-      if (d === 'Low') return 'green'
-      if (d === 'Mid') return 'orange'
-      return 'red'
+      if (typeof d === 'number') {
+        if (d <= 1) return '简单'
+        if (d <= 2) return '普通'
+        if (d <= 3) return '中等'
+        if (d <= 4) return '较难'
+        return '困难'
+      }
+      return String(d || '未知')
+    },
+    diffClass () {
+      const d = this.currentProblem.difficulty
+      if (typeof d === 'number') {
+        if (d <= 1) return 'easy'
+        if (d <= 2) return 'easy'
+        if (d <= 3) return 'mid'
+        return 'hard'
+      }
+      if (d === 'Low') return 'easy'
+      if (d === 'Mid') return 'mid'
+      return 'hard'
+    },
+    tagColor () {
+      const d = this.currentProblem.difficulty
+      if (typeof d === 'number') {
+        if (d <= 1) return 'success'
+        if (d <= 2) return 'success'
+        if (d <= 3) return 'warning'
+        return 'error'
+      }
+      if (d === 'Low') return 'success'
+      if (d === 'Mid') return 'warning'
+      return 'error'
+    },
+    submitStatusColor () {
+      if (!this.submitStatus) return 'default'
+      return this.submitStatus.includes('成功') ? 'success' : 'error'
+    },
+    editorOptions () {
+      return {
+        tabSize: 4,
+        mode: MODE_MAP[this.language] || 'text/x-csrc',
+        theme: this.theme,
+        lineNumbers: true,
+        line: true,
+        lineWrapping: true,
+        styleSelectedText: true,
+        autofocus: false
+      }
+    }
+  },
+  watch: {
+    language (val) {
+      if (!this.code || this.code === DEFAULT_CODE[this._prevLang || '']) {
+        this.code = DEFAULT_CODE[val] || ''
+      }
+      this._prevLang = val
+    },
+    currentIndex () {
+      this.code = DEFAULT_CODE[this.language] || ''
+      this.submitStatus = ''
     }
   },
   created () {
+    this._prevLang = this.language
+    this.code = DEFAULT_CODE[this.language] || ''
     if (!this.isAuthenticated) {
       this.$router.push({name: 'home'})
       return
     }
-    this.fetchRecommendations()
+    this.loadProblems()
   },
   methods: {
-    fetchRecommendations () {
+    loadProblems () {
       this.loading = true
-      api.getImmersionRecommendations().then(res => {
-        this.problemList = res.data.problems || []
-        this.currentIndex = res.data.current_index || 0
-        this.progressMap = {}
-        this.loading = false
-      }).catch(() => {
-        this.loading = false
-      })
+      return api.getImmersionRecommendations({ limit: 15, offset: 0 })
+        .then(res => {
+          const data = res.data || res || {}
+          this.problemList = data.problems || data.recommendations || []
+          this.loading = false
+        })
+        .catch(() => {
+          this.loading = false
+        })
+    },
+    refetch () {
+      this.currentIndex = 0
+      this.loadProblems()
+    },
+    prevProblem () {
+      if (this.currentIndex > 0) {
+        this.currentIndex--
+      }
+    },
+    nextProblem () {
+      if (this.currentIndex < this.problemList.length - 1) {
+        this.currentIndex++
+      }
     },
     jumpTo (idx) {
       if (idx >= 0 && idx < this.problemList.length) {
         this.currentIndex = idx
-        window.scrollTo({top: 0, behavior: 'smooth'})
       }
     },
-    gotoDetail () {
+    async submitCode () {
+      if (!this.code.trim()) {
+        this.$Message.error('代码不能为空')
+        return
+      }
       const problem = this.currentProblem
-      if (problem && problem._id) {
-        this.$router.push({name: 'problem-details', params: {problemID: problem._id}})
+      if (!problem || !problem.id) {
+        this.$Message.error('题目信息不完整')
+        return
       }
-    },
-    handleSkip () {
-      if (this.currentIndex < this.problemList.length - 1) {
-        this.currentIndex++
-        window.scrollTo({top: 0, behavior: 'smooth'})
+      this.submitting = true
+      this.submitStatus = ''
+      try {
+        const res = await api.submitCode({
+          problem_id: problem.id,
+          language: this.language,
+          code: this.code
+        })
+        if (res.data && res.data.data && res.data.data.submission_id) {
+          this.submitStatus = '提交成功！'
+        } else {
+          this.submitStatus = '提交成功'
+        }
+        this.$Message.success('代码提交成功')
+      } catch (e) {
+        const errMsg = (e.response && e.response.data && e.response.data.error) || '提交失败'
+        this.submitStatus = '提交失败：' + errMsg
+        this.$Message.error(errMsg)
+      } finally {
+        this.submitting = false
       }
     },
     goProblemList () {
       this.$router.push({name: 'problem-list'})
-    },
-    renderMarkdown (text) {
-      if (!text) return ''
-      if (typeof this.$markdownRender === 'function') {
-        return this.$markdownRender(text)
-      }
-      return text
-    }
-  },
-  watch: {
-    currentIndex (newVal, oldVal) {
-      if (oldVal !== undefined && oldVal !== newVal) {
-        this.progressMap = {
-          ...this.progressMap,
-          [oldVal]: 'in_progress'
-        }
-      }
     }
   }
 }
@@ -208,217 +305,183 @@ export default {
 
 <style lang="less" scoped>
 .immersion-container {
-  min-height: 100vh;
-  background: #0a0e27;
-  padding: 100px 0 120px 0;
-}
-
-.loading-state, .empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 60vh;
-  color: #8892b0;
-
-  .spin-icon {
-    animation: spin 1s linear infinite;
-    margin-bottom: 16px;
-  }
-
-  p {
-    margin: 16px 0;
-    font-size: 15px;
-  }
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.practice-area {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 0 24px;
-}
-
-.progress-indicator {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 24px;
-
-  .current-pos {
-    color: #ccd6f6;
-    font-size: 14px;
-    font-weight: 600;
-    white-space: nowrap;
-    min-width: 80px;
-  }
-}
-
-.problem-detail {
-  background: #112240;
-  border: 1px solid #233554;
-  border-radius: 12px;
-  padding: 32px;
-  margin-bottom: 24px;
-}
-
-.problem-header {
-  .problem-title {
-    color: #e6f1ff;
-    font-size: 22px;
-    font-weight: 700;
-    margin-bottom: 12px;
-
-    .display-id {
-      color: #64ffda;
-    }
-  }
-
-  .problem-meta {
+  .loading-state, .empty-state {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 14px;
-
-    .meta-divider {
-      color: #495670;
-    }
-    .meta-text {
-      color: #8892b0;
-      font-size: 13px;
-    }
-  }
-
-  .reason-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(100, 255, 218, 0.1);
-    border: 1px solid rgba(100, 255, 218, 0.3);
-    border-radius: 20px;
-    padding: 6px 16px;
-    color: #64ffda;
-    font-size: 13px;
-  }
-}
-
-.problem-body {
-  .section {
-    margin-bottom: 24px;
-
-    h3 {
-      color: #ccd6f6;
-      font-size: 16px;
-      font-weight: 600;
-      margin-bottom: 10px;
-      padding-left: 10px;
-      border-left: 3px solid #64ffda;
-    }
-  }
-
-  .markdown-content {
-    color: #8892b0;
-    line-height: 1.8;
-    font-size: 14px;
-  }
-
-  .sample-block {
-    display: flex;
-    gap: 16px;
-    margin-bottom: 12px;
-
-    .sample-item {
-      flex: 1;
-      background: #0a192f;
-      border: 1px solid #233554;
-      border-radius: 8px;
-      overflow: hidden;
-
-      .sample-label {
-        background: #1d2d50;
-        color: #ccd6f6;
-        padding: 6px 14px;
-        font-size: 12px;
-        font-weight: 600;
-      }
-
-      pre {
-        color: #a8b2d1;
-        padding: 14px;
-        margin: 0;
-        font-size: 13px;
-        font-family: 'Fira Code', 'Menlo', monospace;
-        white-space: pre-wrap;
-      }
-    }
-  }
-}
-
-.nav-footer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: #0a192f;
-  border-top: 1px solid #233554;
-  padding: 16px 24px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  z-index: 100;
-
-  .nav-buttons {
-    display: flex;
-    align-items: center;
-  }
-
-  .nav-dots {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
     justify-content: center;
-    max-width: 800px;
-
-    .dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: #233554;
-      cursor: pointer;
-      transition: all 0.2s;
-
-      &:hover {
-        background: #64ffda;
-      }
-
-      &.active {
-        background: #64ffda;
-        box-shadow: 0 0 8px rgba(100, 255, 218, 0.5);
-      }
-
-      &.in-progress {
-        background: #ffd700;
-      }
-
-      &.done {
-        background: #4caf50;
-      }
-    }
+    min-height: 60vh;
+    color: #808695;
+    .spin-icon { animation: spin 1s linear infinite; margin-bottom: 16px; }
+    p { margin: 16px 0; font-size: 17px; }
   }
 }
 
-/deep/ .ivu-divider {
-  background: #233554;
-  margin: 20px 0;
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+.flex-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px 20px 60px;
 }
 
-/deep/ .ivu-progress-bg {
-  background: linear-gradient(90deg, #64ffda, #4fc3f7);
+#problem-main {
+  .panel-title-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 22px;
+    font-weight: 600;
+
+    .diff-tag {
+      display: inline-block;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 3px 12px;
+      border-radius: 4px;
+      line-height: 22px;
+
+      &.easy { background: #19be6b; color: #fff; }
+      &.mid { background: #f90; color: #fff; }
+      &.hard { background: #ed4014; color: #fff; }
+    }
+  }
+
+  .reason-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    color: #515a6e;
+    font-size: 15px;
+    line-height: 1.7;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border-left: 3px solid #2d8cf0;
+    .rn-dot {
+      flex-shrink: 0;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #2d8cf0;
+      margin-top: 8px;
+    }
+  }
+
+  .meta-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+    .meta-text {
+      color: #808695;
+      font-size: 13px;
+      margin-left: 8px;
+    }
+  }
+
+  #problem-content {
+    .title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #17233d;
+      margin: 24px 0 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #e8eaec;
+    }
+    .content {
+      font-size: 16px;
+      line-height: 1.9;
+      color: #515a6e;
+      /deep/ p { margin: 8px 0; }
+    }
+    .sample {
+      display: flex;
+      gap: 16px;
+      margin-top: 8px;
+      .sample-input, .sample-output {
+        flex: 1;
+        pre {
+          background: #f5f7fa;
+          border: 1px solid #e8eaec;
+          border-radius: 6px;
+          padding: 12px 16px;
+          font-size: 14px;
+          line-height: 1.7;
+          color: #333;
+          white-space: pre-wrap;
+          word-break: break-all;
+          margin: 0;
+        }
+      }
+    }
+  }
+
+  .code-section {
+    .code-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      .code-label { font-size: 14px; color: #515a6e; }
+    }
+    .code-editor {
+      /deep/ .CodeMirror { height: 320px; border-radius: 6px; border: 1px solid #e8eaec; font-size: 15px; }
+    }
+    .submit-row {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 12px;
+      .submit-status { font-size: 14px; }
+    }
+  }
+
+  .nav-bottom {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 20px;
+    padding: 14px 20px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+
+    .nav-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dot-nav {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
+
+      .dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #e8eaec;
+        cursor: pointer;
+        transition: all 0.2s;
+        &:hover { background: #2d8cf0; opacity: 0.6; }
+        &.active { background: #2d8cf0; transform: scale(1.3); }
+      }
+    }
+
+    .progress-text {
+      font-size: 15px;
+      font-weight: 600;
+      color: #17233d;
+    }
+  }
 }
 </style>

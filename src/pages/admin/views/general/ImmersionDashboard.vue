@@ -1,91 +1,79 @@
 <template>
   <div class="immersion-dashboard" v-loading="loading">
-    <div class="scan-lines"></div>
-    <div class="particles-bg"></div>
 
     <div class="top-bar">
       <div class="brand">
-        <span class="brand-icon">◈</span>
-        <span class="brand-text">NEBULA</span>
-        <span class="brand-sub">DASHBOARD</span>
-      </div>
-      <div class="live-indicator">
-        <span class="live-dot"></span>
-        LIVE
+        <img :src="require('@/assets/logo.png')" class="brand-logo" alt="logo" />
+        <span class="brand-sub">数据看板</span>
       </div>
       <div class="top-bar-time">{{ currentTime }}</div>
     </div>
 
     <div class="dashboard-grid">
-      <div class="grid-cell stat-row">
-        <div class="stat-card" v-for="(card, idx) in statCards" :key="idx" :class="card.glowClass">
-          <div class="stat-icon-wrap" :style="{ borderColor: card.borderColor }">
-            <Icon :type="card.icon" size="28" :color="card.iconColor" />
-          </div>
-          <div class="stat-info">
-            <div class="stat-number" :style="{ color: card.textColor }">
-              <span ref="counters" :data-target="card.value">{{ animatedValues[idx] }}</span>
+      <!-- 第一行：左侧统计卡片（竖向）+ 右侧判题服务器滚动列表 -->
+      <div class="grid-row grid-row--top">
+        <div class="stats-vert">
+          <div class="stat-card" v-for="(card, idx) in statCards" :key="idx" :class="card.glowClass">
+            <div class="stat-icon-wrap" :style="{ borderColor: card.borderColor }">
+              <span class="stat-emoji">{{ card.iconHtml }}</span>
             </div>
-            <div class="stat-label-text">{{ card.label }}</div>
+            <div class="stat-info">
+              <div class="stat-number" :style="{ color: card.textColor }">{{ animatedValues[idx] }}</div>
+              <div class="stat-label-text">{{ card.label }}</div>
+            </div>
           </div>
-          <div class="stat-glow" :style="{ background: card.glowBg }"></div>
+        </div>
+        <div class="judge-panel">
+          <div class="judge-header">
+            <span class="stat-emoji" style="font-size:14px">🖥️</span>
+            <span>判题服务器 {{ judgeServers.length }}</span>
+          </div>
+          <div class="judge-scroll-box" ref="judgeScrollBox">
+            <div class="judge-scroll-track" ref="judgeScrollTrack">
+              <div v-for="s in judgeServers" :key="s.hostname" class="js-card" :class="s.status === 'normal' ? 'js-ok' : 'js-bad'">
+                <div class="js-card-head">
+                  <span class="js-dot"></span>
+                  <span class="js-hostname">{{ s.hostname }}</span>
+                </div>
+                <div class="js-card-body">
+                  <div class="js-row"><span class="js-lbl">IP</span> {{ s.ip }}</div>
+                  <div class="js-row"><span class="js-lbl">版本</span> {{ s.judger_version }}</div>
+                  <div class="js-row"><span class="js-lbl">URL</span> <code>{{ s.service_url }}</code></div>
+                  <div class="js-row"><span class="js-lbl">心跳</span> {{ s.last_heartbeat | localtime }}</div>
+                  <div class="js-row"><span class="js-lbl">创建</span> {{ s.create_time | localtime }}</div>
+                  <div class="js-row"><span class="js-lbl">任务</span> {{ s.task_number }} | CPU {{ s.cpu_core }}核 {{ s.cpu_usage }}% | MEM {{ s.memory_usage }}%</div>
+                </div>
+              </div>
+              <div v-if="!judgeServers.length" class="no-data">暂无</div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="grid-cell chart-cell chart-cell--half">
+      <!-- 4个图表 -->
+      <div class="grid-row grid-row--quad">
         <div class="panel panel-chart">
-          <div class="panel-header">
-            <span class="panel-dot" style="background:#00f0ff;"></span>
-            <span>难度分布</span>
-          </div>
+          <div class="panel-header"><span class="panel-dot c-cyan"></span>难度分布</div>
           <div id="im-difficulty-chart" class="chart-inner"></div>
         </div>
-      </div>
-      <div class="grid-cell chart-cell chart-cell--half">
         <div class="panel panel-chart">
-          <div class="panel-header">
-            <span class="panel-dot" style="background:#ff2d95;"></span>
-            <span>提交结果分布</span>
-          </div>
+          <div class="panel-header"><span class="panel-dot c-pink"></span>提交结果</div>
           <div id="im-result-chart" class="chart-inner"></div>
         </div>
-      </div>
-
-      <div class="grid-cell chart-cell chart-cell--half">
         <div class="panel panel-chart">
-          <div class="panel-header">
-            <span class="panel-dot" style="background:#b829f0;"></span>
-            <span>语言分布</span>
-          </div>
+          <div class="panel-header"><span class="panel-dot c-purple"></span>语言分布</div>
           <div id="im-language-chart" class="chart-inner"></div>
         </div>
-      </div>
-      <div class="grid-cell chart-cell chart-cell--half">
         <div class="panel panel-chart">
-          <div class="panel-header">
-            <span class="panel-dot" style="background:#00ff88;"></span>
-            <span>标签分布 Top 10</span>
-          </div>
+          <div class="panel-header"><span class="panel-dot c-green"></span>标签 Top 10</div>
           <div id="im-tag-chart" class="chart-inner"></div>
         </div>
       </div>
 
-      <div class="grid-cell chart-cell chart-cell--full">
-        <div class="panel panel-chart">
-          <div class="panel-header">
-            <span class="panel-dot" style="background:#ffaa00;"></span>
-            <span>每日提交趋势（最近7天）</span>
-          </div>
-          <div id="im-daily-chart" class="chart-inner-wide"></div>
-        </div>
-      </div>
-
-      <div class="grid-cell stat-inline">
+      <!-- 活跃统计 + 趋势图 -->
+      <div class="grid-row grid-row--mid">
         <div class="panel panel-stat">
-          <div class="panel-header">
-            <span class="panel-dot" style="background:#00f0ff;"></span>
-            <span>活跃统计</span>
-          </div>
+          <div class="panel-header"><span class="panel-dot c-cyan"></span>活跃统计</div>
           <div class="stat-inline-items">
             <div class="inline-stat" v-for="(s, idx) in activityStats" :key="idx">
               <div class="inline-stat-val">{{ s.value }}</div>
@@ -93,74 +81,27 @@
             </div>
           </div>
         </div>
-      </div>
-
-      <div class="grid-cell table-row">
-        <div class="grid-cell table-cell table-cell--half">
-          <div class="panel panel-table">
-            <div class="panel-header">
-              <span class="panel-dot" style="background:#00ff88;"></span>
-              <span>完成率最高 Top 10</span>
-            </div>
-            <div class="mini-table-wrap">
-              <Table :data="mostCompleted" :columns="problemColumns" :key="'i1-'+tableKey" size="small" disabled-hover></Table>
-            </div>
-            <div v-if="!mostCompleted.length" class="no-data">暂无数据</div>
-          </div>
-        </div>
-        <div class="grid-cell table-cell table-cell--half">
-          <div class="panel panel-table">
-            <div class="panel-header">
-              <span class="panel-dot" style="background:#ff2d95;"></span>
-              <span>完成率最低 Top 10</span>
-            </div>
-            <div class="mini-table-wrap">
-              <Table :data="leastCompleted" :columns="problemColumns" :key="'i2-'+tableKey" size="small" disabled-hover></Table>
-            </div>
-            <div v-if="!leastCompleted.length" class="no-data">暂无数据</div>
-          </div>
+        <div class="panel panel-chart">
+          <div class="panel-header"><span class="panel-dot c-orange"></span>每日趋势（7天）</div>
+          <div id="im-daily-chart" class="chart-inner-daily"></div>
         </div>
       </div>
 
-      <div class="grid-cell table-row">
-        <div class="grid-cell table-cell table-cell--half">
-          <div class="panel panel-table">
-            <div class="panel-header">
-              <span class="panel-dot" style="background:#b829f0;"></span>
-              <span>用户排名 Top 20</span>
-            </div>
-            <div class="mini-table-wrap">
-              <Table :data="userRanking" :columns="userColumns" :key="'i3-'+tableKey" size="small" disabled-hover></Table>
-            </div>
-            <div v-if="!userRanking.length" class="no-data">暂无数据</div>
+      <!-- 5个数据表，表头固定，内容自动滚动 -->
+      <div class="grid-row grid-row--tables5">
+        <div v-for="(tg, ti) in tableGroups" :key="ti" class="panel panel-table scroll-table-panel">
+          <div class="panel-header">
+            <span class="panel-dot" :class="'c-'+dotColors[ti]"></span>
+            <span>{{ tg.title }}</span>
           </div>
-        </div>
-        <div class="grid-cell table-cell table-cell--half">
-          <div class="panel panel-table">
-            <div class="panel-header">
-              <span class="panel-dot" style="background:#ffaa00;"></span>
-              <span>历史提交最多用户</span>
-            </div>
-            <div class="mini-table-wrap">
-              <Table :data="topSubmittersAllTime" :columns="submitterColumns" :key="'i4-'+tableKey" size="small" disabled-hover></Table>
-            </div>
-            <div v-if="!topSubmittersAllTime.length" class="no-data">暂无数据</div>
+          <div class="table-fixed-wrap">
+            <el-table :data="tg.data" :key="'st-'+ti+'-'+tableKey" size="mini" class="dark-table"
+              header-row-class-name="dark-th" row-class-name="dark-tr"
+              :id="'table-'+ti">
+              <el-table-column v-for="col in tg.columns" :key="col.prop || col.label" v-bind="col"></el-table-column>
+            </el-table>
           </div>
-        </div>
-      </div>
-
-      <div class="grid-cell table-row">
-        <div class="grid-cell table-cell table-cell--half">
-          <div class="panel panel-table">
-            <div class="panel-header">
-              <span class="panel-dot" style="background:#00f0ff;"></span>
-              <span>本周提交最多用户</span>
-            </div>
-            <div class="mini-table-wrap">
-              <Table :data="topSubmittersWeek" :columns="submitterWeekColumns" :key="'i5-'+tableKey" size="small" disabled-hover></Table>
-            </div>
-            <div v-if="!topSubmittersWeek.length" class="no-data">暂无数据</div>
-          </div>
+          <div v-if="!tg.data.length" class="no-data">暂无数据</div>
         </div>
       </div>
     </div>
@@ -181,6 +122,7 @@ export default {
       timeTimer: null,
       animatedValues: [0, 0, 0, 0],
       animTimers: [],
+      scrollTimers: [],
       overview: {},
       problemStats: {},
       difficultyDistribution: [],
@@ -192,59 +134,17 @@ export default {
       leastCompleted: [],
       topSubmittersAllTime: [],
       topSubmittersWeek: [],
-      problemColumns: [
-        { title: 'ID', key: '_id', width: 60 },
-        { title: '题目标题', key: 'title', ellipsis: true, minWidth: 120 },
-        {
-          title: '难度', key: 'difficulty', width: 60,
-          render: (h, params) => {
-            const labelMap = { Low: '简', Mid: '中', High: '难' }
-            const colorMap = { Low: '#00ff88', Mid: '#ffaa00', High: '#ff2d95' }
-            return h('span', { style: { color: colorMap[params.row.difficulty] || '#fff', fontWeight: 600 } }, labelMap[params.row.difficulty] || params.row.difficulty)
-          }
-        },
-        {
-          title: '通过率', key: 'pass_rate', width: 70,
-          render: (h, params) => {
-            const rate = params.row.pass_rate || 0
-            return h('span', rate.toFixed(1) + '%')
-          }
-        }
-      ],
-      userColumns: [
-        { title: '#', key: 'rank', width: 40 },
-        { title: '用户', key: 'username', minWidth: 80 },
-        { title: '通过', key: 'accepted_count', width: 50 },
-        { title: '提交', key: 'submission_count', width: 50 },
-        {
-          title: 'AC率', key: 'ac_rate', width: 60,
-          render: (h, params) => {
-            const rate = params.row.ac_rate || 0
-            return h('span', (typeof rate === 'number' ? rate.toFixed(1) : rate) + '%')
-          }
-        },
-        { title: 'OI分', key: 'total_score', width: 60 }
-      ],
-      submitterColumns: [
-        { title: '用户', key: 'username', minWidth: 80 },
-        { title: '提交', key: 'submission_count', width: 60 },
-        { title: '通过', key: 'accepted_count', width: 60 },
-        { title: 'OI分', key: 'total_score', width: 60 }
-      ],
-      submitterWeekColumns: [
-        { title: '用户', key: 'username', minWidth: 80 },
-        { title: '本周提交', key: 'submission_count', width: 70 },
-        { title: '本周通过', key: 'accepted_count', width: 70 }
-      ]
+      judgeServers: [],
+      dotColors: ['cyan', 'pink', 'purple', 'orange', 'green']
     }
   },
   computed: {
     statCards () {
       return [
-        { icon: 'ios-people', value: this.overview.total_users || 0, label: '总用户数', iconColor: '#00f0ff', textColor: '#00f0ff', borderColor: 'rgba(0,240,255,0.4)', glowBg: 'radial-gradient(circle at 50% 50%, rgba(0,240,255,0.15), transparent)', glowClass: 'glow-cyan' },
-        { icon: 'ios-document', value: this.overview.total_problems || 0, label: '总题目数', iconColor: '#ff2d95', textColor: '#ff2d95', borderColor: 'rgba(255,45,149,0.4)', glowBg: 'radial-gradient(circle at 50% 50%, rgba(255,45,149,0.15), transparent)', glowClass: 'glow-pink' },
-        { icon: 'ios-send', value: this.overview.total_submissions || 0, label: '总提交数', iconColor: '#b829f0', textColor: '#b829f0', borderColor: 'rgba(184,41,240,0.4)', glowBg: 'radial-gradient(circle at 50% 50%, rgba(184,41,240,0.15), transparent)', glowClass: 'glow-purple' },
-        { icon: 'ios-trophy', value: this.overview.total_contests || 0, label: '总比赛数', iconColor: '#00ff88', textColor: '#00ff88', borderColor: 'rgba(0,255,136,0.4)', glowBg: 'radial-gradient(circle at 50% 50%, rgba(0,255,136,0.15), transparent)', glowClass: 'glow-green' }
+        { iconHtml: '👥', value: this.overview.total_users || 0, label: '用户', iconColor: '#00f0ff', textColor: '#fff', borderColor: 'rgba(0,240,255,0.4)', glowClass: 'glow-cyan' },
+        { iconHtml: '📄', value: this.overview.total_problems || 0, label: '题目', iconColor: '#ff2d95', textColor: '#fff', borderColor: 'rgba(255,45,149,0.4)', glowClass: 'glow-pink' },
+        { iconHtml: '🚀', value: this.overview.total_submissions || 0, label: '提交', iconColor: '#b829f0', textColor: '#fff', borderColor: 'rgba(184,41,240,0.4)', glowClass: 'glow-purple' },
+        { iconHtml: '🏆', value: this.overview.total_contests || 0, label: '比赛', iconColor: '#00ff88', textColor: '#fff', borderColor: 'rgba(0,255,136,0.4)', glowClass: 'glow-green' }
       ]
     },
     activityStats () {
@@ -257,6 +157,61 @@ export default {
         { value: this.overview.active_contests || 0, label: '进行中比赛' },
         { value: this.overview.upcoming_contests || 0, label: '未开始比赛' }
       ]
+    },
+    tableGroups () {
+      return [
+        {
+          title: '完成率最高 Top 10',
+          data: this.mostCompleted,
+          columns: [
+            { prop: '_id', label: 'ID', width: '50' },
+            { prop: 'title', label: '题目', showOverflowTooltip: true, minWidth: '100' },
+            { label: '难度', width: '40', render: (h, { row }) => h('span', { style: { color: this.diffColor(row.difficulty) } }, this.diffChar(row.difficulty)) },
+            { label: '通过率', width: '60', render: (h, { row }) => h('span', (row.pass_rate || 0).toFixed(1) + '%') }
+          ]
+        },
+        {
+          title: '完成率最低 Top 10',
+          data: this.leastCompleted,
+          columns: [
+            { prop: '_id', label: 'ID', width: '50' },
+            { prop: 'title', label: '题目', showOverflowTooltip: true, minWidth: '100' },
+            { label: '难度', width: '40', render: (h, { row }) => h('span', { style: { color: this.diffColor(row.difficulty) } }, this.diffChar(row.difficulty)) },
+            { label: '通过率', width: '60', render: (h, { row }) => h('span', (row.pass_rate || 0).toFixed(1) + '%') }
+          ]
+        },
+        {
+          title: '用户排名 Top 20',
+          data: this.userRanking,
+          columns: [
+            { prop: 'rank', label: '#', width: '35' },
+            { prop: 'username', label: '用户', minWidth: '80' },
+            { prop: 'accepted_count', label: '通过', width: '48' },
+            { prop: 'submission_count', label: '提交', width: '48' },
+            { label: 'AC率', width: '55', render: (h, { row }) => h('span', this.fmRate(row.ac_rate)) },
+            { prop: 'total_score', label: '分', width: '40' }
+          ]
+        },
+        {
+          title: '历史提交最多',
+          data: this.topSubmittersAllTime,
+          columns: [
+            { prop: 'username', label: '用户', minWidth: '80' },
+            { prop: 'submission_count', label: '提交', width: '55' },
+            { prop: 'accepted_count', label: '通过', width: '55' },
+            { prop: 'total_score', label: '分', width: '40' }
+          ]
+        },
+        {
+          title: '本周提交最多',
+          data: this.topSubmittersWeek,
+          columns: [
+            { prop: 'username', label: '用户', minWidth: '80' },
+            { prop: 'submission_count', label: '提交', width: '60' },
+            { prop: 'accepted_count', label: '通过', width: '60' }
+          ]
+        }
+      ]
     }
   },
   mounted () {
@@ -266,13 +221,99 @@ export default {
   },
   beforeDestroy () {
     clearInterval(this.timeTimer)
+    this.scrollTimers.forEach(t => {
+      if (typeof t === 'object' && t.cancel) t.cancel()
+      else clearInterval(t)
+    })
     this.animTimers.forEach(t => clearInterval(t))
     this.disposeAllCharts()
   },
   methods: {
+    diffChar (d) {
+      const m = { Low: '简', Mid: '中', High: '难' }
+      return m[d] || d || '-'
+    },
+    diffColor (d) {
+      const m = { Low: '#00ff88', Mid: '#ffaa00', High: '#ff2d95' }
+      return m[d] || '#fff'
+    },
+    fmRate (r) {
+      if (typeof r === 'number') return r.toFixed(1) + '%'
+      return (r || 0) + '%'
+    },
+    translateSubmissionResult (status) {
+      const keyMap = {
+        'Pending': 'Submission_Result_Pending',
+        'Judging': 'Submission_Result_Judging',
+        'Accepted': 'Submission_Result_Accepted',
+        'Wrong Answer': 'Submission_Result_Wrong_Answer',
+        'CPU Time Limit Exceeded': 'Submission_Result_CPU_Time_Limit_Exceeded',
+        'Real Time Limit Exceeded': 'Submission_Result_Real_Time_Limit_Exceeded',
+        'Memory Limit Exceeded': 'Submission_Result_Memory_Limit_Exceeded',
+        'Runtime Error': 'Submission_Result_Runtime_Error',
+        'Compile Error': 'Submission_Result_Compile_Error',
+        'System Error': 'Submission_Result_System_Error',
+        'Partially Accepted': 'Submission_Result_Partially_Accepted',
+      }
+      const key = keyMap[status]
+      return key ? this.$t('m.' + key) : status
+    },
+    startScroll () {
+      this.scrollTimers.forEach(t => {
+        if (typeof t === 'object' && t.cancel) t.cancel()
+        else clearInterval(t)
+      })
+      this.scrollTimers = []
+      const tryStart = () => {
+        this._startJudgeScroll()
+        this._startTableScrolls()
+      }
+      this.$nextTick(() => {
+        setTimeout(tryStart, 500)
+        setTimeout(tryStart, 1200)
+      })
+    },
+    _startJudgeScroll () {
+      const box = this.$refs.judgeScrollBox
+      const track = this.$refs.judgeScrollTrack
+      if (!box || !track) return
+      let offset = 0
+      let rafId = null
+      const speed = 0.5
+      const step = () => {
+        if (!track.isConnected) { cancelAnimationFrame(rafId); return }
+        const maxScroll = track.scrollWidth - box.clientWidth
+        if (maxScroll <= 4) { rafId = requestAnimationFrame(step); return }
+        offset += speed
+        if (offset >= maxScroll) offset = 0
+        box.scrollLeft = offset
+        rafId = requestAnimationFrame(step)
+      }
+      rafId = requestAnimationFrame(step)
+      this.scrollTimers.push({ cancel: () => cancelAnimationFrame(rafId) })
+    },
+    _startTableScrolls () {
+      const ids = ['table-0', 'table-1', 'table-2', 'table-3', 'table-4']
+      ids.forEach(id => {
+        const table = document.getElementById(id)
+        if (!table) return
+        const tbody = table.querySelector('.el-table__body-wrapper')
+        if (!tbody) return
+        const timer = setInterval(() => {
+          if (!tbody.isConnected) { clearInterval(timer); return }
+          const maxScroll = tbody.scrollHeight - tbody.clientHeight
+          if (maxScroll <= 2) return
+          if (tbody.scrollTop >= maxScroll) {
+            tbody.scrollTop = 0
+          } else {
+            tbody.scrollTop += 1
+          }
+        }, 80)
+        this.scrollTimers.push(timer)
+      })
+    },
     updateTime () {
-      const now = new Date()
-      this.currentTime = now.toLocaleString('zh-CN', { hour12: false })
+      this.currentTime = new Date().toLocaleString('zh-CN', { hour12: false })
     },
     animateNumbers () {
       this.animTimers.forEach(t => clearInterval(t))
@@ -285,21 +326,24 @@ export default {
       ]
       this.animatedValues = [0, 0, 0, 0]
       targets.forEach((target, idx) => {
-        const step = Math.max(1, Math.floor(target / 60))
+        const step = Math.max(1, Math.floor(target / 40))
         const timer = setInterval(() => {
           if (this.animatedValues[idx] < target) {
             this.animatedValues[idx] = Math.min(this.animatedValues[idx] + step, target)
           } else {
             clearInterval(timer)
           }
-        }, 20)
+        }, 25)
         this.animTimers.push(timer)
       })
     },
     fetchData () {
       this.loading = true
-      api.getDataDashboard().then(res => {
-        const data = res.data.data || res.data
+      Promise.all([
+        api.getDataDashboard(),
+        api.getJudgeServer()
+      ]).then(([dashRes, jRes]) => {
+        const data = dashRes.data.data || dashRes.data
         this.overview = data.overview || {}
         this.problemStats = data.problem_stats || {}
         this.difficultyDistribution = data.difficulty_distribution || []
@@ -307,19 +351,23 @@ export default {
         this.topSubmitters = data.top_submitters || {}
         this.userRanking = data.user_ranking || []
         this.submissionStats = data.submission_stats || {}
-        this.mostCompleted = (this.problemCompletion.most_completed || []).map(item => ({ ...item }))
-        this.leastCompleted = (this.problemCompletion.least_completed || []).map(item => ({ ...item }))
-        this.topSubmittersAllTime = (this.topSubmitters.all_time || []).map(item => ({ ...item }))
-        this.topSubmittersWeek = (this.topSubmitters.this_week || []).map(item => ({ ...item }))
-        this.userRanking = (data.user_ranking || []).map(item => ({ ...item }))
+        this.mostCompleted = (this.problemCompletion.most_completed || []).slice(0, 10).map(item => ({ ...item }))
+        this.leastCompleted = (this.problemCompletion.least_completed || []).slice(0, 10).map(item => ({ ...item }))
+        this.topSubmittersAllTime = (this.topSubmitters.all_time || []).slice(0, 10).map(item => ({ ...item }))
+        this.topSubmittersWeek = (this.topSubmitters.this_week || []).slice(0, 10).map(item => ({ ...item }))
+        this.userRanking = (data.user_ranking || []).slice(0, 20).map(item => ({ ...item }))
+
+        // judge server list
+        const jData = jRes.data.data || {}
+        this.judgeServers = jData.servers || []
+
         this.loading = false
         this.tableKey = Date.now()
         this.$forceUpdate()
         this.animateNumbers()
+        this.startScroll()
         this.$nextTick(() => {
-          setTimeout(() => {
-            this.drawAllCharts()
-          }, 150)
+          setTimeout(() => { this.drawAllCharts() }, 200)
         })
       }).catch((err) => {
         console.error('Immersion Dashboard fetch error:', err)
@@ -344,23 +392,11 @@ export default {
         backgroundColor: 'transparent',
         tooltip: { trigger: 'item', formatter: '{b}: {c}题' },
         series: [{
-          type: 'pie',
-          radius: ['45%', '75%'],
-          avoidLabelOverlap: false,
-          itemStyle: {
-            borderRadius: 8,
-            borderColor: '#0a0e1a',
-            borderWidth: 3,
-            shadowBlur: 15,
-            shadowColor: 'rgba(0,240,255,0.3)'
-          },
-          label: { show: true, color: '#8892b0', formatter: '{b}\n{c}题' },
-          labelLine: { lineStyle: { color: '#3a3f5c' } },
-          data: this.difficultyDistribution.map(item => ({
-            name: labelMap[item.name] || item.name,
-            value: item.count,
-            itemStyle: { color: colorMap[item.name] || '#00f0ff' }
-          }))
+          type: 'pie', radius: ['42%', '72%'], avoidLabelOverlap: true,
+          itemStyle: { borderRadius: 8, borderColor: '#101525', borderWidth: 3 },
+          label: { show: true, color: '#b0b8d0', fontSize: 13, position: 'outside', formatter: '{b}\n{c}题' },
+          labelLine: { lineStyle: { color: '#4a5070' }, length: 12, length2: 10 },
+          data: this.difficultyDistribution.map(item => ({ name: labelMap[item.name] || item.name, value: item.count, itemStyle: { color: colorMap[item.name] || '#5b9bd5' } }))
         }]
       })
     },
@@ -374,22 +410,11 @@ export default {
         backgroundColor: 'transparent',
         tooltip: { trigger: 'item', formatter: '{b}: {c}次 ({d}%)' },
         series: [{
-          type: 'pie',
-          radius: ['45%', '75%'],
-          avoidLabelOverlap: false,
-          itemStyle: {
-            borderRadius: 8,
-            borderColor: '#0a0e1a',
-            borderWidth: 3,
-            shadowBlur: 15,
-            shadowColor: 'rgba(255,45,149,0.3)'
-          },
-          label: { show: true, color: '#8892b0', formatter: '{b}\n{c}次' },
-          labelLine: { lineStyle: { color: '#3a3f5c' } },
-          data: resultDistribution.map(item => ({
-            name: item.status,
-            value: item.count
-          }))
+          type: 'pie', radius: ['42%', '72%'], avoidLabelOverlap: true,
+          itemStyle: { borderRadius: 8, borderColor: '#101525', borderWidth: 3 },
+          label: { show: true, color: '#b0b8d0', fontSize: 13, position: 'outside', formatter: '{b}\n{c}' },
+          labelLine: { lineStyle: { color: '#4a5070' }, length: 12, length2: 10 },
+          data: resultDistribution.map(item => ({ name: this.translateSubmissionResult(item.status), value: item.count }))
         }]
       })
     },
@@ -403,22 +428,11 @@ export default {
         backgroundColor: 'transparent',
         tooltip: { trigger: 'item', formatter: '{b}: {c}次 ({d}%)' },
         series: [{
-          type: 'pie',
-          radius: ['45%', '75%'],
-          avoidLabelOverlap: false,
-          itemStyle: {
-            borderRadius: 8,
-            borderColor: '#0a0e1a',
-            borderWidth: 3,
-            shadowBlur: 15,
-            shadowColor: 'rgba(184,41,240,0.3)'
-          },
-          label: { show: true, color: '#8892b0', formatter: '{b}\n{c}次' },
-          labelLine: { lineStyle: { color: '#3a3f5c' } },
-          data: languageDistribution.map(item => ({
-            name: item.language,
-            value: item.count
-          }))
+          type: 'pie', radius: ['42%', '72%'], avoidLabelOverlap: true,
+          itemStyle: { borderRadius: 8, borderColor: '#101525', borderWidth: 3 },
+          label: { show: true, color: '#b0b8d0', fontSize: 13, position: 'outside', formatter: '{b}\n{c}' },
+          labelLine: { lineStyle: { color: '#4a5070' }, length: 12, length2: 10 },
+          data: languageDistribution.map(item => ({ name: item.language, value: item.count }))
         }]
       })
     },
@@ -431,39 +445,13 @@ export default {
       chart.setOption({
         backgroundColor: 'transparent',
         tooltip: { trigger: 'axis', axisPointer: { type: 'shadow', shadowStyle: { color: 'rgba(0,240,255,0.05)' } } },
-        grid: { left: '5%', right: '8%', bottom: '3%', top: '3%', containLabel: true },
-        xAxis: {
-          type: 'value',
-          axisLine: { lineStyle: { color: '#3a3f5c' } },
-          axisTick: { lineStyle: { color: '#3a3f5c' } },
-          splitLine: { lineStyle: { color: 'rgba(255,255,255,0.03)' } },
-          axisLabel: { color: '#66708a' }
-        },
-        yAxis: {
-          type: 'category',
-          data: tagsDistribution.map(item => item.name).reverse(),
-          axisLine: { lineStyle: { color: '#3a3f5c' } },
-          axisTick: { show: false },
-          axisLabel: { color: '#8892b0', interval: 0, fontSize: 11 }
-        },
+        grid: { left: '6%', right: '6%', bottom: '3%', top: '3%', containLabel: true },
+        xAxis: { type: 'value', axisLine: { lineStyle: { color: '#4a5070' } }, axisTick: { show: false }, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.04)' } }, axisLabel: { color: '#78809a', fontSize: 11 } },
+        yAxis: { type: 'category', data: tagsDistribution.map(item => item.name).reverse(), axisLine: { lineStyle: { color: '#4a5070' } }, axisTick: { show: false }, axisLabel: { color: '#a0a8c0', interval: 0, fontSize: 12 } },
         series: [{
-          type: 'bar',
-          data: tagsDistribution.map(item => item.count).reverse(),
-          itemStyle: {
-            borderRadius: [0, 4, 4, 0],
-            color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-              { offset: 0, color: 'rgba(0,240,255,0.2)' },
-              { offset: 0.5, color: '#00f0ff' },
-              { offset: 1, color: '#00ff88' }
-            ])
-          },
-          barWidth: '65%',
-          emphasis: {
-            itemStyle: {
-              shadowBlur: 20,
-              shadowColor: 'rgba(0,240,255,0.5)'
-            }
-          }
+          type: 'bar', data: tagsDistribution.map(item => item.count).reverse(),
+          itemStyle: { borderRadius: [0, 4, 4, 0], color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [{ offset: 0, color: 'rgba(91,155,213,0.3)' }, { offset: 0.5, color: '#5b9bd5' }, { offset: 1, color: '#50b878' }]) },
+          barWidth: '60%'
         }]
       })
     },
@@ -476,51 +464,16 @@ export default {
       chart.setOption({
         backgroundColor: 'transparent',
         tooltip: { trigger: 'axis' },
-        legend: {
-          data: ['总提交', '通过'],
-          left: 'center',
-          textStyle: { color: '#8892b0' }
-        },
-        grid: { left: '60px', right: '40px', bottom: '40px', top: '60px', containLabel: true },
-        xAxis: {
-          type: 'category',
-          boundaryGap: false,
-          data: dailySubmissions.map(item => item.date),
-          axisLine: { lineStyle: { color: '#3a3f5c' } },
-          axisLabel: { color: '#66708a', interval: 0 },
-          axisTick: { show: false }
-        },
-        yAxis: {
-          type: 'value',
-          axisLine: { lineStyle: { color: '#3a3f5c' } },
-          splitLine: { lineStyle: { color: 'rgba(255,255,255,0.03)' } },
-          axisLabel: { color: '#66708a' }
-        },
+        legend: { data: ['提交', '通过'], left: 'center', textStyle: { color: '#a0a8c0', fontSize: 13 } },
+        grid: { left: '55px', right: '30px', bottom: '35px', top: '50px', containLabel: true },
+        xAxis: { type: 'category', boundaryGap: false, data: dailySubmissions.map(item => item.date), axisLine: { lineStyle: { color: '#4a5070' } }, axisLabel: { color: '#78809a', fontSize: 12, interval: 0 }, axisTick: { show: false } },
+        yAxis: { type: 'value', axisLine: { lineStyle: { color: '#4a5070' } }, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.04)' } }, axisLabel: { color: '#78809a', fontSize: 12 } },
         series: [
-          {
-            name: '总提交',
-            type: 'line',
-            smooth: true,
-            symbol: 'circle',
-            symbolSize: 6,
-            data: dailySubmissions.map(item => item.total),
-            lineStyle: { color: '#00f0ff', width: 2.5, shadowBlur: 10, shadowColor: 'rgba(0,240,255,0.5)' },
-            areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(0,240,255,0.3)' }, { offset: 1, color: 'rgba(0,240,255,0)' }]) },
-            itemStyle: { color: '#00f0ff', borderColor: '#0a0e1a', borderWidth: 2 }
-          },
-          {
-            name: '通过',
-            type: 'line',
-            smooth: true,
-            symbol: 'circle',
-            symbolSize: 6,
-            data: dailySubmissions.map(item => item.accepted),
-            lineStyle: { color: '#00ff88', width: 2.5, shadowBlur: 10, shadowColor: 'rgba(0,255,136,0.5)' },
-            areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(0,255,136,0.3)' }, { offset: 1, color: 'rgba(0,255,136,0)' }]) },
-            itemStyle: { color: '#00ff88', borderColor: '#0a0e1a', borderWidth: 2 }
-          }
+          { name: '提交', type: 'line', smooth: true, symbol: 'circle', symbolSize: 5, data: dailySubmissions.map(item => item.total), lineStyle: { color: '#5b9bd5', width: 2 }, areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(91,155,213,0.15)' }, { offset: 1, color: 'rgba(91,155,213,0)' }]) }, itemStyle: { color: '#5b9bd5', borderColor: '#101525', borderWidth: 2 } },
+          { name: '通过', type: 'line', smooth: true, symbol: 'circle', symbolSize: 5, data: dailySubmissions.map(item => item.accepted), lineStyle: { color: '#50b878', width: 2 }, areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(80,184,120,0.15)' }, { offset: 1, color: 'rgba(80,184,120,0)' }]) }, itemStyle: { color: '#50b878', borderColor: '#101525', borderWidth: 2 } }
         ]
       })
+      setTimeout(() => chart.resize(), 200)
     },
     disposeChart (dom) {
       const existing = echarts.getInstanceByDom(dom)
@@ -528,682 +481,264 @@ export default {
     },
     disposeAllCharts () {
       const ids = ['im-difficulty-chart', 'im-result-chart', 'im-language-chart', 'im-tag-chart', 'im-daily-chart']
-      ids.forEach(id => {
-        const dom = document.getElementById(id)
-        if (dom) this.disposeChart(dom)
-      })
+      ids.forEach(id => { const dom = document.getElementById(id); if (dom) this.disposeChart(dom) })
     }
   }
 }
 </script>
 
 <style lang="less" scoped>
-@bg-primary: #0a0e1a;
-@bg-panel: rgba(14, 18, 40, 0.85);
-@border-glow: rgba(0, 240, 255, 0.15);
-@text-primary: #e0e6ff;
-@text-secondary: #66708a;
+@bg-primary: #101525;
+@bg-panel: rgba(20, 25, 45, 0.92);
+@border-color: rgba(100, 120, 160, 0.18);
+@text-primary: #e5eaf5;
+@text-secondary: #8892b0;
 
 .immersion-dashboard {
   position: relative;
   min-height: 100vh;
   background: @bg-primary;
   color: @text-primary;
-  padding: 16px;
+  padding: 14px 18px;
   overflow-x: hidden;
-  font-family: 'JetBrains Mono', 'Consolas', monospace;
-}
-
-.scan-lines {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  pointer-events: none;
-  z-index: 200;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0, 240, 255, 0.015) 2px,
-    rgba(0, 240, 255, 0.015) 4px
-  );
-  animation: scanMove 8s linear infinite;
-}
-
-@keyframes scanMove {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(4px); }
-}
-
-.particles-bg {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  pointer-events: none;
-  z-index: 0;
-  background:
-    radial-gradient(ellipse at 10% 20%, rgba(0,240,255,0.04) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 10%, rgba(184,41,240,0.04) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 80%, rgba(255,45,149,0.03) 0%, transparent 50%),
-    radial-gradient(ellipse at 90% 70%, rgba(0,255,136,0.03) 0%, transparent 50%);
+  font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
 }
 
 .top-bar {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 0 16px;
-  margin-bottom: 12px;
-  border-bottom: 1px solid @border-glow;
+  position: relative; z-index: 2;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 0 10px; margin-bottom: 8px;
+  border-bottom: 1px solid @border-color;
 
   .brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-
-    .brand-icon {
-      font-size: 24px;
-      color: #00f0ff;
-      text-shadow: 0 0 20px rgba(0,240,255,0.6);
-      animation: iconPulse 2s ease-in-out infinite;
-    }
-
-    @keyframes iconPulse {
-      0%, 100% { opacity: 1; text-shadow: 0 0 20px rgba(0,240,255,0.6); }
-      50% { opacity: 0.7; text-shadow: 0 0 30px rgba(0,240,255,0.9); }
-    }
-
-    .brand-text {
-      font-size: 24px;
-      font-weight: 800;
-      letter-spacing: 6px;
-      background: linear-gradient(90deg, #00f0ff, #b829f0, #ff2d95);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .brand-sub {
-      font-size: 12px;
-      color: @text-secondary;
-      letter-spacing: 4px;
-      margin-top: 2px;
-    }
+    display: flex; align-items: center; gap: 10px;
+    .brand-logo { height: 42px; width: auto; object-fit: contain; }
+    .brand-sub { font-size: 14px; color: @text-secondary; letter-spacing: 2px; }
   }
 
-  .live-indicator {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    letter-spacing: 3px;
-    color: #00ff88;
-
-    .live-dot {
-      width: 8px;
-      height: 8px;
-      background: #00ff88;
-      border-radius: 50%;
-      box-shadow: 0 0 10px #00ff88, 0 0 20px #00ff88;
-      animation: liveBlink 1.5s ease-in-out infinite;
-    }
-
-    @keyframes liveBlink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.3; }
-    }
-  }
-
-  .top-bar-time {
-    font-size: 13px;
-    color: @text-secondary;
-    letter-spacing: 1px;
-  }
+  .top-bar-time { font-size: 14px; color: @text-secondary; }
 }
 
 .dashboard-grid {
-  position: relative;
-  z-index: 2;
+  position: relative; z-index: 2;
+  display: flex; flex-direction: column; gap: 12px;
+}
+
+.grid-row { display: grid; gap: 12px; }
+
+.grid-row--top {
+  grid-template-columns: 220px 1fr;
+}
+
+.stats-vert {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-}
-
-.grid-cell {
-  width: 100%;
-}
-
-.stat-row {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+  gap: 8px;
 }
 
 .stat-card {
   position: relative;
   background: @bg-panel;
-  border: 1px solid @border-glow;
-  border-radius: 12px;
-  padding: 18px 20px;
+  border: 1px solid @border-color;
+  border-radius: 8px;
+  padding: 8px 14px;
   display: flex;
   align-items: center;
-  gap: 16px;
-  overflow: hidden;
-  transition: all 0.3s ease;
+  gap: 10px;
+  transition: background 0.2s ease;
 
-  &:hover {
-    border-color: rgba(0, 240, 255, 0.4);
-    box-shadow: 0 0 30px rgba(0, 240, 255, 0.1), inset 0 0 30px rgba(0, 240, 255, 0.03);
-    transform: translateY(-2px);
-  }
-
-  .stat-glow {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    pointer-events: none;
-    opacity: 0.6;
-  }
+  &:hover { background: rgba(30, 35, 60, 0.95); }
 
   .stat-icon-wrap {
-    width: 52px;
-    height: 52px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid;
-    flex-shrink: 0;
-    background: rgba(0, 0, 0, 0.3);
+    width: 34px; height: 34px; border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid @border-color; flex-shrink: 0; background: rgba(0, 0, 0, 0.25);
+    .stat-emoji { font-size: 17px; line-height: 1; }
   }
 
   .stat-info {
+    display: flex; align-items: baseline; gap: 7px;
+    .stat-number { font-size: 24px; font-weight: 700; line-height: 1; color: #fff; }
+    .stat-label-text { font-size: 14px; color: #c8d0e8; font-weight: 500; }
+  }
+}
+
+.judge-panel {
+  background: @bg-panel;
+  border: 1px solid @border-color;
+  border-radius: 8px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+
+  .judge-header {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 15px; font-weight: 600; color: #c8d0e8;
+    margin-bottom: 8px; padding-bottom: 8px;
+    border-bottom: 1px solid @border-color;
+    flex-shrink: 0;
+  }
+
+  .judge-scroll-box {
+    flex: 1;
+    overflow-x: auto;
+    overflow-y: hidden;
+    min-height: 110px;
+
+    &::-webkit-scrollbar { height: 0; }
+  }
+
+  .judge-scroll-track {
     display: flex;
-    flex-direction: column;
-    gap: 4px;
+    gap: 10px;
+    white-space: nowrap;
 
-    .stat-number {
-      font-size: 32px;
-      font-weight: 800;
-      line-height: 1;
-      letter-spacing: 1px;
-      text-shadow: 0 0 20px currentColor;
-    }
+    .js-card {
+      flex-shrink: 0;
+      width: 280px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid @border-color;
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-size: 12px;
+      font-family: 'Consolas', 'JetBrains Mono', monospace;
 
-    .stat-label-text {
-      font-size: 13px;
-      color: @text-secondary;
-      letter-spacing: 1px;
+      &.js-ok { border-color: rgba(0, 200, 120, 0.3); }
+      &.js-bad {
+        border-color: rgba(220, 60, 90, 0.3);
+        .js-card-head .js-dot { background: #dc3c5a; }
+      }
+
+      .js-card-head {
+        display: flex; align-items: center; gap: 6px;
+        margin-bottom: 6px; padding-bottom: 5px;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+
+        .js-dot {
+           width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+           background: #00c878;
+         }
+
+         .js-hostname {
+           color: #d0d8f0; font-weight: 600; font-size: 13px;
+           overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+         }
+       }
+
+      .js-card-body {
+        display: flex; flex-direction: column; gap: 3px;
+
+        .js-row {
+          color: #a0aec0; font-size: 11px; white-space: nowrap;
+          overflow: hidden; text-overflow: ellipsis;
+
+          .js-lbl { color: #66708a; margin-right: 4px; flex-shrink: 0; }
+          code { color: #a0b0d0; background: rgba(255,255,255,0.06); padding: 0 3px; border-radius: 2px; }
+        }
+      }
     }
   }
 }
 
-.glow-cyan:hover { border-color: rgba(0,240,255,0.5); box-shadow: 0 0 40px rgba(0,240,255,0.12), inset 0 0 30px rgba(0,240,255,0.03); }
-.glow-pink:hover { border-color: rgba(255,45,149,0.5); box-shadow: 0 0 40px rgba(255,45,149,0.12), inset 0 0 30px rgba(255,45,149,0.03); }
-.glow-purple:hover { border-color: rgba(184,41,240,0.5); box-shadow: 0 0 40px rgba(184,41,240,0.12), inset 0 0 30px rgba(184,41,240,0.03); }
-.glow-green:hover { border-color: rgba(0,255,136,0.5); box-shadow: 0 0 40px rgba(0,255,136,0.12), inset 0 0 30px rgba(0,255,136,0.03); }
-
-.chart-row, .table-row {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+.grid-row--quad {
+  grid-template-columns: repeat(4, 1fr);
 }
 
-.chart-cell--full {
-  grid-column: 1 / -1;
+.grid-row--mid {
+  grid-template-columns: 1fr 1.2fr;
+}
+
+.grid-row--tables5 {
+  grid-template-columns: repeat(5, 1fr);
+}
+
+.scroll-table-panel {
+  min-width: 0;
 }
 
 .panel {
   background: @bg-panel;
-  border: 1px solid @border-glow;
-  border-radius: 12px;
+  border: 1px solid @border-color;
+  border-radius: 8px;
   padding: 14px 16px;
-  transition: all 0.3s ease;
-
-  &:hover {
-    border-color: rgba(0, 240, 255, 0.25);
-    box-shadow: 0 0 25px rgba(0, 240, 255, 0.06);
-  }
+  transition: background 0.2s ease;
+  &:hover { background: rgba(25, 30, 55, 0.95); }
 }
 
 .panel-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 1px;
-  margin-bottom: 10px;
-  color: @text-primary;
+  display: flex; align-items: center; gap: 6px;
+  font-size: 15px; font-weight: 600;
+  margin-bottom: 8px; color: #e0e6ff;
 
-  .panel-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    box-shadow: 0 0 8px currentColor;
-  }
+  .panel-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .c-cyan { background: #5b9bd5; }
+  .c-pink { background: #e06090; }
+  .c-purple { background: #a070d0; }
+  .c-green { background: #50b878; }
+  .c-orange { background: #e0a040; }
 }
 
-.panel-chart {
-  .chart-inner {
-    height: 280px;
-    width: 100%;
-  }
-
-  .chart-inner-wide {
-    height: 320px;
-    width: 100%;
-  }
-}
+.panel-chart .chart-inner { height: 220px; width: 100%; }
+.panel-chart .chart-inner-daily { height: 200px; width: 100%; }
 
 .panel-stat {
-  .stat-inline-items {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
+  .stat-inline-items { display: flex; flex-wrap: wrap; gap: 8px; }
   .inline-stat {
-    flex: 1;
-    min-width: 100px;
-    text-align: center;
-    padding: 10px 8px;
-    background: rgba(0, 240, 255, 0.03);
-    border: 1px solid rgba(0, 240, 255, 0.08);
-    border-radius: 8px;
-    transition: all 0.3s ease;
+    flex: 1; min-width: 90px; text-align: center; padding: 12px 8px;
+    background: rgba(255,255,255,0.03); border: 1px solid @border-color; border-radius: 6px;
+    transition: background 0.2s ease;
+    &:hover { background: rgba(255,255,255,0.05); }
+    .inline-stat-val { font-size: 24px; font-weight: 700; color: #5b9bd5; }
+    .inline-stat-lbl { font-size: 13px; color: #c8d0e8; margin-top: 3px; }
+  }
+}
 
-    &:hover {
-      border-color: rgba(0, 240, 255, 0.25);
-      background: rgba(0, 240, 255, 0.06);
-    }
-
-    .inline-stat-val {
-      font-size: 22px;
-      font-weight: 700;
-      color: #00f0ff;
-      text-shadow: 0 0 12px rgba(0, 240, 255, 0.3);
-    }
-
-    .inline-stat-lbl {
-      font-size: 11px;
-      color: @text-secondary;
-      margin-top: 4px;
-      letter-spacing: 1px;
-    }
+.table-fixed-wrap {
+  /deep/ .el-table__header-wrapper {
+    flex-shrink: 0;
+  }
+  /deep/ .el-table__body-wrapper {
+    height: 220px !important;
+    overflow-y: auto !important;
+    &::-webkit-scrollbar { width: 0; }
   }
 }
 
 .panel-table {
-  .mini-table-wrap {
-    max-height: 320px;
-    overflow-y: auto;
+  .dark-table {
+    background: transparent;
+    color: #c0caf5;
+    font-size: 13px;
+  }
 
-    &::-webkit-scrollbar {
-      width: 4px;
-    }
-    &::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    &::-webkit-scrollbar-thumb {
-      background: rgba(0, 240, 255, 0.2);
-      border-radius: 2px;
-    }
+  /deep/ .dark-table .el-table__header-wrapper th,
+  /deep/ .dark-table .dark-th {
+    background: rgba(255,255,255,0.05) !important;
+    color: #a0b0d0 !important;
+    border-bottom: 1px solid @border-color !important;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 6px 4px;
+  }
+
+  /deep/ .dark-table .el-table__body-wrapper td,
+  /deep/ .dark-table .dark-tr {
+    background: transparent !important;
+    border-bottom: 1px solid rgba(255,255,255,0.03) !important;
+    color: #d0d8f0 !important;
+    padding: 6px 4px;
+    font-size: 13px;
+  }
+
+  /deep/ .dark-table tr:hover > td {
+    background: rgba(255,255,255,0.04) !important;
   }
 }
 
 .no-data {
-  text-align: center;
-  padding: 20px 0;
-  color: @text-secondary;
-  font-size: 13px;
+  text-align: center; padding: 18px 0; color: @text-secondary; font-size: 13px;
 }
 
-// Table dark styling
-/deep/ .ivu-table {
-  background: transparent;
-  color: #c0caf5;
-  font-size: 12px;
-
-  &::before { background: transparent; }
-  &::after { background: transparent; }
-
-  th {
-    background: rgba(0, 240, 255, 0.06);
-    color: #00f0ff;
-    border-bottom: 1px solid @border-glow;
-    font-weight: 600;
-    font-size: 12px;
-    padding: 8px 6px;
-    letter-spacing: 0.5px;
-  }
-
-  td {
-    background: transparent;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-    padding: 6px;
-    color: #8892b0;
-    font-size: 12px;
-  }
-
-  tr:hover td {
-    background: rgba(0, 240, 255, 0.04);
-  }
-
-  .ivu-table-row-hover td {
-    background: rgba(0, 240, 255, 0.04) !important;
-  }
-}
-
-// Loading override
-/deep/ .el-loading-mask {
-  background: rgba(10, 14, 26, 0.8);
-}
-
-// ========== 移动端适配 ==========
-
-// 平板
-@media screen and (max-width: 1024px) {
-  .immersion-dashboard {
-    padding: 12px;
-  }
-
-  .top-bar {
-    flex-wrap: wrap;
-    gap: 8px;
-
-    .brand {
-      .brand-text {
-        font-size: 20px;
-        letter-spacing: 4px;
-      }
-      .brand-sub {
-        font-size: 10px;
-      }
-    }
-
-    .live-indicator {
-      order: 10;
-    }
-
-    .top-bar-time {
-      font-size: 11px;
-    }
-  }
-
-  .stat-row {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-  }
-
-  .stat-card {
-    padding: 14px 16px;
-    gap: 12px;
-
-    .stat-icon-wrap {
-      width: 44px;
-      height: 44px;
-      border-radius: 10px;
-    }
-
-    .stat-info .stat-number {
-      font-size: 26px;
-    }
-  }
-
-  .chart-row, .table-row {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-
-  .panel-chart {
-    .chart-inner {
-      height: 260px;
-    }
-    .chart-inner-wide {
-      height: 280px;
-    }
-  }
-
-  .panel-table .mini-table-wrap {
-    max-height: 260px;
-  }
-}
-
-// 大屏手机
-@media screen and (max-width: 768px) {
-  .immersion-dashboard {
-    padding: 8px;
-  }
-
-  .top-bar {
-    padding-bottom: 10px;
-    margin-bottom: 8px;
-
-    .brand {
-      gap: 6px;
-      .brand-icon {
-        font-size: 20px;
-      }
-      .brand-text {
-        font-size: 18px;
-        letter-spacing: 3px;
-      }
-      .brand-sub {
-        font-size: 10px;
-        letter-spacing: 2px;
-      }
-    }
-
-    .live-indicator {
-      font-size: 11px;
-      letter-spacing: 2px;
-    }
-
-    .top-bar-time {
-      font-size: 10px;
-    }
-  }
-
-  .dashboard-grid {
-    gap: 8px;
-  }
-
-  .stat-row {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-  }
-
-  .stat-card {
-    padding: 12px 14px;
-    gap: 10px;
-    border-radius: 10px;
-
-    .stat-icon-wrap {
-      width: 38px;
-      height: 38px;
-      border-radius: 8px;
-    }
-
-    .stat-info {
-      .stat-number {
-        font-size: 22px;
-      }
-      .stat-label-text {
-        font-size: 11px;
-      }
-    }
-  }
-
-  .panel {
-    padding: 10px 12px;
-  }
-
-  .panel-header {
-    font-size: 13px;
-    margin-bottom: 8px;
-  }
-
-  .panel-chart {
-    .chart-inner {
-      height: 220px;
-    }
-    .chart-inner-wide {
-      height: 240px;
-    }
-  }
-
-  .panel-stat .stat-inline-items {
-    gap: 6px;
-  }
-
-  .panel-stat .inline-stat {
-    min-width: 70px;
-    padding: 8px 6px;
-
-    .inline-stat-val {
-      font-size: 18px;
-    }
-    .inline-stat-lbl {
-      font-size: 10px;
-    }
-  }
-
-  .panel-table .mini-table-wrap {
-    max-height: 240px;
-  }
-
-  /deep/ .ivu-table {
-    font-size: 11px;
-    th { font-size: 11px; padding: 6px 4px; }
-    td { font-size: 11px; padding: 4px; }
-  }
-}
-
-// 小屏手机
-@media screen and (max-width: 480px) {
-  .immersion-dashboard {
-    padding: 6px;
-  }
-
-  .top-bar {
-    padding-bottom: 8px;
-    margin-bottom: 6px;
-
-    .brand {
-      .brand-icon {
-        font-size: 16px;
-      }
-      .brand-text {
-        font-size: 15px;
-        letter-spacing: 2px;
-      }
-      .brand-sub {
-        display: none;
-      }
-    }
-
-    .live-indicator {
-      font-size: 10px;
-      letter-spacing: 1px;
-      gap: 4px;
-      .live-dot {
-        width: 6px;
-        height: 6px;
-      }
-    }
-
-    .top-bar-time {
-      font-size: 9px;
-      letter-spacing: 0;
-    }
-  }
-
-  .dashboard-grid {
-    gap: 6px;
-  }
-
-  .stat-row {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 6px;
-  }
-
-  .stat-card {
-    padding: 10px 12px;
-    gap: 8px;
-    border-radius: 8px;
-
-    .stat-icon-wrap {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      svg {
-        width: 18px;
-        height: 18px;
-      }
-    }
-
-    .stat-info {
-      .stat-number {
-        font-size: 18px;
-        letter-spacing: 0;
-      }
-      .stat-label-text {
-        font-size: 10px;
-        letter-spacing: 0;
-      }
-    }
-  }
-
-  .panel {
-    padding: 8px 10px;
-    border-radius: 8px;
-  }
-
-  .panel-header {
-    font-size: 12px;
-    margin-bottom: 6px;
-    gap: 6px;
-
-    .panel-dot {
-      width: 6px;
-      height: 6px;
-    }
-  }
-
-  .panel-chart {
-    .chart-inner {
-      height: 190px;
-    }
-    .chart-inner-wide {
-      height: 210px;
-    }
-  }
-
-  .panel-stat .stat-inline-items {
-    gap: 4px;
-  }
-
-  .panel-stat .inline-stat {
-    min-width: 60px;
-    padding: 6px 4px;
-
-    .inline-stat-val {
-      font-size: 16px;
-    }
-    .inline-stat-lbl {
-      font-size: 9px;
-      letter-spacing: 0;
-    }
-  }
-
-  .panel-table .mini-table-wrap {
-    max-height: 200px;
-  }
-
-  /deep/ .ivu-table {
-    font-size: 10px;
-    th { font-size: 10px; padding: 5px 3px; }
-    td { font-size: 10px; padding: 3px; }
-  }
-}
+/deep/ .el-loading-mask { background: rgba(16, 21, 37, 0.85); }
 </style>

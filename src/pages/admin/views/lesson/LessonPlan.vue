@@ -4,37 +4,37 @@
       <div class="list">
         <el-table
           v-loading="loading"
-          element-loading-text="loading"
+          :element-loading-text="$t('m.Loading')"
           ref="table"
           :data="lessonPlanList"
           style="width: 100%">
           <el-table-column
             width="80"
             prop="id"
-            label="ID">
+            :label="$t('m.ID')">
           </el-table-column>
           <el-table-column
             prop="title"
-            label="Title"
+            :label="$t('m.Title_Col')"
             min-width="200">
           </el-table-column>
           <el-table-column
             prop="description"
-            label="Description"
+            :label="$t('m.Description_Col')"
             min-width="200">
             <template slot-scope="scope">
               <span class="description-text">{{ scope.row.description }}</span>
             </template>
           </el-table-column>
           <el-table-column
-            width="120"
+            width="100"
             prop="problems_count"
-            label="Problems">
+            :label="$t('m.Problems')">
           </el-table-column>
           <el-table-column
-            width="150"
+            width="160"
             prop="create_time"
-            label="CreateTime">
+            :label="$t('m.CreateTime')">
             <template slot-scope="scope">
               {{ scope.row.create_time | localtime }}
             </template>
@@ -42,12 +42,12 @@
           <el-table-column
             width="120"
             prop="created_by_username"
-            label="Author">
+            :label="$t('m.Author')">
           </el-table-column>
           <el-table-column
             width="100"
             prop="visible"
-            label="Visible">
+            :label="$t('m.Visibility')">
             <template slot-scope="scope">
               <el-switch v-model="scope.row.visible"
                          active-text=""
@@ -58,16 +58,19 @@
           </el-table-column>
           <el-table-column
             fixed="right"
-            label="Option"
+            :label="$t('m.Option')"
             width="200">
             <div slot-scope="scope">
-              <icon-btn name="Edit" icon="edit" @click.native="openLessonPlanDialog(scope.row.id)"></icon-btn>
-              <icon-btn name="Delete" icon="trash" @click.native="deleteLessonPlan(scope.row.id)"></icon-btn>
+              <icon-btn :name="$t('m.Edit')" icon="edit" @click.native="openLessonPlanDialog(scope.row.id)"></icon-btn>
+              <icon-btn :name="$t('m.Delete')" icon="trash" @click.native="deleteLessonPlan(scope.row.id)"></icon-btn>
             </div>
           </el-table-column>
         </el-table>
         <div class="panel-options">
-          <el-button type="primary" size="small" @click="openLessonPlanDialog(null)" icon="el-icon-plus">Create</el-button>
+          <div class="left-actions">
+            <el-button type="primary" size="small" @click="openLessonPlanDialog(null)" icon="el-icon-plus">{{ $t('m.Create') }}</el-button>
+            <el-button type="success" size="small" @click="openBatchImport" icon="el-icon-upload2">{{ $t('m.Batch_Import_Lesson') }}</el-button>
+          </div>
           <el-pagination
             class="page"
             layout="prev, pager, next"
@@ -79,80 +82,148 @@
       </div>
     </Panel>
 
+    <!-- 批量导入 Markdown 文件对话框 -->
+    <el-dialog :title="$t('m.Batch_Import_MD_Title')" :visible.sync="showBatchImport"
+               :close-on-click-modal="false" width="60%" @close="resetBatchImport">
+      <p class="batch-import-desc">{{ $t('m.Batch_Import_Desc_MD') }}</p>
+      <div class="batch-upload-area">
+        <input
+          ref="batchFileInput"
+          type="file"
+          multiple
+          :key="fileInputKey"
+          accept=".md,.markdown,text/markdown"
+          style="display:none"
+          @change="handleBatchFilesSelected"
+        />
+        <el-button size="small" type="primary" icon="el-icon-upload2" @click="$refs.batchFileInput.click()">{{ $t('m.Batch_Upload_MD_Files') }}</el-button>
+        <div v-if="batchFileCount > 0" class="batch-file-count">
+          {{ batchFileCount }} 个文件已选择
+        </div>
+      </div>
+      <div v-if="batchPreview.length > 0" class="batch-preview">
+        <div class="batch-preview-header">{{ $t('m.Import_Preview') }} ({{ batchPreview.length }} {{ $t('m.Files') }})</div>
+        <div class="batch-preview-list">
+          <div v-for="(item, idx) in batchPreview" :key="idx" class="batch-preview-item">
+            <span class="batch-idx">{{ idx + 1 }}.</span>
+            <span class="batch-title">{{ item.title }}</span>
+            <span class="batch-desc">{{ item.description }}</span>
+          </div>
+        </div>
+        <div class="batch-preview-hint">{{ $t('m.Auto_Fill_From_MD') }}</div>
+      </div>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="showBatchImport = false; resetBatchImport()">{{ $t('m.Cancel') }}</el-button>
+        <el-button type="primary" @click="submitBatchImport" :disabled="batchPreview.length === 0">{{ $t('m.Import_All_Files') }}</el-button>
+      </span>
+    </el-dialog>
+
     <!-- 教案编辑对话框 -->
     <el-dialog :title="lessonPlanDialogTitle" :visible.sync="showEditDialog"
                :close-on-click-modal="false" width="80%">
       <el-form label-position="top" :model="lessonPlan" ref="form">
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="Title" required>
-              <el-input v-model="lessonPlan.title" placeholder="Lesson Plan Title"></el-input>
+            <el-form-item :label="$t('m.Lesson_Plan_Title')" required>
+              <el-input v-model="lessonPlan.title" :placeholder="$t('m.Lesson_Plan_Title')"></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="Description" required>
-              <el-input v-model="lessonPlan.description" placeholder="Brief Description"></el-input>
+            <el-form-item :label="$t('m.Brief_Description')" required>
+              <el-input v-model="lessonPlan.description" :placeholder="$t('m.Brief_Description')"></el-input>
             </el-form-item>
           </el-col>
         </el-row>
 
-        <el-form-item label="Content" required>
-          <Simditor v-model="lessonPlan.content"></Simditor>
+        <el-form-item :label="$t('m.Content')" required>
+          <div class="content-type-switch">
+            <el-radio-group v-model="lessonPlan.content_type" size="small">
+              <el-radio-button label="html">{{ $t('m.Rich_Editor_Label') }}</el-radio-button>
+              <el-radio-button label="markdown">{{ $t('m.Markdown_File_Label') }}</el-radio-button>
+            </el-radio-group>
+          </div>
+          <div v-show="lessonPlan.content_type === 'html'">
+            <Simditor ref="simditor" v-model="lessonPlan.content"></Simditor>
+          </div>
+          <div v-show="lessonPlan.content_type === 'markdown'">
+            <div class="md-upload-area">
+              <el-upload
+                class="md-upload"
+                action=""
+                :auto-upload="false"
+                :show-file-list="false"
+                :on-change="handleMdFileChange"
+                accept=".md,.markdown,text/markdown">
+                <el-button size="small" type="primary" icon="el-icon-upload">{{ $t('m.Upload_MD_File') }}</el-button>
+              </el-upload>
+              <div v-if="mdFileName" class="md-file-info">
+                <i class="el-icon-document"></i>
+                <span>{{ mdFileName }}</span>
+                <el-button type="text" size="mini" @click="clearMdFile" icon="el-icon-delete">{{ $t('m.Remove') }}</el-button>
+              </div>
+              <div v-if="mdContent" class="md-preview">
+                <div class="md-preview-header">{{ $t('m.Preview') }}:</div>
+                <div class="md-preview-content" v-html="renderMarkdown(mdContent)"></div>
+              </div>
+            </div>
+          </div>
         </el-form-item>
 
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="Cover Image">
+            <el-form-item :label="$t('m.Cover_Image')">
               <el-upload
                 class="upload-demo"
                 action="/api/admin/upload_file/"
                 :show-file-list="false"
                 :on-success="handleCoverUpload"
                 :before-upload="beforeUpload">
-                <el-button size="small" type="primary" icon="el-icon-upload">Upload Cover Image</el-button>
+                <el-button size="small" type="primary" icon="el-icon-upload">{{ $t('m.Upload_Cover_Image') }}</el-button>
               </el-upload>
               <div v-if="lessonPlan.cover_image" class="preview-image">
                 <img :src="lessonPlan.cover_image" alt="Cover" />
-                <el-button type="text" @click="lessonPlan.cover_image = ''" icon="el-icon-delete">Remove</el-button>
+                <el-button type="text" @click="lessonPlan.cover_image = ''" icon="el-icon-delete">{{ $t('m.Remove') }}</el-button>
               </div>
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="PDF File">
+            <el-form-item :label="$t('m.PDF_File')">
               <el-upload
                 class="upload-demo"
                 action="/api/admin/upload_file/"
                 :show-file-list="false"
                 :on-success="handlePdfUpload"
                 :before-upload="beforePdfUpload">
-                <el-button size="small" type="primary" icon="el-icon-upload">Upload PDF</el-button>
+                <el-button size="small" type="primary" icon="el-icon-upload">{{ $t('m.Upload_PDF') }}</el-button>
               </el-upload>
               <div v-if="lessonPlan.pdf_file" class="pdf-file-info">
                 <div class="pdf-file-row">
                   <i class="el-icon-document"></i>
                   <span class="pdf-file-name">{{ pdfFileName }}</span>
-                  <el-button type="text" size="mini" @click="previewPdf" icon="el-icon-view">Preview</el-button>
-                  <el-button type="text" size="mini" @click="lessonPlan.pdf_file = ''" icon="el-icon-delete">Remove</el-button>
+                  <el-button type="text" size="mini" @click="previewPdf" icon="el-icon-view">{{ $t('m.Preview') }}</el-button>
+                  <el-button type="text" size="mini" @click="lessonPlan.pdf_file = ''" icon="el-icon-delete">{{ $t('m.Remove') }}</el-button>
                 </div>
               </div>
             </el-form-item>
           </el-col>
         </el-row>
 
-        <!-- PDF 预览弹窗 -->
-        <el-dialog title="PDF Preview" :visible.sync="showPdfPreview" width="80%">
+        <el-dialog :title="$t('m.PDF_Preview')" :visible.sync="showPdfPreview" width="80%">
           <embed :src="lessonPlan.pdf_file" type="application/pdf" width="100%" height="700px" />
         </el-dialog>
 
-        <el-form-item label="Related Problems">
+        <el-form-item :label="$t('m.Related_Problems')">
           <div class="problem-selector">
             <el-input
               v-model="problemSearchKeyword"
-              placeholder="Search problems by ID or title..."
+              :placeholder="$t('m.Search_Problems')"
               @input="searchProblems"
               clearable>
               <el-button slot="append" icon="el-icon-search" @click="searchProblems"></el-button>
             </el-input>
+            <div class="selected-problems-actions" v-if="searchResults.length > 0">
+              <el-button type="text" size="mini" @click="selectAllProblems">{{ $t('m.Select_All_Problems') }}</el-button>
+            </div>
             <div class="selected-problems" v-if="selectedProblems.length > 0">
               <el-tag
                 v-for="problem in selectedProblems"
@@ -178,7 +249,7 @@
           </div>
         </el-form-item>
 
-        <el-form-item label="Visible">
+        <el-form-item :label="$t('m.Visibility')">
           <el-switch
             v-model="lessonPlan.visible"
             active-text=""
@@ -187,8 +258,8 @@
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
-        <cancel @click.native="showEditDialog = false"></cancel>
-        <save type="primary" @click.native="submitLessonPlan"></save>
+        <el-button @click="showEditDialog = false">{{ $t('m.Cancel') }}</el-button>
+        <el-button type="primary" @click="submitLessonPlan">{{ $t('m.Save') }}</el-button>
       </span>
     </el-dialog>
   </div>
@@ -197,6 +268,7 @@
 <script>
 import Simditor from '../../components/Simditor.vue'
 import api from '../../api.js'
+import { renderMarkdown } from '@/utils/markdown'
 
 export default {
   name: 'LessonPlanManagement',
@@ -211,26 +283,35 @@ export default {
       pageSize: 15,
       currentPage: 1,
       showEditDialog: false,
+      showBatchImport: false,
+      batchFileList: [],
+      batchFileCount: 0,
+      batchPreview: [],
+      fileInputKey: 0,
       currentLessonPlanId: null,
       mode: 'create',
       showPdfPreview: false,
       pdfFileName: '',
+      mdFileName: '',
+      mdContent: '',
       lessonPlan: {
         title: '',
         description: '',
         content: '',
+        content_type: 'html',
         pdf_file: '',
         cover_image: '',
         visible: true,
         problem_ids: []
       },
-      lessonPlanDialogTitle: 'Create Lesson Plan',
+      lessonPlanDialogTitle: '',
       problemSearchKeyword: '',
       searchResults: [],
       selectedProblems: []
     }
   },
   mounted () {
+    this.lessonPlanDialogTitle = this.$t('m.Create_Lesson_Plan')
     this.getLessonPlanList()
   },
   methods: {
@@ -238,7 +319,7 @@ export default {
       this.currentPage = page
       this.getLessonPlanList(page)
     },
-    getLessonPlanList (page) {
+    getLessonPlanList (page = 1) {
       this.loading = true
       api.getLessonPlanList({
         offset: (page - 1) * this.pageSize,
@@ -246,9 +327,10 @@ export default {
       }).then(res => {
         this.loading = false
         const data = res.data.data
-        this.total = data.count || 0
+        console.log('LP admin getList total:', data.total, 'results:', (data.results || []).length)
+        this.total = Number(data.total) || 0
         this.lessonPlanList = data.results || []
-      }).catch(() => {
+      }, res => {
         this.loading = false
         this.lessonPlanList = []
         this.total = 0
@@ -258,12 +340,12 @@ export default {
       if (id) {
         this.mode = 'edit'
         this.currentLessonPlanId = id
-        this.lessonPlanDialogTitle = 'Edit Lesson Plan'
+        this.lessonPlanDialogTitle = this.$t('m.Edit_Lesson_Plan')
         this.loadLessonPlanDetail(id)
       } else {
         this.mode = 'create'
         this.currentLessonPlanId = null
-        this.lessonPlanDialogTitle = 'Create Lesson Plan'
+        this.lessonPlanDialogTitle = this.$t('m.Create_Lesson_Plan')
         this.resetForm()
       }
       this.showEditDialog = true
@@ -271,19 +353,23 @@ export default {
     loadLessonPlanDetail (id) {
       api.getLessonPlanDetail(id).then(res => {
         const data = res.data.data
+        const isMarkdown = (data.content || '').startsWith('[MD]')
         this.lessonPlan = {
           id: data.id,
           title: data.title,
           description: data.description,
-          content: data.content,
+          content: isMarkdown ? '' : (data.content || ''),
+          content_type: isMarkdown ? 'markdown' : 'html',
           pdf_file: data.pdf_file || '',
           cover_image: data.cover_image || '',
           visible: data.visible,
           problem_ids: data.problems ? data.problems.map(p => p.id) : []
         }
+        this.mdContent = isMarkdown ? data.content.replace(/^\[MD\]\n?/, '') : ''
+        this.mdFileName = isMarkdown ? (data.title + '.md') : ''
         this.selectedProblems = data.problems || []
       }).catch(() => {
-        this.$error('Failed to load lesson plan details')
+        this.$error(this.$t('m.Load_Detail_Failed'))
       })
     },
     resetForm () {
@@ -291,6 +377,7 @@ export default {
         title: '',
         description: '',
         content: '',
+        content_type: 'html',
         pdf_file: '',
         cover_image: '',
         visible: true,
@@ -299,17 +386,25 @@ export default {
       this.selectedProblems = []
       this.searchResults = []
       this.problemSearchKeyword = ''
+      this.mdFileName = ''
+      this.mdContent = ''
     },
     submitLessonPlan () {
-      if (!this.lessonPlan.title || !this.lessonPlan.content) {
-        this.$error('Please fill in title and content')
+      const hasContent = this.lessonPlan.content_type === 'markdown'
+        ? this.mdContent
+        : this.lessonPlan.content
+      if (!this.lessonPlan.title || !hasContent) {
+        this.$error(this.$t('m.Fill_Required'))
         return
       }
       const problemIds = this.selectedProblems.map(p => p.id)
+      const finalContent = this.lessonPlan.content_type === 'markdown'
+        ? '[MD]\n' + this.mdContent
+        : this.lessonPlan.content
       const data = {
         title: this.lessonPlan.title,
         description: this.lessonPlan.description || '',
-        content: this.lessonPlan.content,
+        content: finalContent,
         visible: this.lessonPlan.visible
       }
       if (this.lessonPlan.pdf_file) {
@@ -329,12 +424,12 @@ export default {
         data.id = this.currentLessonPlanId
       }
       api[funcName](data).then(() => {
-        this.$success(this.mode === 'create' ? 'Lesson plan created successfully' : 'Lesson plan updated successfully')
+        this.$success(this.mode === 'create' ? this.$t('m.Create_Success') : this.$t('m.Update_Success'))
         this.showEditDialog = false
         this.getLessonPlanList(this.currentPage)
       }).catch(err => {
         console.error('Lesson plan submit error:', err)
-        let errorMsg = 'Operation failed'
+        let errorMsg = this.$t('m.Update_Failed')
         if (err && err.data && err.data.data) {
           errorMsg = err.data.data
         } else if (err && err.data && typeof err.data === 'string') {
@@ -344,16 +439,16 @@ export default {
       })
     },
     deleteLessonPlan (id) {
-      this.$confirm('Are you sure to delete this lesson plan?', 'Warning', {
-        confirmButtonText: 'Delete',
-        cancelButtonText: 'Cancel',
+      this.$confirm(this.$t('m.Confirm_Delete_Content'), this.$t('m.Confirm_Delete_Title'), {
+        confirmButtonText: this.$t('m.Delete'),
+        cancelButtonText: this.$t('m.Cancel'),
         type: 'warning'
       }).then(() => {
         api.deleteLessonPlan(id).then(() => {
-          this.$success('Lesson plan deleted successfully')
+          this.$success(this.$t('m.Delete_Success'))
           this.getLessonPlanList(this.currentPage)
         }).catch(() => {
-          this.$error('Delete failed')
+          this.$error(this.$t('m.Delete_Failed'))
         })
       }).catch(() => {})
     },
@@ -362,49 +457,168 @@ export default {
         id: row.id,
         visible: row.visible
       }).then(() => {
-        this.$success('Visibility updated successfully')
+        this.$success(this.$t('m.Visibility_Updated'))
       }).catch(() => {
         row.visible = !row.visible
-        this.$error('Update failed')
+        this.$error(this.$t('m.Update_Failed'))
       })
     },
     handleCoverUpload (response) {
       if (response.success || response.error === null || response.error === undefined) {
         this.lessonPlan.cover_image = response.file_path || response.url || ''
-        this.$success('Cover image uploaded successfully')
+        this.$success(this.$t('m.Cover_Upload_Success'))
       } else {
-        this.$error('Upload failed: ' + (response.msg || 'Unknown error'))
+        this.$error(this.$t('m.Upload_Failed') + ': ' + (response.msg || ''))
       }
     },
     handlePdfUpload (response, file) {
       if (response.success || response.error === null || response.error === undefined) {
         let filePath = response.file_path || response.url || ''
-        // 移除开头的斜杠，确保路径格式正确
         filePath = filePath.replace(/^\/+/, '')
         this.lessonPlan.pdf_file = '/' + filePath
         this.pdfFileName = response.file_name || file.name
-        this.$success('PDF uploaded successfully')
+        this.$success(this.$t('m.PDF_Upload_Success'))
       } else {
-        this.$error('Upload failed: ' + (response.msg || 'Unknown error'))
+        this.$error(this.$t('m.Upload_Failed') + ': ' + (response.msg || ''))
       }
     },
     previewPdf () {
       this.showPdfPreview = true
     },
+    handleMdFileChange (file) {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        this.mdContent = e.target.result
+        this.mdFileName = file.name
+
+        const rawName = file.name.replace(/\.(md|markdown)$/i, '')
+        let title = rawName
+        if (/^\s*#+\s*/.test(title)) {
+          title = title.replace(/^\s*#+\s*/, '')
+        }
+        title = title.trim()
+        if (title && !this.lessonPlan.title) {
+          this.lessonPlan.title = title
+        }
+        if (title && !this.lessonPlan.description) {
+          this.lessonPlan.description = '关于「' + title + '」的教学内容。'
+        }
+      }
+      reader.readAsText(file.raw)
+    },
+    clearMdFile () {
+      this.mdContent = ''
+      this.mdFileName = ''
+    },
+    renderMarkdown (md) {
+      return renderMarkdown(md)
+    },
     beforeUpload (file) {
       const isImage = file.type.startsWith('image/')
       if (!isImage) {
-        this.$error('You can only upload image files!')
+        this.$error(this.$t('m.Image_Only'))
       }
       return isImage
     },
     beforePdfUpload (file) {
       const isPdf = file.type === 'application/pdf'
       if (!isPdf) {
-        this.$error('You can only upload PDF files!')
+        this.$error(this.$t('m.PDF_Only'))
       }
       return isPdf
     },
+
+    openBatchImport () {
+      this.resetBatchImport()
+      this.showBatchImport = true
+    },
+    handleBatchFilesSelected (e) {
+      const files = Array.from(e.target.files)
+      if (!files.length) return
+
+      const newFiles = files.filter(f => {
+        const rawName = f.name.replace(/\.(md|markdown)$/i, '')
+        let title = rawName.replace(/^\s*#+\s*/, '').trim()
+        return !this.batchPreview.some(p => p.title === title)
+      })
+      if (files.length !== newFiles.length) {
+        this.$message.info(files.length - newFiles.length + ' 个文件已存在，跳过')
+      }
+      if (!newFiles.length) {
+        this.fileInputKey++
+        return
+      }
+
+      this.batchFileCount += newFiles.length
+
+      let loaded = 0
+      newFiles.forEach((file) => {
+        const rawName = file.name.replace(/\.(md|markdown)$/i, '')
+        let title = rawName
+        if (/^\s*#+\s*/.test(title)) {
+          title = title.replace(/^\s*#+\s*/, '')
+        }
+        title = title.trim()
+        const description = '关于「' + title + '」的教学内容。'
+
+        const reader = new FileReader()
+        reader.onload = (ev) => {
+          loaded++
+          this.batchPreview.push({
+            title, description,
+            content: ev.target.result,
+            fileName: file.name
+          })
+          if (loaded === newFiles.length) {
+            this.batchPreview.sort((a, b) => a.title.localeCompare(b.title, 'zh-Hans-CN'))
+            this.fileInputKey++
+          }
+        }
+        reader.onerror = () => { loaded++ }
+        reader.readAsText(file)
+      })
+    },
+    resetBatchImport () {
+      this.batchFileList = []
+      this.batchFileCount = 0
+      this.batchPreview = []
+      this.fileInputKey++
+    },
+    async submitBatchImport () {
+      if (this.batchPreview.length === 0) return
+      this.loading = true
+      let successCount = 0
+      let failCount = 0
+      const total = this.batchPreview.length
+
+      for (let i = 0; i < total; i++) {
+        const item = this.batchPreview[i]
+        try {
+          await api.createLessonPlan({
+            title: item.title,
+            description: item.description,
+            content: '[MD]\n' + item.content,
+            visible: true,
+            problem_ids: []
+          })
+          successCount++
+        } catch (err) {
+          console.error('Batch import error for ' + item.title + ':', err)
+          failCount++
+        }
+      }
+
+      this.loading = false
+      if (failCount === 0) {
+        this.$success(this.$t('m.Import_Success') + ' (' + successCount + ')，可继续添加文件')
+      } else {
+        this.$warning(this.$t('m.Import_Success') + ': ' + successCount + ', ' + this.$t('m.Import_Failed') + ': ' + failCount)
+      }
+      this.resetBatchImport()
+      this.currentPage = 1
+      this.getLessonPlanList(1)
+    },
+
     searchProblems () {
       if (!this.problemSearchKeyword) {
         this.searchResults = []
@@ -414,10 +628,17 @@ export default {
         params: {
           keyword: this.problemSearchKeyword,
           offset: 0,
-          limit: 20
+          limit: 50
         }
       }).then(res => {
         this.searchResults = res.data.data.results || []
+      })
+    },
+    selectAllProblems () {
+      this.searchResults.forEach(p => {
+        if (!this.isProblemSelected(p.id)) {
+          this.selectedProblems.push(p)
+        }
       })
     },
     addProblem (problem) {
@@ -460,9 +681,102 @@ export default {
     justify-content: space-between;
     align-items: center;
     margin-top: 20px;
+    position: relative;
+    z-index: 1;
 
-    .page {
-      float: right;
+    .left-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    /deep/ .el-pagination {
+      flex-shrink: 0;
+      white-space: nowrap;
+      margin-left: 16px;
+    }
+
+    /deep/ .el-pager li,
+    /deep/ .btn-prev,
+    /deep/ .btn-next {
+      pointer-events: auto !important;
+      cursor: pointer !important;
+    }
+  }
+
+  .batch-import-desc {
+    color: #64748b;
+    font-size: 14px;
+    margin-bottom: 16px;
+  }
+
+  .batch-upload-area {
+    border: 2px dashed #dce1e8;
+    border-radius: 8px;
+    padding: 24px;
+    text-align: center;
+    margin-bottom: 16px;
+
+    .batch-file-count {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #1e3a8a;
+      font-weight: 500;
+    }
+  }
+
+  .batch-preview {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+
+    .batch-preview-header {
+      padding: 8px 12px;
+      background: #f8fafc;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1e3a8a;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .batch-preview-list {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .batch-preview-item {
+      padding: 8px 12px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 14px;
+
+      .batch-idx {
+        color: #94a3b8;
+        min-width: 28px;
+      }
+
+      .batch-title {
+        font-weight: 600;
+        color: #1e3a8a;
+        min-width: 160px;
+      }
+
+      .batch-desc {
+        color: #64748b;
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+
+    .batch-preview-hint {
+      padding: 6px 12px;
+      font-size: 12px;
+      color: #94a3b8;
+      background: #fefce8;
     }
   }
 
@@ -485,7 +799,36 @@ export default {
     color: #64748b;
   }
 
+  .pdf-file-info {
+    margin-top: 10px;
+
+    .pdf-file-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: #f0f9ff;
+      border-radius: 6px;
+
+      .el-icon-document {
+        font-size: 18px;
+        color: #0284c7;
+      }
+
+      .pdf-file-name {
+        flex: 1;
+        color: #0c4a6e;
+        font-weight: 500;
+        font-size: 14px;
+      }
+    }
+  }
+
   .problem-selector {
+    .selected-problems-actions {
+      margin-top: 6px;
+    }
+
     .selected-problems {
       margin-top: 10px;
       display: flex;
@@ -539,30 +882,93 @@ export default {
       }
     }
   }
-}
 
-.pdf-file-info {
-  margin-top: 10px;
-  padding: 10px;
-  background: #f0f9ff;
-  border: 1px solid #bae6fd;
-  border-radius: 8px;
+  .content-type-switch {
+    margin-bottom: 12px;
+  }
 
-  .pdf-file-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  .md-upload-area {
+    border: 2px dashed #dce1e8;
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
 
-    .el-icon-document {
-      font-size: 18px;
-      color: #0284c7;
+    .md-file-info {
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: #e8f5e9;
+      border-radius: 6px;
+      font-size: 14px;
+      color: #2e7d32;
+
+      i { color: #2e7d32; }
     }
 
-    .pdf-file-name {
-      flex: 1;
-      color: #0c4a6e;
-      font-weight: 500;
-      font-size: 14px;
+    .md-preview {
+      margin-top: 16px;
+      text-align: left;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      overflow: hidden;
+
+      .md-preview-header {
+        padding: 8px 12px;
+        background: #f8fafc;
+        font-size: 13px;
+        font-weight: 600;
+        color: #64748b;
+        border-bottom: 1px solid #e2e8f0;
+      }
+
+      .md-preview-content {
+        padding: 12px 16px;
+        max-height: 400px;
+        overflow-y: auto;
+        font-size: 14px;
+        line-height: 1.7;
+        color: #334155;
+
+        h1, h2, h3, h4 { margin: 12px 0 8px; color: #1e3a8a; }
+        h1 { font-size: 1.5em; }
+        h2 { font-size: 1.3em; }
+        h3 { font-size: 1.15em; }
+        h4 { font-size: 1.05em; }
+        p { margin: 4px 0; }
+        code {
+          background: #f1f5f9;
+          padding: 2px 6px;
+          border-radius: 3px;
+          font-size: 0.9em;
+          color: #e040fb;
+        }
+        pre {
+          background: #1e293b;
+          color: #e2e8f0;
+          padding: 12px 16px;
+          border-radius: 6px;
+          overflow-x: auto;
+          font-size: 13px;
+          line-height: 1.5;
+
+          code { background: transparent; color: inherit; padding: 0; }
+        }
+        ul, ol { padding-left: 24px; margin: 4px 0; }
+        li { margin: 2px 0; }
+        a { color: #2563eb; text-decoration: underline; }
+        blockquote {
+          border-left: 3px solid #94a3b8;
+          margin: 8px 0;
+          padding: 4px 12px;
+          color: #64748b;
+          background: #f8fafc;
+        }
+        hr { border: none; border-top: 1px solid #e2e8f0; margin: 12px 0; }
+        img { max-width: 100%; border-radius: 4px; }
+      }
     }
   }
 }

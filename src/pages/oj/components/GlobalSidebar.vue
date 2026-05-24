@@ -41,6 +41,10 @@
         <h3>{{ aiFullName }}</h3>
         <div class="panel-actions">
           <Select v-model="aiModel" size="small" class="model-select" @on-change="onModelChange">
+            <Option value="agent">
+              <img src="~@/assets/logo3.png" class="model-option-icon" />
+              Agent
+            </Option>
             <Option value="spark">
               <img src="/static/pictures/xh.png" class="model-option-icon" />
               Spark
@@ -68,27 +72,21 @@
             <p>{{ aiWelcomeDesc }}</p>
           </div>
           <template v-else>
-            <div v-for="(msg, idx) in aiMessages" :key="idx" :class="['message-item', msg.role]">
-              <div class="message-avatar">
-                <Avatar v-if="msg.role === 'user'" icon="ios-person" style="background: #2d8cf0" />
-                <div v-else class="ai-avatar">
-                  <img :src="aiAvatar" :alt="aiDisplayName" :key="'msg-avatar-' + aiAvatar" />
-                </div>
-              </div>
-              <div class="message-content">
-                <div class="message-header">
-                  <span class="sender-name">{{ msg.role === 'user' ? $t('m.Me') : aiDisplayName }}</span>
-                </div>
-                <div class="message-body">
-                  <div v-if="msg.role === 'loading'" class="loading-indicator">
-                    <Spin size="small" />
-                    <span>{{ $t('m.AI_Thinking') }}</span>
-                  </div>
-                  <div v-else class="message-text" v-html="formatMessage(msg.content)"></div>
-                </div>
-              </div>
-            </div>
-          </template>
+              <MessageItem
+                v-for="(msg, idx) in aiMessages"
+                :key="idx"
+                :role="msg.role"
+                :content="msg.content"
+                :agent-name="msg.agentName"
+                :thinking-steps="msg.thinkingSteps"
+                :all-steps-done="msg.allStepsDone"
+                :current-step-index="msg.currentStepIndex"
+                :ai-avatar="aiAvatar"
+                :ai-name="aiDisplayName"
+                :display-type="msg.displayType"
+                :display-data="msg.displayData"
+              />
+            </template>
         </div>
         <div class="input-area">
           <Input v-model="aiInputText" type="textarea" :rows="3" :placeholder="aiMessages.length === 0 ? $t('m.Enter_Your_Question_Start') : $t('m.Enter_Your_Question')" />
@@ -166,6 +164,8 @@
 <script>
 import { mapState, mapActions } from 'vuex'
 import { codemirror } from 'vue-codemirror-lite'
+import MessageItem from '@oj/views/chat/components/MessageItem.vue'
+import { formatAgentResponse, extractAgentDisplay } from '@oj/views/chat/utils.js'
 
 import 'codemirror/theme/monokai.css'
 import 'codemirror/theme/solarized.css'
@@ -177,7 +177,8 @@ import 'codemirror/mode/javascript/javascript.js'
 export default {
   name: 'GlobalSidebar',
   components: {
-    codemirror
+    codemirror,
+    MessageItem
   },
   data () {
     return {
@@ -191,7 +192,7 @@ export default {
       sideDragTimer: null,
       sidebarSnapped: 'left',
 
-      aiModel: 'spark',
+      aiModel: 'agent',
       aiMessages: [],
       aiInputText: '',
       aiSending: false,
@@ -230,18 +231,23 @@ export default {
       }
     },
     aiAvatar () {
+      if (this.aiModel === 'agent') return require('@/assets/logo3.png')
       return this.aiModel === 'deepseek' ? '/static/pictures/ds.png' : '/static/pictures/xh.png'
     },
     aiDisplayName () {
+      if (this.aiModel === 'agent') return 'OJ Agent'
       return this.aiModel === 'deepseek' ? 'DeepSeek' : this.$t('m.Spark_AI')
     },
     aiFullName () {
+      if (this.aiModel === 'agent') return 'OJ 智能助手 (Agent)'
       return this.aiModel === 'deepseek' ? 'DeepSeek V4 PRO' : this.$t('m.Spark_AI_Assistant')
     },
     aiWelcomeTitle () {
+      if (this.aiModel === 'agent') return '你好！我是 OJ 智能助手'
       return this.aiModel === 'deepseek' ? this.$t('m.Hello_I_Am_DeepSeek') : this.$t('m.Hello_I_Am_Spark_AI')
     },
     aiWelcomeDesc () {
+      if (this.aiModel === 'agent') return '我可以帮你推荐题目、规划学习路径、生成练习题、提供解题提示、分析提交错误。尽管问我吧！'
       return this.aiModel === 'deepseek' ? this.$t('m.DeepSeek_Description') : this.$t('m.Spark_AI_Description')
     },
     editorOptions () {
@@ -441,33 +447,44 @@ export default {
       this.aiInputText = ''
       this.aiSending = true
 
-      this.aiMessages.push({ role: 'loading', content: this.$t('m.AI_Thinking_Text') })
+      const loadingIdx = this.aiMessages.length
+      this.aiMessages.push({ role: 'loading', content: '' })
       this.scrollToBottom()
 
       try {
-        const response = await fetch('/api/agent/chat/', {
+        const apiUrl = this.aiModel === 'agent' ? '/api/agent/chat/' : '/api/spark/chat/'
+        const response = await fetch(apiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message: text, model: this.aiModel })
         })
 
-        this.aiMessages.splice(this.aiMessages.length - 1, 1)
+        this.aiMessages.splice(loadingIdx, 1)
 
         if (response.ok) {
           const result = await response.json()
-          const agentData = result.data || result
-          let content
-          if (agentData.intent === 'general') {
-            content = '抱歉，我没太明白你的意思。你可以试试问我：推荐题目、规划学习路径、生成练习题、解题提示、或者分析错误。'
+          if (this.aiModel === 'agent') {
+            const agentData = result.data || result
+            const formatted = formatAgentResponse(agentData)
+            const display = extractAgentDisplay(agentData)
+            this.aiMessages.push({
+              role: 'assistant',
+              content: formatted.content || this.$t('m.No_Reply'),
+              agentName: agentData.agent || '',
+              thinkingSteps: agentData.thinking_steps || [],
+              allStepsDone: !!(agentData.thinking_steps && agentData.thinking_steps.length),
+              displayType: display.displayType,
+              displayData: display.displayData
+            })
           } else {
-            content = agentData.answer || agentData.message || agentData.analysis || agentData.hint || JSON.stringify(agentData)
+            const data = result
+            this.aiMessages.push({ role: 'assistant', content: data.answer || data.reply || data.message || this.$t('m.No_Reply') })
           }
-          this.aiMessages.push({ role: 'assistant', content: content || this.$t('m.No_Reply') })
         } else {
           this.aiMessages.push({ role: 'assistant', content: this.$t('m.Request_Failed') })
         }
       } catch (e) {
-        this.aiMessages.splice(this.aiMessages.length - 1, 1)
+        this.aiMessages.splice(loadingIdx, 1)
         this.aiMessages.push({ role: 'assistant', content: this.$t('m.Network_Error_Text') })
       } finally {
         this.aiSending = false

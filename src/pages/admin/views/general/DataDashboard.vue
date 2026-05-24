@@ -6,16 +6,16 @@
         <p>Data Dashboard</p>
       </div>
       <div class="header-actions">
-        <Button type="primary" icon="ios-expand" @click="goImmersion" class="immersion-btn">
+        <el-button type="primary" icon="el-icon-full-screen" @click="goImmersion" class="immersion-btn">
           沉浸式观看
-        </Button>
+        </el-button>
       </div>
     </div>
 
     <div class="overview-cards">
       <div class="card overview-card">
         <div class="card-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">
-          <i class="el-icon-fa-users"></i>
+          <span style="font-size:36px">👥</span>
         </div>
         <div class="card-content">
           <div class="card-value">{{ overview.total_users || 0 }}</div>
@@ -24,7 +24,7 @@
       </div>
       <div class="card overview-card">
         <div class="card-icon" style="background: linear-gradient(135deg, #f093fb, #f5576c);">
-          <i class="el-icon-fa-file-code-o"></i>
+          <span style="font-size:36px">📄</span>
         </div>
         <div class="card-content">
           <div class="card-value">{{ overview.total_problems || 0 }}</div>
@@ -33,7 +33,7 @@
       </div>
       <div class="card overview-card">
         <div class="card-icon" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">
-          <i class="el-icon-fa-send"></i>
+          <span style="font-size:36px">🚀</span>
         </div>
         <div class="card-content">
           <div class="card-value">{{ overview.total_submissions || 0 }}</div>
@@ -42,7 +42,7 @@
       </div>
       <div class="card overview-card">
         <div class="card-icon" style="background: linear-gradient(135deg, #43e97b, #38f9d7);">
-          <i class="el-icon-fa-trophy"></i>
+          <span style="font-size:36px">🏆</span>
         </div>
         <div class="card-content">
           <div class="card-value">{{ overview.total_contests || 0 }}</div>
@@ -117,12 +117,42 @@
     <div class="tables-row">
       <div class="table-panel">
         <h3>完成率最高题目 Top 10</h3>
-        <Table :data="mostCompleted" :columns="problemColumns" :key="'t1-'+tableKey" size="small" disabled-hover></Table>
+        <el-table :data="mostCompleted" :key="'t1-'+tableKey" size="small" stripe>
+          <el-table-column prop="_id" label="ID" width="80"></el-table-column>
+          <el-table-column prop="title" label="题目标题" show-overflow-tooltip></el-table-column>
+          <el-table-column label="难度" width="80">
+            <template slot-scope="scope">
+              <el-tag :type="diffTagType(scope.row.difficulty)" size="small">{{ diffLabel(scope.row.difficulty) }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="submission_count" label="提交数" width="80"></el-table-column>
+          <el-table-column prop="accepted_count" label="通过数" width="80"></el-table-column>
+          <el-table-column label="通过率" width="100">
+            <template slot-scope="scope">
+              <span>{{ (scope.row.pass_rate || 0).toFixed(1) }}%</span>
+            </template>
+          </el-table-column>
+        </el-table>
         <div v-if="!mostCompleted.length" class="no-data">暂无数据</div>
       </div>
       <div class="table-panel">
         <h3>完成率最低题目 Top 10</h3>
-        <Table :data="leastCompleted" :columns="problemColumns" :key="'t2-'+tableKey" size="small" disabled-hover></Table>
+        <el-table :data="leastCompleted" :key="'t2-'+tableKey" size="small" stripe>
+          <el-table-column prop="_id" label="ID" width="80"></el-table-column>
+          <el-table-column prop="title" label="题目标题" show-overflow-tooltip></el-table-column>
+          <el-table-column label="难度" width="80">
+            <template slot-scope="scope">
+              <el-tag :type="diffTagType(scope.row.difficulty)" size="small">{{ diffLabel(scope.row.difficulty) }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="submission_count" label="提交数" width="80"></el-table-column>
+          <el-table-column prop="accepted_count" label="通过数" width="80"></el-table-column>
+          <el-table-column label="通过率" width="100">
+            <template slot-scope="scope">
+              <span>{{ (scope.row.pass_rate || 0).toFixed(1) }}%</span>
+            </template>
+          </el-table-column>
+        </el-table>
         <div v-if="!leastCompleted.length" class="no-data">暂无数据</div>
       </div>
     </div>
@@ -130,7 +160,21 @@
     <div class="tables-row">
       <div class="table-panel">
         <h3>用户排名 Top 20</h3>
-        <Table :data="userRanking" :columns="userColumns" :key="'t3-'+tableKey" size="small" disabled-hover></Table>
+        <el-table :data="userRanking" :key="'t3-'+tableKey" size="small" stripe>
+          <el-table-column prop="rank" label="排名" width="60"></el-table-column>
+          <el-table-column prop="username" label="用户名" width="120"></el-table-column>
+          <el-table-column label="真实姓名" width="120">
+            <template slot-scope="scope">{{ scope.row.real_name || '-' }}</template>
+          </el-table-column>
+          <el-table-column prop="accepted_count" label="通过数" width="80"></el-table-column>
+          <el-table-column prop="submission_count" label="提交数" width="80"></el-table-column>
+          <el-table-column label="AC率" width="80">
+            <template slot-scope="scope">
+              <span>{{ (typeof scope.row.ac_rate === 'number' ? scope.row.ac_rate.toFixed(1) : scope.row.ac_rate || 0) }}%</span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="total_score" label="OI总分" width="100"></el-table-column>
+        </el-table>
         <div v-if="!userRanking.length" class="no-data">暂无数据</div>
       </div>
     </div>
@@ -138,12 +182,27 @@
     <div class="tables-row">
       <div class="table-panel">
         <h3>历史提交最多用户</h3>
-        <Table :data="topSubmittersAllTime" :columns="submitterColumns" :key="'t4-'+tableKey" size="small" disabled-hover></Table>
+        <el-table :data="topSubmittersAllTime" :key="'t4-'+tableKey" size="small" stripe>
+          <el-table-column prop="username" label="用户名" width="120"></el-table-column>
+          <el-table-column label="真实姓名" width="120">
+            <template slot-scope="scope">{{ scope.row.real_name || '-' }}</template>
+          </el-table-column>
+          <el-table-column prop="submission_count" label="提交数" width="100"></el-table-column>
+          <el-table-column prop="accepted_count" label="通过数" width="100"></el-table-column>
+          <el-table-column prop="total_score" label="OI总分" width="100"></el-table-column>
+        </el-table>
         <div v-if="!topSubmittersAllTime.length" class="no-data">暂无数据</div>
       </div>
       <div class="table-panel">
         <h3>本周提交最多用户</h3>
-        <Table :data="topSubmittersWeek" :columns="submitterWeekColumns" :key="'t5-'+tableKey" size="small" disabled-hover></Table>
+        <el-table :data="topSubmittersWeek" :key="'t5-'+tableKey" size="small" stripe>
+          <el-table-column prop="username" label="用户名" width="120"></el-table-column>
+          <el-table-column label="真实姓名" width="120">
+            <template slot-scope="scope">{{ scope.row.real_name || '-' }}</template>
+          </el-table-column>
+          <el-table-column prop="submission_count" label="本周提交" width="100"></el-table-column>
+          <el-table-column prop="accepted_count" label="本周通过" width="100"></el-table-column>
+        </el-table>
         <div v-if="!topSubmittersWeek.length" class="no-data">暂无数据</div>
       </div>
     </div>
@@ -170,149 +229,7 @@ export default {
       mostCompleted: [],
       leastCompleted: [],
       topSubmittersAllTime: [],
-      topSubmittersWeek: [],
-      problemColumns: [
-        {
-          title: 'ID',
-          key: '_id',
-          width: 80
-        },
-        {
-          title: '题目标题',
-          key: 'title',
-          ellipsis: true
-        },
-        {
-          title: '难度',
-          key: 'difficulty',
-          width: 80,
-          render: (h, params) => {
-            const colorMap = { Low: 'green', Mid: 'blue', High: 'red' }
-            const labelMap = { Low: '简单', Mid: '中等', High: '困难' }
-            return h('Tag', {
-              props: { color: colorMap[params.row.difficulty] || 'default' }
-            }, labelMap[params.row.difficulty] || params.row.difficulty)
-          }
-        },
-        {
-          title: '提交数',
-          key: 'submission_count',
-          width: 80
-        },
-        {
-          title: '通过数',
-          key: 'accepted_count',
-          width: 80
-        },
-        {
-          title: '通过率',
-          key: 'pass_rate',
-          width: 100,
-          render: (h, params) => {
-            const rate = params.row.pass_rate || 0
-            return h('span', rate.toFixed(1) + '%')
-          }
-        }
-      ],
-      userColumns: [
-        {
-          title: '排名',
-          key: 'rank',
-          width: 60
-        },
-        {
-          title: '用户名',
-          key: 'username',
-          width: 120
-        },
-        {
-          title: '真实姓名',
-          key: 'real_name',
-          width: 120,
-          render: (h, params) => {
-            return h('span', params.row.real_name || '-')
-          }
-        },
-        {
-          title: '通过数',
-          key: 'accepted_count',
-          width: 80
-        },
-        {
-          title: '提交数',
-          key: 'submission_count',
-          width: 80
-        },
-        {
-          title: 'AC率',
-          key: 'ac_rate',
-          width: 80,
-          render: (h, params) => {
-            const rate = params.row.ac_rate || 0
-            return h('span', (typeof rate === 'number' ? rate.toFixed(1) : rate) + '%')
-          }
-        },
-        {
-          title: 'OI总分',
-          key: 'total_score',
-          width: 100
-        }
-      ],
-      submitterColumns: [
-        {
-          title: '用户名',
-          key: 'username',
-          width: 120
-        },
-        {
-          title: '真实姓名',
-          key: 'real_name',
-          width: 120,
-          render: (h, params) => {
-            return h('span', params.row.real_name || '-')
-          }
-        },
-        {
-          title: '提交数',
-          key: 'submission_count',
-          width: 100
-        },
-        {
-          title: '通过数',
-          key: 'accepted_count',
-          width: 100
-        },
-        {
-          title: 'OI总分',
-          key: 'total_score',
-          width: 100
-        }
-      ],
-      submitterWeekColumns: [
-        {
-          title: '用户名',
-          key: 'username',
-          width: 120
-        },
-        {
-          title: '真实姓名',
-          key: 'real_name',
-          width: 120,
-          render: (h, params) => {
-            return h('span', params.row.real_name || '-')
-          }
-        },
-        {
-          title: '本周提交',
-          key: 'submission_count',
-          width: 100
-        },
-        {
-          title: '本周通过',
-          key: 'accepted_count',
-          width: 100
-        }
-      ]
+      topSubmittersWeek: []
     }
   },
   mounted () {
@@ -323,15 +240,39 @@ export default {
     window.removeEventListener('resize', this.handleResize)
   },
   methods: {
+    diffTagType (difficulty) {
+      if (difficulty === 'Low') return 'success'
+      if (difficulty === 'Mid') return 'warning'
+      return 'danger'
+    },
+    diffLabel (difficulty) {
+      const map = { Low: '简单', Mid: '中等', High: '困难' }
+      return map[difficulty] || difficulty
+    },
+    translateSubmissionResult (status) {
+      const keyMap = {
+        'Pending': 'Submission_Result_Pending',
+        'Judging': 'Submission_Result_Judging',
+        'Accepted': 'Submission_Result_Accepted',
+        'Wrong Answer': 'Submission_Result_Wrong_Answer',
+        'CPU Time Limit Exceeded': 'Submission_Result_CPU_Time_Limit_Exceeded',
+        'Real Time Limit Exceeded': 'Submission_Result_Real_Time_Limit_Exceeded',
+        'Memory Limit Exceeded': 'Submission_Result_Memory_Limit_Exceeded',
+        'Runtime Error': 'Submission_Result_Runtime_Error',
+        'Compile Error': 'Submission_Result_Compile_Error',
+        'System Error': 'Submission_Result_System_Error',
+        'Partially Accepted': 'Submission_Result_Partially_Accepted',
+      }
+      const key = keyMap[status]
+      return key ? this.$t('m.' + key) : status
+    },
     goImmersion () {
-      const routeData = this.$router.resolve({ name: 'immersion-dashboard' })
-      window.open(routeData.href, '_blank')
+      this.$router.push({ name: 'immersion-dashboard' })
     },
     fetchData () {
       this.loading = true
       api.getDataDashboard().then(res => {
         const data = res.data.data || res.data
-        console.log('Dashboard raw data:', data)
         this.overview = data.overview || {}
         this.problemStats = data.problem_stats || {}
         this.difficultyDistribution = data.difficulty_distribution || []
@@ -347,11 +288,6 @@ export default {
         this.loading = false
         this.tableKey = Date.now()
         this.$forceUpdate()
-        console.log('赋值后的 mostCompleted:', JSON.stringify(this.mostCompleted))
-        console.log('赋值后的 leastCompleted:', this.leastCompleted)
-        console.log('赋值后的 userRanking:', this.userRanking)
-        console.log('赋值后的 topSubmittersAllTime:', this.topSubmittersAllTime)
-        console.log('赋值后的 topSubmittersWeek:', this.topSubmittersWeek)
         this.$nextTick(() => {
           setTimeout(() => {
             this.drawDifficultyChart()
@@ -381,7 +317,7 @@ export default {
           radius: ['40%', '70%'],
           avoidLabelOverlap: false,
           itemStyle: { borderRadius: 10, borderColor: '#fff', borderWidth: 2 },
-          label: { show: true, formatter: '{b}: {c}题' },
+          label: { show: true, formatter: '{b}: {c}题', fontSize: 14 },
           data: this.difficultyDistribution.map(item => ({
             name: labelMap[item.name] || item.name,
             value: item.count,
@@ -404,9 +340,9 @@ export default {
           radius: ['40%', '70%'],
           avoidLabelOverlap: false,
           itemStyle: { borderRadius: 10, borderColor: '#fff', borderWidth: 2 },
-          label: { show: true, formatter: '{b}: {c}次' },
+          label: { show: true, formatter: '{b}: {c}次', fontSize: 13 },
           data: resultDistribution.map(item => ({
-            name: item.status,
+            name: this.translateSubmissionResult(item.status),
             value: item.count
           }))
         }]
@@ -426,7 +362,7 @@ export default {
           radius: ['40%', '70%'],
           avoidLabelOverlap: false,
           itemStyle: { borderRadius: 10, borderColor: '#fff', borderWidth: 2 },
-          label: { show: true, formatter: '{b}: {c}次' },
+          label: { show: true, formatter: '{b}: {c}次', fontSize: 13 },
           data: languageDistribution.map(item => ({
             name: item.language,
             value: item.count
@@ -473,13 +409,13 @@ export default {
       const dailySubmissions = this.submissionStats.daily_submissions || []
       chart.setOption({
         tooltip: { trigger: 'axis' },
-        legend: { data: ['总提交', '通过'], left: 'center' },
-        grid: { left: '60px', right: '40px', bottom: '40px', top: '60px', containLabel: true },
+        legend: { data: ['总提交', '通过'], left: 'center', textStyle: { fontSize: 14 } },
+        grid: { left: '70px', right: '50px', bottom: '45px', top: '60px', containLabel: true },
         xAxis: {
           type: 'category',
           boundaryGap: false,
           data: dailySubmissions.map(item => item.date),
-          axisLabel: { rotate: 0, interval: 0 }
+          axisLabel: { rotate: 0, interval: 0, fontSize: 13 }
         },
         yAxis: { type: 'value' },
         series: [
@@ -532,19 +468,8 @@ export default {
   margin-bottom: 30px;
 
   .header-left {
-    h2 {
-      font-size: 28px;
-      font-weight: 700;
-      color: #1e3a8a;
-      margin: 0 0 8px 0;
-    }
-
-    p {
-      font-size: 14px;
-      color: #94a3b8;
-      margin: 0;
-      letter-spacing: 2px;
-    }
+    h2 { font-size: 32px; font-weight: 700; color: #1e3a8a; margin: 0 0 6px 0; }
+    p { font-size: 16px; color: #94a3b8; margin: 0; letter-spacing: 2px; }
   }
 
   .header-actions {
@@ -552,17 +477,13 @@ export default {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       border: none;
       border-radius: 12px;
-      padding: 10px 24px;
-      font-size: 15px;
+      padding: 12px 28px;
+      font-size: 17px;
       font-weight: 600;
       letter-spacing: 1px;
       box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
       transition: all 0.3s ease;
-
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 25px rgba(102, 126, 234, 0.6);
-      }
+      &:hover { transform: translateY(-2px); box-shadow: 0 6px 25px rgba(102, 126, 234, 0.6); }
     }
   }
 }
@@ -577,175 +498,77 @@ export default {
 .card {
   background: #fff;
   border-radius: 16px;
-  padding: 24px;
+  padding: 28px;
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
-  }
+  &:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1); }
 }
 
 .card-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-
-  i {
-    font-size: 28px;
-    color: #fff;
-  }
+  width: 72px; height: 72px; border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  i, span { font-size: 36px; color: #fff; line-height: 1; }
 }
 
 .card-content {
-  .card-value {
-    font-size: 28px;
-    font-weight: 700;
-    color: #1e293b;
-    line-height: 1.2;
-  }
-
-  .card-label {
-    font-size: 14px;
-    color: #64748b;
-    margin-top: 4px;
-  }
+  flex: 1;
+  .card-value { font-size: 40px; font-weight: 700; color: #1e3a8a; margin-bottom: 4px; }
+  .card-label { font-size: 17px; color: #64748b; }
 }
 
 .activity-stats {
   background: #fff;
   border-radius: 16px;
-  padding: 24px;
+  padding: 28px;
   margin-bottom: 30px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
 
-  h3 {
-    font-size: 18px;
-    font-weight: 600;
-    color: #1e293b;
-    margin: 0 0 16px 0;
-  }
-
-  .stat-items {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-  }
-
-  .stat-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 12px 24px;
-    background: #f8fafc;
-    border-radius: 12px;
-    min-width: 120px;
-
-    .stat-label {
-      font-size: 13px;
-      color: #64748b;
-      margin-bottom: 6px;
-    }
-
-    .stat-value {
-      font-size: 22px;
-      font-weight: 700;
-      color: #1e293b;
+  .stat-group {
+    h3 { font-size: 20px; font-weight: 600; color: #1e3a8a; margin: 0 0 20px; }
+    .stat-items {
+      display: flex; flex-wrap: wrap; gap: 16px;
+      .stat-item {
+        flex: 1; min-width: 150px; padding: 16px 20px;
+        background: #f8fafc; border-radius: 12px; text-align: center;
+        .stat-label { display: block; font-size: 15px; color: #64748b; margin-bottom: 8px; }
+        .stat-value { font-size: 28px; font-weight: 700; color: #1e3a8a; }
+      }
     }
   }
 }
 
 .charts-row {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-  margin-bottom: 30px;
-  width: 100%;
-
-  &.single-row {
-    grid-template-columns: 1fr;
-  }
+  display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;
 }
 
-.chart-panel {
-  background: #fff;
-  border-radius: 16px;
-  padding: 24px;
+.chart-panel, .daily-chart-panel {
+  background: #fff; border-radius: 16px; padding: 28px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-  width: 100%;
-
-  h3 {
-    font-size: 18px;
-    font-weight: 600;
-    color: #1e293b;
-    margin: 0 0 16px 0;
-  }
-
-  &.full-width {
-    grid-column: 1 / -1;
-  }
+  h3 { font-size: 18px; font-weight: 600; color: #1e3a8a; margin: 0 0 16px; }
 }
 
-.chart-container {
-  height: 350px;
-  width: 100%;
-}
-
-.chart-container-wide {
-  height: 350px;
-  width: 100%;
-  display: block;
-}
-
-.daily-chart-panel {
-  background: #fff;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-  margin-bottom: 30px;
-  width: 100%;
-
-  h3 {
-    font-size: 18px;
-    font-weight: 600;
-    color: #1e293b;
-    margin: 0 0 16px 0;
-  }
-}
+.chart-container { height: 380px; }
+.chart-container-wide { height: 420px; }
+.daily-chart-panel { margin-bottom: 30px; }
 
 .tables-row {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-  margin-bottom: 30px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;
 }
 
 .table-panel {
-  background: #fff;
-  border-radius: 16px;
-  padding: 24px;
+  background: #fff; border-radius: 16px; padding: 28px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  h3 { font-size: 18px; font-weight: 600; color: #1e3a8a; margin: 0 0 16px; }
 
-  h3 {
-    font-size: 18px;
-    font-weight: 600;
-    color: #1e293b;
-    margin: 0 0 16px 0;
-  }
+  /deep/ .el-table { font-size: 15px; }
+  /deep/ .el-table th { font-size: 15px; padding: 10px 0; }
+  /deep/ .el-table td { font-size: 15px; padding: 8px 0; }
 }
 
 .no-data {
-  text-align: center;
-  padding: 30px 0;
-  color: #909399;
-  font-size: 14px;
+  text-align: center; color: #94a3b8; font-size: 14px; padding: 30px 0;
 }
 </style>

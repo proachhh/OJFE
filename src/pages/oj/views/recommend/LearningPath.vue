@@ -15,9 +15,9 @@
 
       <!-- 搜索 -->
       <div class="search-wrapper">
-        <Input 
-          v-model="searchQuery" 
-          :placeholder="$t('m.Search_Topics')" 
+        <Input
+          v-model="searchQuery"
+          :placeholder="$t('m.Search_Topics')"
           prefix="ios-search"
           clearable
           class="topic-search"
@@ -36,8 +36,8 @@
             </Tag>
           </div>
           <div class="tags-scroll">
-            <Tag 
-              v-for="topic in filteredTopics" 
+            <Tag
+              v-for="topic in filteredTopics"
               :key="'start-'+topic"
               :class="['selectable-tag', { 'start-selected': startTopic === topic }]"
               @click.native="selectStartTopic(topic)"
@@ -57,8 +57,8 @@
             </Tag>
           </div>
           <div class="tags-scroll">
-            <Tag 
-              v-for="topic in filteredTopics" 
+            <Tag
+              v-for="topic in filteredTopics"
               :key="'target-'+topic"
               :class="['selectable-tag', { 'target-selected': targetTopic === topic }]"
               @click.native="selectTargetTopic(topic)"
@@ -71,10 +71,10 @@
 
       <!-- 生成按钮 -->
       <div class="generate-wrapper">
-        <Button 
-          type="primary" 
-          size="large" 
-          @click="fetchPath" 
+        <Button
+          type="primary"
+          size="large"
+          @click="fetchPath"
           :loading="loading"
           :disabled="!targetTopic"
           class="generate-btn"
@@ -88,10 +88,10 @@
       <div v-if="pathData" class="result-wrapper">
         <div class="weak-info">
           <span class="label">{{ $t('m.Your_Weakest_Topic') }}:</span>
-          <Tag color="error">{{ translateTopic(pathData.start) }}</Tag>
+          <Tag color="red">{{ translateTopic(pathData.start) }}</Tag>
           <span class="goal-label">→ {{ $t('m.Target_Topic') }}:</span>
-          <Tag color="primary">{{ translateTopic(pathData.goal) }}</Tag>
-          <Tag v-if="pathData.fallback" color="warning" size="small">备选路径</Tag>
+          <Tag color="blue">{{ translateTopic(pathData.goal) }}</Tag>
+          <Tag v-if="pathData.fallback" color="yellow" size="small">备选路径</Tag>
         </div>
         <Timeline class="path-timeline">
           <TimelineItem v-for="(item, index) in pathData.path_plan" :key="index">
@@ -100,15 +100,15 @@
                 <span class="step-badge">{{ index + 1 }}</span>
                 <span class="topic-text">{{ translateTopic(item.name) }}</span>
                 <div class="node-meta">
-                  <Tag :color="getDifficultyColorNumeric(item.difficulty)" size="small">
+                  <span class="meta-tag meta-difficulty" :style="getDifficultyStyle(item.difficulty)">
                     难度 {{ formatDifficulty(item.difficulty) }}
-                  </Tag>
-                  <Tag color="cyan" size="small">
+                  </span>
+                  <span class="meta-tag" style="background: #00bcd4; color: #fff;">
                     重要度 {{ item.importance.toFixed(0) }}
-                  </Tag>
-                  <Tag v-if="item.problem_count" color="geekblue" size="small">
+                  </span>
+                  <span v-if="item.problem_count" class="meta-tag" style="background: #2d8cf0; color: #fff;">
                     {{ item.problem_count }} 题
-                  </Tag>
+                  </span>
                 </div>
               </div>
               <div v-if="item.snippet" class="snippet-info">
@@ -128,13 +128,13 @@
         <span>{{ error }}</span>
       </div>
 
-      <!-- AI 知识点总结 -->
+      <!-- 智能知识点总结 -->
       <div class="topic-summary-section">
         <div class="summary-header">
           <Icon type="ios-book" size="18" color="#9c27b0" />
-          <span>AI 知识点总结</span>
-          <Input 
-            v-model="summaryTopic" 
+          <span>{{ $t('m.Smart_Topic_Summary') }}</span>
+          <Input
+            v-model="summaryTopic"
             placeholder="输入知识点名称, 如 BFS..."
             size="small"
             class="summary-input"
@@ -145,7 +145,7 @@
           :title="`知识点总结: ${summaryTopic}`"
           icon="ios-book"
           iconColor="#9c27b0"
-          btnText="AI 生成总结"
+          :btnText="$t('m.Smart_Gen_Summary')"
           btnType="primary"
           :fetchFn="fetchTopicSummary"
           :key="summaryTopic"
@@ -215,7 +215,7 @@ export default {
         topic.charAt(0).toLowerCase() + topic.slice(1), // 首字母小写: backtracking
         topic.charAt(0).toUpperCase() + topic.slice(1).toLowerCase() // 首字母大写: Backtracking
       ]
-      
+
       for (const format of formats) {
         const key = 'm.tag.' + format
         const translated = this.$t(key)
@@ -223,7 +223,7 @@ export default {
           return translated
         }
       }
-      
+
       // 如果没有找到翻译，返回原始值
       return topic
     },
@@ -285,14 +285,10 @@ export default {
     fetchTopicSummary () {
       return api.getTopicSummary({ topic: this.summaryTopic })
     },
-    getDifficultyColor (difficulty) {
-      const map = { 'Low': 'success', 'Mid': 'warning', 'High': 'error' }
-      return map[difficulty] || 'default'
-    },
-    getDifficultyColorNumeric (diff) {
-      if (diff <= 2.5) return 'success'
-      if (diff <= 3.5) return 'warning'
-      return 'error'
+    getDifficultyStyle (diff) {
+      if (diff <= 2.5) return { background: '#2d8cf0', color: '#fff' }
+      if (diff <= 3.5) return { background: '#f90', color: '#fff' }
+      return { background: '#ed4014', color: '#fff' }
     },
     formatDifficulty (diff) {
       if (diff <= 2.5) return 'Easy'
@@ -614,6 +610,15 @@ export default {
         gap: 6px;
         padding-left: 32px;
         flex-wrap: wrap;
+
+        .meta-tag {
+          display: inline-block;
+          font-size: 12px;
+          font-weight: 600;
+          padding: 2px 8px;
+          border-radius: 4px;
+          line-height: 20px;
+        }
       }
 
       .snippet-info {
@@ -651,7 +656,7 @@ export default {
   gap: 8px;
 }
 
-// AI 知识点总结区域
+// 智能知识点总结区域
 .topic-summary-section {
   max-width: 900px;
   margin: 20px auto 0;
@@ -689,7 +694,7 @@ export default {
   backdrop-filter: blur(10px);
   box-shadow: none;
   border: none !important;
-  
+
   &::before, &::after {
     display: none !important;
   }
@@ -700,55 +705,55 @@ export default {
     .logo .logo-img {
       /* 移除滤镜，显示原始 logo 颜色 */
     }
-    
+
     .oj-menu {
       border-bottom: none !important;
-      
+
       &::after {
         display: none !important;
       }
-      
+
       .ivu-menu-item, .ivu-menu-submenu-title {
         border: 2px solid rgba(255, 255, 255, 0.8);
         color: rgba(255, 255, 255, 0.9) !important;
-        
+
         &:hover {
           background: rgba(255, 255, 255, 0.15) !important;
           box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
         }
-        
+
         &.ivu-menu-item-active {
           background: rgba(255, 255, 255, 0.25) !important;
           color: rgba(255, 255, 255, 1) !important;
           border-color: rgba(255, 255, 255, 1);
           box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
         }
-        
+
         .ivu-icon {
           color: rgba(255, 255, 255, 0.9);
         }
       }
     }
-    
+
     .auth-menu {
       .user-info {
         &:hover {
           background: rgba(255, 255, 255, 0.15);
         }
-        
+
         .user-avatar {
           border-color: rgba(255, 255, 255, 0.9);
         }
-        
+
         .user-name {
           color: rgba(255, 255, 255, 0.9);
         }
       }
-      
+
       .ivu-btn-ghost {
         border: 2px solid rgba(255, 255, 255, 0.8);
         color: rgba(255, 255, 255, 0.9);
-        
+
         &:hover {
           background: rgba(255, 255, 255, 0.15);
           box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);

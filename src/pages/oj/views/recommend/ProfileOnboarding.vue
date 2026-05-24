@@ -6,7 +6,7 @@
           <Icon type="ios-person" size="64" color="#2d8cf0" />
         </div>
         <h1>学习画像引导</h1>
-        <p>为了更好地为你推荐学习路径和题目，请先回答几个简单的问题，帮助 AI 了解你的学习情况。</p>
+        <p>{{ $t('m.Smart_Profile_Onboarding_Desc') }}</p>
         <div class="dimension-preview">
           <div v-for="dim in dimensions" :key="dim.key" class="dim-item">
             <Icon type="ios-checkmark-circle-outline" size="18" />
@@ -22,29 +22,46 @@
         <div class="complete-icon">
           <Icon type="ios-checkmark-circle" size="64" color="#19be6b" />
         </div>
-        <h1>画像建立完成！</h1>
-        <p>{{ completeMessage }}</p>
-        <div v-if="profile" class="profile-summary">
-          <h3>你的学习画像</h3>
+        <h1>学习画像</h1>
+        <p v-if="completeMessage">{{ completeMessage }}</p>
+        <div v-if="profile && (strengthTopics.length || weakTopics.length || profile.recommended_focus)" class="profile-summary">
           <div class="summary-item" v-if="strengthTopics.length">
             <span class="label">强项</span>
-            <Tag v-for="t in strengthTopics" :key="t" color="success" size="small">{{ t }}</Tag>
+            <span class="profile-tag"
+              style="background: #2d8cf0; color: #fff;"
+              v-for="t in strengthTopics" :key="t">{{ t }}</span>
           </div>
           <div class="summary-item" v-if="weakTopics.length">
             <span class="label">弱项</span>
-            <Tag v-for="t in weakTopics" :key="t" color="error" size="small">{{ t }}</Tag>
+            <span class="profile-tag"
+              style="background: #ed4014; color: #fff;"
+              v-for="t in weakTopics" :key="t">{{ t }}</span>
+          </div>
+          <div class="summary-item" v-if="profile.coding_style">
+            <span class="label">编码风格</span>
+            <span>{{ profile.coding_style }}</span>
+          </div>
+          <div class="summary-item" v-if="profile.learning_pace">
+            <span class="label">学习节奏</span>
+            <span>{{ profile.learning_pace }}</span>
           </div>
           <div class="summary-item" v-if="profile.recommended_focus">
             <span class="label">建议方向</span>
             <span>{{ profile.recommended_focus }}</span>
           </div>
         </div>
+        <div v-else class="empty-profile">
+          <p>暂无画像数据，完成引导对话即可生成。</p>
+        </div>
         <div class="complete-actions">
-          <Button type="primary" @click="$router.push({name: 'chat'})">
-            去 AI 助手聊天
+          <Button type="primary" @click="$router.push({name: 'ai-chat-fullscreen'})">
+            {{ $t('m.Smart_Chat_Nav') }}
           </Button>
           <Button @click="$router.push({name: 'learning-path'})">
             规划学习路径
+          </Button>
+          <Button type="text" @click="resetAndStart" size="small">
+            重新生成画像
           </Button>
         </div>
       </div>
@@ -146,6 +163,7 @@ export default {
           this.completeMessage = data.message || '引导对话已完成！'
           this.profile = data.profile || {}
         } else {
+          this.complete = false
           this.started = true
           this.step = data.step || 1
           this.totalSteps = data.total_steps || 6
@@ -160,6 +178,17 @@ export default {
         this.loading = false
       }
     },
+    resetAndStart () {
+      this.started = false
+      this.complete = false
+      this.profile = null
+      this.completeMessage = ''
+      this.answer = ''
+      this.step = 1
+      this.$nextTick(() => {
+        this.startOnboarding()
+      })
+    },
     async submitAnswer () {
       if (!this.answer.trim()) return
       this.loading = true
@@ -171,7 +200,7 @@ export default {
         const data = res.data.data || res.data
         if (data.onboarding_complete) {
           this.complete = true
-          this.completeMessage = data.message || '引导对话完成！AI 已为你生成学习画像。'
+          this.completeMessage = data.message || this.$t('m.Smart_Profile_Done')
           this.profile = data.profile || {}
         } else {
           this.step = data.step || this.step + 1
@@ -285,7 +314,7 @@ export default {
 
   h1 {
     font-size: 28px;
-    color: #19be6b;
+    color: #2d8cf0;
     margin: 0 0 12px;
   }
 
@@ -326,13 +355,29 @@ export default {
         flex-shrink: 0;
         font-size: 14px;
       }
+
+      .profile-tag {
+        display: inline-block;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 2px 10px;
+        border-radius: 4px;
+        line-height: 20px;
+      }
     }
+  }
+
+  .empty-profile {
+    color: #808695;
+    font-size: 14px;
+    margin-bottom: 20px;
   }
 
   .complete-actions {
     display: flex;
     gap: 12px;
     justify-content: center;
+    flex-wrap: wrap;
   }
 }
 

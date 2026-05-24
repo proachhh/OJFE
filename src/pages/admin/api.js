@@ -321,6 +321,9 @@ export default {
   deleteLessonPlan (id) {
     return ajax('admin/lesson_plan', 'delete', { params: { id } })
   },
+  batchImportLessonPlans (data) {
+    return ajax('admin/lesson_plan/batch_import', 'post', { data })
+  },
   getDataDashboard () {
     return ajax('admin/dashboard', 'get')
   }

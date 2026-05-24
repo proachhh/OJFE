@@ -34,6 +34,14 @@
             </div>
 
             <div class="filter-right">
+              <RadioGroup v-model="viewMode" type="button" size="small" class="view-toggle">
+                <Radio label="table">
+                  <Icon type="ios-list" size="14" />
+                </Radio>
+                <Radio label="card">
+                  <Icon type="ios-apps" size="14" />
+                </Radio>
+              </RadioGroup>
               <div class="search-box">
                 <Input v-model="query.keyword"
                        @on-enter="filterByKeyword"
@@ -48,13 +56,43 @@
             </div>
           </div>
 
-          <div class="table-container">
+          <div v-if="viewMode === 'table'" class="table-container">
             <Table style="width: 100%;"
                    :columns="problemTableColumns"
                    :data="problemList"
                    :loading="loadings.table"
                    class="problem-table"
                    disabled-hover></Table>
+          </div>
+
+          <div v-else class="card-container">
+            <Card
+              v-for="problem in problemList"
+              :key="problem.id"
+              :padding="18"
+              shadow
+              class="problem-card-item"
+              @click.native="$router.push({ name: 'problem-details', params: { problemID: problem._id } })"
+            >
+              <div class="card-header-row">
+                <span class="card-problem-id">{{ problem._id }}</span>
+                <Tag :color="getCardDiffColor(problem.difficulty)" size="small">{{ $t('m.' + problem.difficulty) }}</Tag>
+              </div>
+              <p class="card-problem-title">{{ problem.title }}</p>
+              <div v-if="showTags" class="card-tags">
+                <span v-for="tag in problem.tags" :key="tag" class="card-tag-item">{{ m.tag[tag] || tag }}</span>
+              </div>
+              <div class="card-stats">
+                <span class="card-stat">
+                  <Icon type="ios-checkmark-circle-outline" size="13" />
+                  {{ getACRate(problem.accepted_number, problem.submission_number) }}
+                </span>
+                <span class="card-stat">
+                  <Icon type="ios-paper" size="13" />
+                  {{ problem.submission_number }}
+                </span>
+              </div>
+            </Card>
           </div>
 
           <div class="pagination-wrapper">
@@ -136,6 +174,7 @@ export default {
     return {
       m: m,
       showTags: true,
+      viewMode: 'table',
       tagList: [],
       tagKeyword: '',
       tagPage: 1,
@@ -360,6 +399,11 @@ export default {
         this.$success('Good Luck')
         this.$router.push({ name: 'problem-details', params: { problemID: res.data.data } })
       })
+    },
+    getCardDiffColor (difficulty) {
+      if (difficulty === 'Low') return 'success'
+      if (difficulty === 'Mid') return 'warning'
+      return 'error'
     }
   },
   computed: {
@@ -462,6 +506,9 @@ export default {
     .filter-right {
       display: flex;
       gap: 12px;
+      align-items: center;
+
+      .view-toggle { flex-shrink: 0; }
 
       .search-input {
         width: 240px;
@@ -615,6 +662,81 @@ export default {
   // 表格内标签换行容器
   .tags-container {
     gap: 6px;
+  }
+
+  // 卡片视图
+  .card-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    padding: 20px 24px;
+  }
+
+  .problem-card-item {
+    cursor: pointer;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(30, 58, 138, 0.1);
+    }
+
+    .card-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+
+      .card-problem-id {
+        font-size: 14px;
+        font-weight: 700;
+        color: #1e3a8a;
+      }
+    }
+
+    .card-problem-title {
+      font-size: 15px;
+      font-weight: 500;
+      color: #334155;
+      margin: 0 0 12px;
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .card-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-bottom: 14px;
+
+      .card-tag-item {
+        padding: 3px 10px;
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        font-size: 12px;
+        color: #475569;
+      }
+    }
+
+    .card-stats {
+      display: flex;
+      gap: 16px;
+      padding-top: 10px;
+      border-top: 1px solid #f1f5f9;
+
+      .card-stat {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 13px;
+        color: #64748b;
+      }
+    }
   }
 
   * {

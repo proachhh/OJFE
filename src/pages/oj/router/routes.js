@@ -179,14 +179,6 @@ export default [
     component: NotFound
   },
 
-  // Aichat
-  {
-    path: '/chat',
-    name: 'chat',
-    meta: {title: 'AI Chat'},
-    component: () => import('@oj/views/chat/Chat.vue')
-  },  
-
   //recommend
   {
     path: '/learning-report',

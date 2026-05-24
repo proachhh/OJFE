@@ -23,7 +23,7 @@
           {{$t('m.NavStatus')}}
         </Menu-item>
         <Menu-item name="/learning-path">
-          <Icon type="ios-git-branch"></Icon>
+          <Icon type="ios-navigate"></Icon>
           {{$t('m.Learning_Path')}}
         </Menu-item>
         <Menu-item name="/lesson-plan">
@@ -31,12 +31,8 @@
           {{$t('m.Lesson_Plans')}}
         </Menu-item>
         <Menu-item name="/immersion">
-          <Icon type="ios-flash"></Icon>
+          <Icon type="flash"></Icon>
           {{$t('m.Immersive_Practice')}}
-        </Menu-item>
-        <Menu-item name="/chat">
-          <Icon type="ios-chatbubbles"></Icon>
-          {{$t('m.AI_Chat')}}
         </Menu-item>
         <Menu-item name="/profile-onboarding">
           <Icon type="ios-person"></Icon>
@@ -167,7 +163,6 @@
         if (path.startsWith('/learning-report') || path.startsWith('/status')) return '/learning-report'
         if (path.startsWith('/learning-path')) return '/learning-path'
         if (path.startsWith('/lesson-plan')) return '/lesson-plan'
-        if (path.startsWith('/chat')) return '/chat'
         if (path.startsWith('/immersion')) return '/immersion'
         if (path.startsWith('/profile-onboarding')) return '/profile-onboarding'
         return '/' + path.split('/')[1]

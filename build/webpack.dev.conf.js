@@ -15,7 +15,12 @@ module.exports = merge(baseWebpackConfig, {
   devtool: '#cheap-module-eval-source-map',
   devServer: {
     hot: true,
-    historyApiFallback: true,
+    historyApiFallback: {
+      rewrites: [
+        { from: /^\/admin/, to: '/admin/index.html' },
+        { from: /./, to: '/index.html' }
+      ]
+    },
     proxy: {
       '/api': {
         target: 'http://127.0.0.1:8001',   // 你的测试后端地址

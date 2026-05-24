@@ -42,7 +42,7 @@
               <iframe :src="pdfUrl" width="100%" height="100%" frameborder="0"></iframe>
             </div>
             <!-- 否则显示 HTML 内容 -->
-            <div v-else class="lesson-content" v-html="lessonPlan.content"></div>
+            <div v-else class="lesson-content" v-html="renderedContent"></div>
           </div>
         </div>
 
@@ -58,9 +58,20 @@
           <div v-if="!currentProblem" class="problems-view">
             <div class="view-header">
               <h2><Icon type="ios-list" /> Related Problems</h2>
-              <span class="problem-count">{{ sortedProblems.length }} problems</span>
+              <div class="view-header-right">
+                <span class="problem-count">{{ sortedProblems.length }} problems</span>
+                <RadioGroup v-model="viewMode" type="button" size="small">
+                  <Radio label="list">
+                    <Icon type="ios-list" />
+                  </Radio>
+                  <Radio label="card">
+                    <Icon type="ios-apps" />
+                  </Radio>
+                </RadioGroup>
+              </div>
             </div>
-            <div class="problems-list">
+            <!-- 列表视图 -->
+            <div v-if="viewMode === 'list'" class="problems-list">
               <div 
                 v-for="problem in sortedProblems" 
                 :key="problem.id" 
@@ -76,6 +87,29 @@
                 </div>
                 <Icon type="ios-arrow-forward" class="arrow-icon" />
               </div>
+            </div>
+            <!-- 卡片视图 -->
+            <div v-else class="problems-cards">
+              <Card
+                v-for="problem in sortedProblems"
+                :key="problem.id"
+                class="problem-card"
+                :padding="16"
+                shadow
+                @click.native="selectProblem(problem)"
+              >
+                <div class="card-top">
+                  <span class="problem-id">{{ problem._id }}</span>
+                  <Tag :color="getDifficultyColor(problem.difficulty)" size="small">
+                    {{ problem.difficulty }}
+                  </Tag>
+                </div>
+                <p class="problem-title">{{ problem.title }}</p>
+                <div class="card-bottom">
+                  <Icon type="ios-arrow-forward" class="arrow-icon" />
+                  <span class="card-action">开始做题</span>
+                </div>
+              </Card>
             </div>
           </div>
 
@@ -110,6 +144,7 @@
 <script>
 import api from '@oj/api'
 import EmbeddedProblem from './EmbeddedProblem.vue'
+import { renderMarkdown } from '@/utils/markdown'
 
 export default {
   name: 'LessonPlanStudy',
@@ -123,7 +158,8 @@ export default {
       leftWidth: 60,
       isResizing: false,
       currentProblem: null,
-      showFullRight: false
+      showFullRight: false,
+      viewMode: 'list'
     }
   },
   computed: {
@@ -140,6 +176,14 @@ export default {
         url = url.substring(1)
       }
       return url
+    },
+    renderedContent () {
+      if (!this.lessonPlan || !this.lessonPlan.content) return ''
+      const content = this.lessonPlan.content || ''
+      if (content.startsWith('[MD]')) {
+        return renderMarkdown(content.replace(/^\[MD\]\n?/, ''))
+      }
+      return content
     }
   },
   mounted () {
@@ -349,8 +393,9 @@ export default {
 
 /* 教案内容 */
 .lesson-content {
-  padding: 24px;
-  line-height: 1.8;
+  padding: 28px 32px;
+  font-size: 17px;
+  line-height: 1.9;
   color: #334155;
 
   /deep/ img {
@@ -360,10 +405,13 @@ export default {
     margin: 16px 0;
   }
 
-  /deep/ h1, /deep/ h2, /deep/ h3, /deep/ h4, /deep/ h5, /deep/ h6 {
+  /deep/ h1 { font-size: 1.8em; color: #1e3a8a; margin: 28px 0 14px; }
+  /deep/ h2 { font-size: 1.5em; color: #1e3a8a; margin: 24px 0 12px; }
+  /deep/ h3 { font-size: 1.25em; color: #1e3a8a; margin: 20px 0 10px; }
+  /deep/ h4, /deep/ h5, /deep/ h6 {
     color: #1e3a8a;
-    margin-top: 24px;
-    margin-bottom: 12px;
+    margin-top: 20px;
+    margin-bottom: 10px;
   }
 
   /deep/ p {
@@ -372,22 +420,26 @@ export default {
 
   /deep/ code {
     background: #f1f5f9;
-    padding: 2px 6px;
+    padding: 2px 8px;
     border-radius: 4px;
     font-family: 'Courier New', monospace;
+    font-size: 0.9em;
   }
 
   /deep/ pre {
     background: #1e293b;
     color: #e2e8f0;
-    padding: 16px;
+    padding: 18px 20px;
     border-radius: 8px;
     overflow-x: auto;
     margin: 16px 0;
+    font-size: 15px;
+    line-height: 1.6;
 
     code {
       background: transparent;
       padding: 0;
+      font-size: inherit;
     }
   }
 
@@ -401,6 +453,40 @@ export default {
     padding-left: 16px;
     margin: 16px 0;
     color: #64748b;
+  }
+
+  /deep/ a {
+    color: #2563eb;
+    text-decoration: underline;
+  }
+
+  /deep/ hr {
+    border: none;
+    border-top: 1px solid #e2e8f0;
+    margin: 20px 0;
+  }
+
+  /deep/ table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+
+    th {
+      background: #f8fafc;
+      font-weight: 600;
+      text-align: left;
+      padding: 8px 12px;
+      border: 1px solid #e2e8f0;
+    }
+
+    td {
+      padding: 8px 12px;
+      border: 1px solid #e2e8f0;
+    }
+  }
+
+  /deep/ strong {
+    color: #1e3a8a;
   }
 }
 
@@ -430,6 +516,12 @@ export default {
       .ivu-icon {
         font-size: 16px;
       }
+    }
+
+    .view-header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
 
     .problem-count {
@@ -537,4 +629,66 @@ export default {
     overflow: hidden;
   }
 }
+
+/* 卡片视图 */
+.problems-cards {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  align-content: start;
+}
+
+.problem-card {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 10px;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(30, 58, 138, 0.12);
+  }
+
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+
+    .problem-id {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #3b82f6;
+    }
+  }
+
+  .problem-title {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #1e3a8a;
+    margin: 0 0 14px;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .card-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    color: #3b82f6;
+    font-size: 0.8rem;
+    font-weight: 500;
+
+    .arrow-icon {
+      font-size: 13px;
+    }
+  }
+}
+
 </style>
