@@ -21,9 +21,9 @@
           <el-table-column
             prop="description"
             :label="$t('m.Description_Col')"
-            min-width="200">
+            width="130">
             <template slot-scope="scope">
-              <span class="description-text">{{ scope.row.description }}</span>
+              <span class="description-text" :title="scope.row.description">{{ shortDesc(scope.row.description) }}</span>
             </template>
           </el-table-column>
           <el-table-column
@@ -659,6 +659,10 @@ export default {
         'High': 'danger'
       }
       return types[difficulty] || ''
+    },
+    shortDesc (desc) {
+      if (!desc) return ''
+      return desc.length > 10 ? desc.slice(0, 10) + '…' : desc
     }
   }
 }
@@ -671,8 +675,21 @@ export default {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      max-width: 300px;
       display: inline-block;
+      max-width: 100%;
+    }
+
+    /deep/ .el-table {
+      th, td {
+        word-break: normal !important;
+      }
+
+      .cell {
+        word-break: normal !important;
+        white-space: nowrap !important;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
     }
   }
 

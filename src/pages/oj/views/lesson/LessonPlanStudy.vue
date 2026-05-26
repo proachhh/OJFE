@@ -444,8 +444,20 @@ export default {
   }
 
   /deep/ ul, /deep/ ol {
-    padding-left: 24px;
+    padding-left: 32px;
     margin-bottom: 16px;
+  }
+
+  /deep/ ol {
+    list-style-position: outside;
+  }
+
+  /deep/ ol li {
+    word-break: break-word;
+  }
+
+  /deep/ ul li {
+    word-break: break-word;
   }
 
   /deep/ blockquote {
@@ -565,6 +577,8 @@ export default {
       font-weight: 600;
       color: #64748b;
       min-width: 45px;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .problem-title {

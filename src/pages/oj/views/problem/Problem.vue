@@ -50,9 +50,9 @@
       </Panel>
       <!--problem main end-->
 
-      <!-- AI 解题提示 -->
+      <!-- 智能解题提示 -->
       <AICard
-        title="AI 解题提示"
+        title="智能解题提示"
         icon="ios-bulb"
         iconColor="#ff9900"
         btnText="获取提示"

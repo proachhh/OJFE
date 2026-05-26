@@ -61,7 +61,7 @@
     }
   }
   .panel-body {
-    word-break: break-all;
+    overflow-wrap: break-word;
     word-wrap: break-word;
   }
 </style>

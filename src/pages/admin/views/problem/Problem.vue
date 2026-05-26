@@ -2,11 +2,14 @@
   <div class="problem">
     <Panel :title="title">
       <el-form ref="form" :model="problem" :rules="rules" label-position="top" label-width="70px">
-        <!-- AI 生成按钮独立行 -->
+        <!-- AI 生成 + LOJ 导入按钮独立行 -->
         <el-row :gutter="20">
           <el-col :span="24">
             <el-button type="primary" icon="el-icon-magic-stick" @click="openAIGenerateDialog" style="margin-bottom: 20px;">
-              AI 生成题目
+              智能生成题目
+            </el-button>
+            <el-button type="success" icon="el-icon-download" @click="openScrapeDialog" style="margin-bottom: 20px;">
+              从链接导入
             </el-button>
           </el-col>
         </el-row>
@@ -111,6 +114,9 @@
                 :fetch-suggestions="querySearch">
               </el-autocomplete>
               <el-button class="button-new-tag" v-else size="small" @click="inputVisible = true">+ {{$t('m.New_Tag')}}</el-button>
+              <el-button class="button-match-tags" size="small" type="text" icon="el-icon-magic-stick" @click="matchTags" :loading="matchingTags">
+                {{ $t('m.Smart_Match_Tag') || '智能匹配标签' }}
+              </el-button>
             </el-form-item>
           </el-col>
           <el-col :span="8">
@@ -297,6 +303,78 @@
         <save @click.native="submit()">Save</save>
       </el-form>
     </Panel>
+
+    <!-- 从 LOJ 链接导入对话框 -->
+    <el-dialog title="从 LOJ 链接导入题目" :visible.sync="scrapeDialogVisible" width="580px" :close-on-click-modal="false" @close="resetScrapeDialog">
+      <div v-if="!scrapeMode || scrapeMode === 'input'">
+        <el-form label-width="80px">
+          <el-form-item label="题目链接">
+            <el-input v-model="scrapeUrl" placeholder="https://loj.ac/p/5" @keyup.enter.native="doScrape">
+              <el-button slot="append" icon="el-icon-download" @click="doScrape" :loading="scrapeLoading">
+                获取
+              </el-button>
+            </el-input>
+          </el-form-item>
+        </el-form>
+        <div v-if="scrapeLoading" style="text-align:center;padding:20px;color:#909399;">
+          <i class="el-icon-loading"></i> 正在从 LOJ 获取题目数据...
+        </div>
+        <div v-if="scrapeError" class="scrape-error-msg">
+          <i class="el-icon-warning"></i> {{ scrapeError }}
+        </div>
+      </div>
+
+      <div v-if="scrapeMode === 'manual'">
+        <div class="scrape-info-row">
+          <span class="scrape-label">在终端执行以下命令获取题目数据：</span>
+        </div>
+        <!-- Linux / Mac -->
+        <div class="scrape-cmd-label">Linux / Mac：</div>
+        <el-input :value="scrapeCurlCmd" type="textarea" :rows="2" readonly class="scrape-cmd-input" style="margin-bottom:8px;">
+          <el-button slot="append" v-clipboard:copy="scrapeCurlCmd" v-clipboard:success="onCurlCopied" size="mini">复制</el-button>
+        </el-input>
+        <!-- Windows PowerShell -->
+        <div class="scrape-cmd-label">Windows PowerShell：</div>
+        <el-input :value="scrapePowershellCmd" type="textarea" :rows="2" readonly class="scrape-cmd-input" style="margin-bottom:8px;">
+          <el-button slot="append" v-clipboard:copy="scrapePowershellCmd" v-clipboard:success="onCurlCopied" size="mini">复制</el-button>
+        </el-input>
+        <!-- 浏览器 Console -->
+        <div class="scrape-cmd-label">浏览器 DevTools Console（推荐）：</div>
+        <el-input :value="scrapeBrowserConsoleCmd" type="textarea" :rows="3" readonly class="scrape-cmd-input" style="margin-bottom:12px;">
+          <el-button slot="append" v-clipboard:copy="scrapeBrowserConsoleCmd" v-clipboard:success="onBrowserCmdCopied" size="mini">复制</el-button>
+        </el-input>
+
+        <div class="scrape-info-row" style="margin-top:4px">
+          <span class="scrape-label">API 地址：</span>
+          <el-input :value="scrapeApiUrl" size="small" readonly>
+            <el-button slot="append" v-clipboard:copy="scrapeApiUrl" v-clipboard:success="() => $message.success('已复制')" size="mini">复制</el-button>
+          </el-input>
+        </div>
+        <div class="scrape-info-row">
+          <span class="scrape-label">请求体：</span>
+          <el-input :value="scrapeApiBodyStr" size="small" type="textarea" :rows="3" readonly>
+            <el-button slot="append" v-clipboard:copy="scrapeApiBodyStr" v-clipboard:success="() => $message.success('已复制')" size="mini">复制</el-button>
+          </el-input>
+        </div>
+
+        <div class="scrape-hint">
+          <i class="el-icon-info"></i>
+          在终端执行上方 cURL 命令，将返回的 JSON 粘贴到下方文本框中。
+        </div>
+
+        <el-form-item label="API JSON">
+          <el-input v-model="scrapeRawJson" type="textarea" :rows="10"
+            placeholder="将 LOJ API 返回的 JSON 粘贴到这里..."></el-input>
+        </el-form-item>
+
+        <div style="text-align: right; margin-top: 12px;">
+          <el-button @click="scrapeMode = 'input'">返回</el-button>
+          <el-button type="primary" @click="doParseAndFill" :loading="scrapeParsing" :disabled="!scrapeRawJson">
+            解析并填入
+          </el-button>
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -336,6 +414,20 @@
         allLanguage: {},
         inputVisible: false,
         tagInput: '',
+        matchingTags: false,
+        // 从 LOJ 导入
+        scrapeDialogVisible: false,
+        scrapeMode: 'input',
+        scrapeUrl: '',
+        scrapeLoading: false,
+        scrapeParsing: false,
+        scrapeError: '',
+        scrapeApiUrl: '',
+        scrapeApiBodyStr: '',
+        scrapeCurlCmd: '',
+        scrapePowershellCmd: '',
+        scrapeBrowserConsoleCmd: '',
+        scrapeRawJson: '',
         template: {},
         title: '',
         spjMode: '',
@@ -495,6 +587,36 @@
       closeTag (tag) {
         this.problem.tags.splice(this.problem.tags.indexOf(tag), 1)
       },
+      matchTags () {
+        this.matchingTags = true
+        api.matchProblemTags({
+          title: this.problem.title,
+          description: this.problem.description,
+          input_description: this.problem.input_description,
+          output_description: this.problem.output_description
+        }).then(res => {
+          this.matchingTags = false
+          const data = res.data.data
+          const newTags = data.tags || []
+          if (newTags.length === 0) {
+            this.$message.info(data.message || '未匹配到标签')
+            return
+          }
+          const existing = new Set(this.problem.tags)
+          let addedCount = 0
+          newTags.forEach(tag => {
+            if (!existing.has(tag)) {
+              this.problem.tags.push(tag)
+              existing.add(tag)
+              addedCount++
+            }
+          })
+          this.$success(`智能匹配完成，新增 ${addedCount} 个标签：${newTags.join('、')}`)
+        }).catch(() => {
+          this.matchingTags = false
+          this.$error('智能匹配标签失败，请稍后重试')
+        })
+      },
       addSample () {
         this.problem.samples.push({input: '', output: ''})
       },
@@ -632,8 +754,114 @@
         }).catch(() => {
         })
       },
+      openScrapeDialog () {
+        this.scrapeUrl = ''
+        this.scrapeMode = 'input'
+        this.scrapeError = ''
+        this.scrapeApiUrl = ''
+        this.scrapeApiBodyStr = ''
+        this.scrapeCurlCmd = ''
+        this.scrapePowershellCmd = ''
+        this.scrapeBrowserConsoleCmd = ''
+        this.scrapeRawJson = ''
+        this.scrapeDialogVisible = true
+      },
+      resetScrapeDialog () {
+        this.scrapeUrl = ''
+        this.scrapeMode = 'input'
+        this.scrapeError = ''
+        this.scrapeCurlCmd = ''
+        this.scrapePowershellCmd = ''
+        this.scrapeBrowserConsoleCmd = ''
+        this.scrapeRawJson = ''
+      },
+      doScrape () {
+        if (!this.scrapeUrl.trim()) {
+          this.$message.warning('请输入 LOJ 题目链接')
+          return
+        }
+        this.scrapeLoading = true
+        this.scrapeError = ''
+        this.scrapeMode = 'input'
+
+        api.scrapeLojProblem({ url: this.scrapeUrl.trim() }).then(res => {
+          const info = res.data.data
+          const apiUrl = info.api_url
+          const apiBody = info.api_body
+          const apiBodyStr = JSON.stringify(apiBody)
+
+          // 保存 API 信息供手动模式使用
+          this.scrapeApiUrl = apiUrl
+          this.scrapeApiBodyStr = apiBodyStr
+          const escapedBody = apiBodyStr.replace(/'/g, `'\\''`)
+          this.scrapeCurlCmd = `curl -X POST '${apiUrl}' -H 'Content-Type: application/json' -d '${escapedBody}'`
+          this.scrapePowershellCmd = `iwr -Uri '${apiUrl}' -Method POST -ContentType 'application/json' -Body '${apiBodyStr}'`
+          this.scrapeBrowserConsoleCmd = `fetch('${apiUrl}', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '${apiBodyStr.replace(/'/g, "\\'")}' }).then(r => r.json()).then(d => console.log(JSON.stringify(d, null, 2)))`
+
+          // 尝试浏览器直连 api.loj.ac
+          fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: apiBodyStr,
+            mode: 'cors'
+          }).then(fetchResp => {
+            if (fetchResp.ok) {
+              return fetchResp.json()
+            }
+            throw new Error('HTTP ' + fetchResp.status)
+          }).then(jsonData => {
+            this.scrapeLoading = false
+            // 浏览器直连成功，直接解析填入
+            return this._fillProblemData(jsonData)
+          }).catch(() => {
+            // 浏览器直连失败（CORS 或网络问题），切换到手动模式
+            this.scrapeLoading = false
+            this.scrapeMode = 'manual'
+            this.$message.info('自动获取失败，请使用手动方式复制 JSON')
+          })
+        }).catch(err => {
+          this.scrapeLoading = false
+          const errData = err && err.data
+          this.scrapeError = (errData && errData.data) || '链接解析失败，请检查链接格式'
+        })
+      },
+      _fillProblemData (rawJson) {
+        return api.parseLojJson({ raw: typeof rawJson === 'string' ? rawJson : JSON.stringify(rawJson) }).then(res => {
+          const d = res.data.data
+          if (d.title) this.problem.title = d.title
+          if (d.description) this.problem.description = d.description
+          if (d.input_description) this.problem.input_description = d.input_description
+          if (d.output_description) this.problem.output_description = d.output_description
+          if (d.hint) this.problem.hint = d.hint
+          if (d.time_limit) this.problem.time_limit = d.time_limit
+          if (d.memory_limit) this.problem.memory_limit = d.memory_limit
+          if (d.difficulty) this.problem.difficulty = d.difficulty
+          if (d.source) this.problem.source = d.source
+          if (d.tags && d.tags.length) this.problem.tags = d.tags
+          if (d.samples && d.samples.length) this.problem.samples = d.samples
+          this.scrapeDialogVisible = false
+          this.$message.success('题目数据已填入表单，请检查并调整')
+        })
+      },
+      doParseAndFill () {
+        if (!this.scrapeRawJson.trim()) return
+        this.scrapeParsing = true
+        this._fillProblemData(this.scrapeRawJson.trim()).then(() => {
+          this.scrapeParsing = false
+        }).catch(err => {
+          this.scrapeParsing = false
+          const errData = err && err.data
+          this.scrapeError = (errData && errData.data) || '数据解析失败，请确认 JSON 格式正确'
+        })
+      },
+      onCurlCopied () {
+        this.$message.success('命令行已复制，执行后将返回的 JSON 粘贴到下方文本框')
+      },
+      onBrowserCmdCopied () {
+        this.$message.success('已复制，打开 loj.ac 页面后按 F12 → Console 粘贴执行，将输出的 JSON 复制到下方文本框')
+      },
       openAIGenerateDialog() {
-        this.$prompt('请输入题目生成要求（例如：生成一道关于二叉树的题目）', 'AI 生成题目', {
+        this.$prompt('请输入题目生成要求（例如：生成一道关于二叉树的题目）', '智能生成题目', {
           confirmButtonText: '生成',
           cancelButtonText: '取消',
           inputPlaceholder: '例如：生成一道关于动态规划的题目，难度中等'
@@ -642,7 +870,7 @@
         }).catch(() => {});
       },
       generateProblemWithAI(prompt) {
-        const loading = this.$loading({ text: "AI 生成中..." });
+        const loading = this.$loading({ text: "智能生成中..." });
         api.generateProblemWithAI(prompt)
           .then(res => {
             if (res.data.error) {
@@ -663,14 +891,14 @@
             if (data.samples && data.samples.length) {
               this.problem.samples = data.samples;
             }
-            this.$message.success("AI 生成完成，请检查并调整");
+            this.$message.success("智能生成完成，请检查并调整");
           })
           .catch(err => {
             let errorMsg = err.message;
             if (err.response && err.response.data && err.response.data.data) {
               errorMsg = err.response.data.data;
             }
-            this.$error("AI 生成失败：" + errorMsg);
+            this.$error("智能生成失败：" + errorMsg);
           })
           .finally(() => {
             loading.close();
@@ -699,6 +927,11 @@
       line-height: 22px;
       padding-top: 0;
       padding-bottom: 0;
+    }
+    .button-match-tags {
+      margin-left: 6px;
+      font-size: 12px;
+      color: #409EFF;
     }
     .tags {
       .el-tag {
@@ -755,6 +988,55 @@
   .problem-tag-poper {
     width: 200px !important;
   }
+  .scrape-info-row {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+  }
+  .scrape-label {
+    min-width: 80px;
+    font-weight: 600;
+    color: #303133;
+  }
+  .scrape-api-input {
+    flex: 1;
+  }
+  .scrape-cmd-input {
+    width: 100%;
+  }
+  .scrape-cmd-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #909399;
+    margin-bottom: 4px;
+  }
+  .scrape-error-msg {
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: #fef0f0;
+    border-radius: 4px;
+    color: #f56c6c;
+    font-size: 13px;
+    border-left: 3px solid #f56c6c;
+  }
+  .scrape-error-msg i {
+    margin-right: 4px;
+  }
+  .scrape-hint {
+    margin: 12px 0;
+    padding: 10px 14px;
+    background: #ecf5ff;
+    border-radius: 4px;
+    color: #409EFF;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .scrape-hint i {
+    margin-right: 4px;
+  }
+</style>
+
+<style>
   .dialog-compile-error {
     width: auto;
     max-width: 80%;

@@ -116,8 +116,8 @@ export default {
   computed: {
     listColumns () {
       return [
-        { title: '#', key: '_index', width: 50, align: 'center',
-          render: (h, p) => h('span', { style: { color: '#94a3b8' } }, (this.offset - 1) * this.limit + p.index + 1) },
+        { title: '#', key: '_index', width: 80, align: 'center', className: 'col-index',
+          render: (h, p) => h('span', { style: { color: '#94a3b8', whiteSpace: 'nowrap' } }, (this.offset - 1) * this.limit + p.index + 1) },
         { title: '标题', key: 'title', width: 200, ellipsis: true,
           render: (h, p) => h('span', { style: { fontWeight: '600', color: '#1e3a8a', cursor: 'pointer' } }, p.row.title) },
         { title: '简介', key: 'description', minWidth: 240, ellipsis: true, tooltip: true },
@@ -303,13 +303,26 @@ export default {
 
 .lesson-plan-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+
+  @media (max-width: 1400px) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  @media (max-width: 1100px) {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  @media (max-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  @media (max-width: 500px) {
+    grid-template-columns: 1fr;
+  }
 }
 
 .lesson-plan-card {
   background: #f8fafc;
-  border-radius: 10px;
+  border-radius: 8px;
   overflow: hidden;
   border: 1px solid #e2e8f0;
   cursor: pointer;
@@ -324,7 +337,7 @@ export default {
   }
 
   .card-cover {
-    height: 140px;
+    height: 100px;
     overflow: hidden;
     background: linear-gradient(135deg, #1e3a8a, #3b82f6);
 
@@ -345,16 +358,18 @@ export default {
 
   .card-body {
     display: flex;
-    gap: 10px;
-    padding: 14px 14px 0;
+    gap: 8px;
+    padding: 10px 10px 0;
     flex: 1;
 
     .card-num {
       color: #c0c8d8;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 600;
       flex-shrink: 0;
-      padding-top: 2px;
+      padding-top: 1px;
+      min-width: 18px;
+      text-align: right;
     }
 
     .card-info {
@@ -362,23 +377,23 @@ export default {
       min-width: 0;
 
       .card-title {
-        font-size: 15px;
+        font-size: 14px;
         font-weight: 600;
         color: #1e3a8a;
-        margin: 0 0 6px;
+        margin: 0 0 4px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
       }
 
       .card-desc {
-        font-size: 13px;
-        color: #64748b;
+        font-size: 12px;
+        color: #94a3b8;
         margin: 0;
         overflow: hidden;
         text-overflow: ellipsis;
         display: -webkit-box;
-        -webkit-line-clamp: 2;
+        -webkit-line-clamp: 1;
         -webkit-box-orient: vertical;
         line-height: 1.4;
       }
@@ -388,16 +403,16 @@ export default {
   .card-footer {
     display: flex;
     justify-content: space-between;
-    padding: 10px 14px;
+    padding: 8px 10px;
     border-top: 1px solid #e8ecf1;
-    font-size: 12px;
+    font-size: 11px;
     color: #94a3b8;
     margin-top: auto;
 
     span {
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 3px;
     }
   }
 }
@@ -417,6 +432,14 @@ export default {
     }
     /deep/ .ivu-table-row:hover td {
       background: #f0f9ff;
+    }
+    /deep/ .col-index {
+      padding-left: 4px;
+      padding-right: 4px;
+    }
+    /deep/ .col-index .ivu-table-cell {
+      padding-left: 0;
+      padding-right: 0;
     }
   }
 }

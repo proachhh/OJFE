@@ -70,3 +70,5 @@ test.vue
 vendor-manifest.json
 vendor.dll*.js
 
+selenium-tests/
+ 

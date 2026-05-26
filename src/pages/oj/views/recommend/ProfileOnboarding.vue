@@ -24,7 +24,11 @@
         </div>
         <h1>学习画像</h1>
         <p v-if="completeMessage">{{ completeMessage }}</p>
-        <div v-if="profile && (strengthTopics.length || weakTopics.length || profile.recommended_focus)" class="profile-summary">
+        <div v-if="profile && hasAnyProfileData" class="profile-summary">
+          <div class="summary-item" v-if="profile.knowledge_mastery">
+            <span class="label">总体评价</span>
+            <span>{{ profile.knowledge_mastery }}</span>
+          </div>
           <div class="summary-item" v-if="strengthTopics.length">
             <span class="label">强项</span>
             <span class="profile-tag"
@@ -130,6 +134,17 @@ export default {
     weakTopics () {
       const v = this.profile && this.profile.weak_topics
       return Array.isArray(v) ? v : (typeof v === 'string' && v ? [v] : [])
+    },
+    hasAnyProfileData () {
+      if (!this.profile) return false
+      return !!(
+        this.profile.knowledge_mastery ||
+        this.strengthTopics.length ||
+        this.weakTopics.length ||
+        this.profile.coding_style ||
+        this.profile.learning_pace ||
+        this.profile.recommended_focus
+      )
     }
   },
   methods: {

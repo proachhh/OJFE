@@ -1,14 +1,5 @@
 <template>
   <div class="oi-contest-rank-elegant">
-    <!-- 页面标题区 -->
-    <div class="page-header">
-      <h1 class="page-title">
-        <span class="title-line"></span>
-        {{ contest.title }}
-        <span class="title-line"></span>
-      </h1>
-      <p class="page-subtitle">OI Contest Rankings</p>
-    </div>
 
     <!-- 控制面板 -->
     <div class="control-panel">

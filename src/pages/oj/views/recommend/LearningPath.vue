@@ -127,30 +127,6 @@
         <Icon type="ios-warning" size="18" />
         <span>{{ error }}</span>
       </div>
-
-      <!-- 智能知识点总结 -->
-      <div class="topic-summary-section">
-        <div class="summary-header">
-          <Icon type="ios-book" size="18" color="#9c27b0" />
-          <span>{{ $t('m.Smart_Topic_Summary') }}</span>
-          <Input
-            v-model="summaryTopic"
-            placeholder="输入知识点名称, 如 BFS..."
-            size="small"
-            class="summary-input"
-          />
-        </div>
-        <AICard
-          v-if="summaryTopic"
-          :title="`知识点总结: ${summaryTopic}`"
-          icon="ios-book"
-          iconColor="#9c27b0"
-          :btnText="$t('m.Smart_Gen_Summary')"
-          btnType="primary"
-          :fetchFn="fetchTopicSummary"
-          :key="summaryTopic"
-        />
-      </div>
     </div>
   </div>
 </template>
@@ -158,13 +134,11 @@
 <script>
 import api from '@oj/api'
 import KnowledgeGraphSection from '../general/KnowledgeGraphSection.vue'
-import AICard from '@oj/components/AICard'
 
 export default {
   name: 'LearningPath',
   components: {
-    KnowledgeGraphSection,
-    AICard
+    KnowledgeGraphSection
   },
   data () {
     return {
@@ -174,8 +148,7 @@ export default {
       startTopic: '',
       targetTopic: '',
       searchQuery: '',
-      pathData: null,
-      summaryTopic: ''
+      pathData: null
     }
   },
   computed: {
@@ -281,9 +254,6 @@ export default {
           this.error = this.$i18n.t('m.Network_Error')
         }
       })
-    },
-    fetchTopicSummary () {
-      return api.getTopicSummary({ topic: this.summaryTopic })
     },
     getDifficultyStyle (diff) {
       if (diff <= 2.5) return { background: '#2d8cf0', color: '#fff' }

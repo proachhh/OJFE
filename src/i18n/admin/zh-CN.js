@@ -14,9 +14,9 @@ export const m = {
   Problem_List: '问题列表',
   Create_Problem: '增加题目',
   Export_Import_Problem: '导入导出题目',
-  Contest: '比赛&练习',
-  Contest_List: '比赛列表',
-  Create_Contest: '创建比赛',
+  Contest: '题目集管理',
+  Contest_List: '题目集列表',
+  Create_Contest: '创建题目集',
   Lesson_Plan: '教案管理',
   Lesson_Plan_Management: '教案列表',
   Batch_Import_Lesson: '批量导入教案',
@@ -25,6 +25,7 @@ export const m = {
   Batch_Import_Desc_MD: '支持批量选择 .md 文件，文件名将作为教案标题。',
   Auto_Fill_From_MD: '已自动从文件名提取标题和描述',
   Import_All_Files: '全部导入',
+  Files: '个文件',
   Import_JSON_File: '导入 JSON 文件',
   Upload_JSON_File: '上传 JSON 文件',
   Import_Preview: '导入预览',
@@ -163,6 +164,7 @@ export const m = {
   Low: '低',
   Tag: '标签',
   New_Tag: '新增标签',
+  Smart_Match_Tag: '智能匹配标签',
   // ProblemList.vue
   Contest_Problem_List: '比赛问题列表',
   // Contest.vue

@@ -209,6 +209,21 @@ export default {
       params
     })
   },
+  matchProblemTags (data) {
+    return ajax('admin/problem/match_tags', 'post', {
+      data
+    })
+  },
+  scrapeLojProblem (data) {
+    return ajax('admin/problem/scrape_loj', 'post', {
+      data
+    })
+  },
+  parseLojJson (data) {
+    return ajax('admin/problem/parse_loj_json', 'post', {
+      data
+    })
+  },
   compileSPJ (data) {
     return ajax('admin/compile_spj', 'post', {
       data

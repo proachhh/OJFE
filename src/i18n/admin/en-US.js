@@ -14,9 +14,9 @@ export const m = {
   Problem_List: 'Problem List',
   Create_Problem: 'Create Problem',
   Export_Import_Problem: 'Export Or Import Problem',
-  Contest: 'Contest',
-  Contest_List: 'Contest List',
-  Create_Contest: 'Create Contest',
+  Contest: 'Problem Sets',
+  Contest_List: 'Problem Set List',
+  Create_Contest: 'Create Problem Set',
   Lesson_Plan: 'Lesson Plan',
   Lesson_Plan_Management: 'Lesson Plan Management',
   Batch_Import_Lesson: 'Batch Import',
@@ -25,6 +25,7 @@ export const m = {
   Batch_Import_Desc_MD: 'Select .md files. File names will be used as lesson plan titles.',
   Auto_Fill_From_MD: 'Title and description auto-extracted from file name',
   Import_All_Files: 'Import All',
+  Files: 'files',
   Import_JSON_File: 'Import JSON File',
   Upload_JSON_File: 'Upload JSON File',
   Import_Preview: 'Import Preview',
@@ -163,6 +164,7 @@ export const m = {
   Low: 'Low',
   Tag: 'Tag',
   New_Tag: 'New Tag',
+  Smart_Match_Tag: 'Smart Match Tags',
    // ProblemList.vue
   Contest_Problem_List: 'Contest Problem List',
   // Contest.vue
