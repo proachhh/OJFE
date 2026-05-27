@@ -165,6 +165,8 @@ export const m = {
   Smart_Match_Tag: '智能匹配標籤',
   // ProblemList.vue
   Contest_Problem_List: '比賽問題列表',
+  Sort_By_ID: '按ID排序',
+  Sort_By_Time: '按時間排序',
   // Contest.vue
   ContestTitle: '標題',
   ContestDescription: '描述',

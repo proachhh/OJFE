@@ -341,7 +341,14 @@ export default {
   },
   getDataDashboard () {
     return ajax('admin/dashboard', 'get')
-  }
+  },
+  getUserStats (userId) {
+    return ajax('admin/dashboard/user-stats', 'get', {
+      params: {
+        user_id: userId
+      }
+    })
+  },
 }
 
 /**

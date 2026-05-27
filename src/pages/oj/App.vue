@@ -2,14 +2,14 @@
   <div>
     <NavBar></NavBar>
     <GlobalSidebar></GlobalSidebar>
-    <div class="content-app" :class="{ 'home-page': isHomePage }">
+    <div class="content-app" :class="{ 'home-page': isHomePage, 'chat-page': isChatPage }">
       <router-view></router-view>
-      <div v-if="!isHomePage" class="footer">
-        <p v-html="website.website_footer"></p>
-        <p>Powered by <a href="https://github.com/QingdaoU/OnlineJudge">OnlineJudge</a>
-          <span v-if="version">&nbsp; Version: {{ version }}</span>
-        </p>
-      </div>
+    </div>
+    <div class="global-footer" :class="{ 'home-page': isHomePage, 'chat-page': isChatPage }">
+      <p v-html="website.website_footer"></p>
+      <p>Powered by <a href="https://github.com/QingdaoU/OnlineJudge">GraphOnlineJudge</a>
+        <span v-if="version">&nbsp; Version: {{ version }}</span>
+      </p>
     </div>
     <BackTop></BackTop>
   </div>
@@ -58,6 +58,9 @@
       ...mapState(['website', 'sidebarCollapsed']),
       isHomePage () {
         return this.$route.path === '/' || this.$route.path === '/home' || this.$route.path === '/learning-path'
+      },
+      isChatPage () {
+        return this.$route.path === '/ai-chat-fullscreen'
       }
     },
     watch: {
@@ -100,12 +103,30 @@
   padding: 0;
 }
 
-  .footer {
-    margin-top: 20px;
-    margin-bottom: 10px;
-    text-align: center;
-    font-size: small;
+.global-footer {
+  position: relative;
+  z-index: 50;
+  padding: 20px 2% 14px;
+  text-align: center;
+  font-size: 13px;
+  background: #f5f7fa;
+  border-top: 1px solid #e8eaec;
+  color: #515a6e;
+
+  a { color: #2d8cf0; text-decoration: none; }
+
+  &.home-page {
+    background: rgba(0, 0, 0, 0.6);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.7);
+
+    a { color: rgba(255, 255, 255, 0.85); }
   }
+
+  &.chat-page {
+    display: none;
+  }
+}
 
 
 

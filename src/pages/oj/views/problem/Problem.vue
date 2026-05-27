@@ -1,66 +1,100 @@
 <template>
-  <div class="flex-container">
+  <div class="flex-container" :class="{ 'full-width-layout': layoutMode === 'horizontal' }">
     <div id="problem-main">
-      <!--problem main-->
-      <Panel :padding="40" shadow>
-        <div slot="title">{{problem.title}}</div>
-        <div id="problem-content" class="markdown-body" v-katex>
-          <p class="title">{{$t('m.Description')}}</p>
-          <p class="content" v-html=problem.description></p>
-          <!-- {{$t('m.music')}} -->
-          <p class="title">{{$t('m.Input')}} <span v-if="problem.io_mode.io_mode=='File IO'">({{$t('m.FromFile')}}: {{ problem.io_mode.input }})</span></p>
-          <p class="content" v-html=problem.input_description></p>
+      <!-- 布局切换 -->
+      <div class="layout-toggle-row">
+        <RadioGroup v-model="layoutMode" type="button" size="small">
+          <Radio label="vertical">
+            <span style="font-size: 12px">上下</span>
+          </Radio>
+          <Radio label="horizontal">
+            <span style="font-size: 12px">左右</span>
+          </Radio>
+        </RadioGroup>
+      </div>
 
-          <p class="title">{{$t('m.Output')}} <span v-if="problem.io_mode.io_mode=='File IO'">({{$t('m.ToFile')}}: {{ problem.io_mode.output }})</span></p>
-          <p class="content" v-html=problem.output_description></p>
+      <!-- 题目描述 + 代码编辑器容器 -->
+      <div class="problem-layout-wrapper" :class="layoutMode">
+        <div class="layout-left" :style="layoutLeftStyle">
+          <Panel :padding="40" shadow>
+            <div slot="title" class="problem-title-header">
+              <span class="problem-title-id">{{problem._id}}</span>
+              <span class="problem-title-text">{{problem.title}}</span>
+            </div>
+            <div id="problem-content" class="markdown-body" v-katex>
+              <p class="title">{{$t('m.Description')}}</p>
+              <p class="content" v-html=problem.description></p>
+              <p class="title">{{$t('m.Input')}} <span v-if="problem.io_mode.io_mode=='File IO'">({{$t('m.FromFile')}}: {{ problem.io_mode.input }})</span></p>
+              <p class="content" v-html=problem.input_description></p>
+              <p class="title">{{$t('m.Output')}} <span v-if="problem.io_mode.io_mode=='File IO'">({{$t('m.ToFile')}}: {{ problem.io_mode.output }})</span></p>
+              <p class="content" v-html=problem.output_description></p>
 
-          <div v-for="(sample, index) of problem.samples" :key="index">
-            <div class="sample">
-              <div class="sample-input">
-                <p class="title">{{$t('m.Sample_Input')}} {{index + 1}}
-                  <a class="copy"
-                     v-clipboard:copy="sample.input"
-                     v-clipboard:success="onCopy"
-                     v-clipboard:error="onCopyError">
-                    <Icon type="clipboard"></Icon>
-                  </a>
-                </p>
-                <pre>{{sample.input}}</pre>
+              <div v-for="(sample, index) of problem.samples" :key="index">
+                <div class="sample">
+                  <div class="sample-input">
+                    <p class="title">{{$t('m.Sample_Input')}} {{index + 1}}
+                      <a class="copy"
+                         v-clipboard:copy="sample.input"
+                         v-clipboard:success="onCopy"
+                         v-clipboard:error="onCopyError">
+                        <Icon type="clipboard"></Icon>
+                      </a>
+                    </p>
+                    <pre>{{sample.input}}</pre>
+                  </div>
+                  <div class="sample-output">
+                    <p class="title">{{$t('m.Sample_Output')}} {{index + 1}}</p>
+                    <pre>{{sample.output}}</pre>
+                  </div>
+                </div>
               </div>
-              <div class="sample-output">
-                <p class="title">{{$t('m.Sample_Output')}} {{index + 1}}</p>
-                <pre>{{sample.output}}</pre>
+
+              <div v-if="problem.hint">
+                <p class="title">{{$t('m.Hint')}}</p>
+                <Card dis-hover>
+                  <div class="content" v-html=problem.hint></div>
+                </Card>
+              </div>
+
+              <div v-if="problem.source">
+                <p class="title">{{$t('m.Source')}}</p>
+                <p class="content">{{problem.source}}</p>
+              </div>
+
+              <div v-if="layoutMode === 'horizontal'" class="problem-info-inline">
+                <Divider />
+                <div class="info-inline-grid">
+                  <span class="info-inline-item"><b>ID</b> {{problem._id}}</span>
+                  <span class="info-inline-item"><b>{{$t('m.Time_Limit')}}</b> {{problem.time_limit}}MS</span>
+                  <span class="info-inline-item"><b>{{$t('m.Memory_Limit')}}</b> {{problem.memory_limit}}MB</span>
+                  <span class="info-inline-item"><b>{{$t('m.IOMode')}}</b> {{problem.io_mode.io_mode}}</span>
+                  <span class="info-inline-item"><b>{{$t('m.Created')}}</b> {{problem.created_by.username}}</span>
+                  <span v-if="problem.difficulty" class="info-inline-item"><b>{{$t('m.Level')}}</b> {{$t('m.' + problem.difficulty)}}</span>
+                  <span v-if="problem.total_score" class="info-inline-item"><b>{{$t('m.Score')}}</b> {{problem.total_score}}</span>
+                  <span class="info-inline-item"><b>{{$t('m.Tags')}}</b>
+                    <Tag v-for="tag in problem.tags" :key="tag" size="small">{{$t('m.tag.' + tag, tag)}}</Tag>
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
-
-          <div v-if="problem.hint">
-            <p class="title">{{$t('m.Hint')}}</p>
-            <Card dis-hover>
-              <div class="content" v-html=problem.hint></div>
-            </Card>
-          </div>
-
-          <div v-if="problem.source">
-            <p class="title">{{$t('m.Source')}}</p>
-            <p class="content">{{problem.source}}</p>
-          </div>
-
+          </Panel>
         </div>
-      </Panel>
-      <!--problem main end-->
 
-      <!-- 智能解题提示 -->
-      <AICard
-        title="智能解题提示"
-        icon="ios-bulb"
-        iconColor="#ff9900"
-        btnText="获取提示"
-        btnType="warning"
-        :fetchFn="fetchHint"
-      />
+        <div v-if="layoutMode === 'horizontal'" class="resize-handle" @mousedown="startResize"></div>
+        <div v-show="isResizing" class="resize-overlay" @mouseup="stopResize" @mousemove="handleResize"></div>
 
-      <Card :padding="20" id="submit-code" dis-hover>
+        <div class="layout-right" :style="layoutRightStyle">
+          <!-- 智能解题提示 -->
+          <AICard
+            title="智能解题提示"
+            icon="ios-bulb"
+            iconColor="#ff9900"
+            btnText="获取提示"
+            btnType="warning"
+            :fetchFn="fetchHint"
+          />
+
+          <Card :padding="20" id="submit-code" dis-hover>
         <CodeMirror :value.sync="code"
                     :languages="problem.languages"
                     :language="language"
@@ -110,9 +144,11 @@
           </Col>
         </Row>
       </Card>
+        </div>
+      </div>
     </div>
 
-    <div id="right-column">
+    <div id="right-column" v-show="layoutMode === 'vertical'">
       <VerticalMenu @on-click="handleRoute">
         <template v-if="this.contestID">
           <VerticalMenu-item :route="{name: 'contest-problem-list', params: {contestID: contestID}}">
@@ -192,16 +228,12 @@
           <span class="card-title">{{$t('m.Statistic')}}</span>
           <Button type="ghost" size="small" id="detail" @click="graphVisible = !graphVisible">Details</Button>
         </div>
-        <div class="echarts">
-          <ECharts :options="pie"></ECharts>
-        </div>
+        <div class="echarts" ref="pieChartDom"></div>
       </Card>
     </div>
 
     <Modal v-model="graphVisible">
-      <div id="pieChart-detail">
-        <ECharts :options="largePie" :initOptions="largePieInitOpts"></ECharts>
-      </div>
+      <div id="pieChart-detail" ref="pieChartDetail"></div>
       <div slot="footer">
         <Button type="ghost" @click="graphVisible=false">{{$t('m.Close')}}</Button>
       </div>
@@ -219,6 +251,7 @@
   import {JUDGE_STATUS, CONTEST_STATUS, buildProblemCodeKey} from '@/utils/constants'
   import api from '@oj/api'
   import {pie, largePie} from './chartData'
+  import * as echarts from 'echarts'
 
   // 只显示这些状态的图形占用
   const filtedStatus = ['-1', '-2', '0', '1', '2', '3', '4', '8']
@@ -236,6 +269,9 @@
         captchaRequired: false,
         graphVisible: false,
         submissionExists: false,
+        layoutMode: 'vertical',
+        leftWidth: 50,
+        isResizing: false,
         captchaCode: '',
         captchaSrc: '',
         contestID: '',
@@ -264,11 +300,8 @@
         },
         pie: pie,
         largePie: largePie,
-        // echarts 无法获取隐藏dom的大小，需手动指定
-        largePieInitOpts: {
-          width: '500',
-          height: '480'
-        }
+        pieChart: null,
+        largePieChart: null,
       }
     },
     beforeRouteEnter (to, from, next) {
@@ -326,11 +359,9 @@
         })
       },
       changePie (problemData) {
-        // 初始化 statistic_info
         if (!problemData.statistic_info) {
           problemData.statistic_info = {}
         }
-        // 只显示特定的一些状态
         for (let k in problemData.statistic_info) {
           if (filtedStatus.indexOf(k) === -1) {
             delete problemData.statistic_info[k]
@@ -339,23 +370,21 @@
         let acNum = problemData.accepted_number || 0
         let subNum = problemData.submission_number || 0
         let data = [
-          {name: 'WA', value: subNum - acNum},
+          {name: 'WA', value: Math.max(0, subNum - acNum)},
           {name: 'AC', value: acNum}
         ]
         this.pie.series[0].data = data
-        // 只把大图的AC selected下，这里需要做一下deepcopy
+
         let data2 = JSON.parse(JSON.stringify(data))
         data2[1].selected = true
         this.largePie.series[1].data = data2
 
-        // 根据结果设置legend,没有提交过的legend不显示
         let legend = Object.keys(problemData.statistic_info).map(ele => JUDGE_STATUS[ele].short)
         if (legend.length === 0) {
           legend.push('AC', 'WA')
         }
         this.largePie.legend.data = legend
 
-        // 把ac的数据提取出来放在最后
         let acCount = problemData.statistic_info['0'] || 0
         delete problemData.statistic_info['0']
 
@@ -365,6 +394,38 @@
         })
         largePieData.push({name: 'AC', value: acCount})
         this.largePie.series[0].data = largePieData
+
+        this.$nextTick(() => {
+          this.initPieChart()
+        })
+      },
+      initPieChart () {
+        const dom = this.$refs.pieChartDom
+        if (!dom) return
+        if (this.pieChart) {
+          this.pieChart.dispose()
+        }
+        this.pieChart = echarts.init(dom)
+        this.pieChart.setOption(this.pie)
+      },
+      initLargePieChart () {
+        const dom = this.$refs.pieChartDetail
+        if (!dom) return
+        if (this.largePieChart) {
+          this.largePieChart.dispose()
+        }
+        this.largePieChart = echarts.init(dom)
+        this.largePieChart.setOption(this.largePie)
+      },
+      disposeCharts () {
+        if (this.pieChart) {
+          this.pieChart.dispose()
+          this.pieChart = null
+        }
+        if (this.largePieChart) {
+          this.largePieChart.dispose()
+          this.largePieChart = null
+        }
       },
       handleRoute (route) {
         this.$router.push(route)
@@ -488,6 +549,29 @@
       },
       onCopyError (e) {
         this.$error('Failed to copy code')
+      },
+      startResize (e) {
+        this.isResizing = true
+        window.addEventListener('mousemove', this.handleResize)
+        window.addEventListener('mouseup', this.stopResize)
+        document.body.style.cursor = 'col-resize'
+        document.body.style.userSelect = 'none'
+        e.preventDefault()
+      },
+      handleResize (e) {
+        if (!this.isResizing) return
+        const main = this.$el.querySelector('#problem-main')
+        if (!main) return
+        const rect = main.getBoundingClientRect()
+        const w = ((e.clientX - rect.left) / rect.width) * 100
+        this.leftWidth = Math.min(Math.max(w, 30), 70)
+      },
+      stopResize () {
+        this.isResizing = false
+        window.removeEventListener('mousemove', this.handleResize)
+        window.removeEventListener('mouseup', this.stopResize)
+        document.body.style.cursor = ''
+        document.body.style.userSelect = ''
       }
     },
     computed: {
@@ -510,6 +594,14 @@
         } else {
           return {name: 'submission-list', query: {problemID: this.problemID}}
         }
+      },
+      layoutRightStyle () {
+        if (this.layoutMode !== 'horizontal') return {}
+        return { width: (100 - this.leftWidth) + '%' }
+      },
+      layoutLeftStyle () {
+        if (this.layoutMode !== 'horizontal') return {}
+        return { width: this.leftWidth + '%' }
       }
     },
     beforeRouteLeave (to, from, next) {
@@ -524,9 +616,21 @@
       })
       next()
     },
+    beforeDestroy () {
+      window.removeEventListener('mousemove', this.handleResize)
+      window.removeEventListener('mouseup', this.stopResize)
+      this.disposeCharts()
+    },
     watch: {
       '$route' () {
         this.init()
+      },
+      graphVisible (val) {
+        if (val) {
+          this.$nextTick(() => {
+            this.initLargePieChart()
+          })
+        }
       }
     }
   }
@@ -538,15 +642,93 @@
   }
 
   .flex-container {
+    display: flex;
     max-width: 1400px;
     margin: 0 auto;
     padding: 40px 20px;
     background: linear-gradient(180deg, #f0f4f8 0%, #f8fafc 100%);
     min-height: calc(100vh - 60px);
 
+    &.full-width-layout {
+      max-width: none;
+      padding: 16px 16px 0 16px;
+      background: #f5f7fa;
+      min-height: calc(100vh - 80px);
+      height: calc(100vh - 80px);
+      overflow: hidden;
+
+      #problem-main {
+        margin-right: 0;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-width: 0;
+
+        .layout-toggle-row {
+          flex-shrink: 0;
+        }
+
+        .problem-layout-wrapper {
+          flex: 1;
+          min-height: 0;
+        }
+
+        .problem-layout-wrapper.horizontal {
+          display: flex;
+          gap: 0;
+          align-items: stretch;
+        }
+      }
+    }
+
     #problem-main {
       flex: auto;
       margin-right: 24px;
+
+      .layout-toggle-row {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 12px;
+      }
+
+      .problem-layout-wrapper {
+         &.horizontal {
+           display: flex;
+           gap: 0;
+         }
+
+         &.vertical {
+           .layout-left {
+             width: 100%;
+           }
+           .layout-right {
+             width: 100%;
+           }
+         }
+       }
+
+      .resize-handle {
+        width: 4px;
+        background: #e2e8f0;
+        cursor: col-resize;
+        flex-shrink: 0;
+        z-index: 10;
+        transition: background 0.2s;
+
+        &:hover {
+          background: #1e3a8a;
+        }
+      }
+
+      .resize-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 9999;
+        cursor: col-resize;
+      }
 
       .problem-panel {
         background: white;
@@ -674,10 +856,32 @@
 
         .echarts {
           height: 250px;
+          min-height: 250px;
           width: 100%;
           padding: 0;
+          overflow: hidden;
         }
       }
+    }
+  }
+
+  .problem-title-header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+
+    .problem-title-id {
+      font-size: 1.5rem;
+      font-weight: 700;
+      font-family: inherit;
+      color: #1e3a8a;
+    }
+
+    .problem-title-text {
+      font-size: 1.5rem;
+      font-weight: 700;
+      font-family: inherit;
+      color: #111827;
     }
   }
 
@@ -788,9 +992,100 @@
     width: 100%;
     height: 480px;
   }
+
+  .problem-info-inline {
+    margin-top: 8px;
+
+    .info-inline-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 16px;
+
+      .info-inline-item {
+        font-size: 13px;
+        color: #475569;
+        padding: 2px 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        flex-wrap: wrap;
+
+        b {
+          color: #1e3a8a;
+          font-weight: 600;
+        }
+      }
+    }
+  }
 </style>
 
 <style lang="less">
+  .full-width-layout {
+    #problem-main {
+      .problem-layout-wrapper.horizontal {
+        .layout-left {
+          min-width: 0;
+          overflow-y: auto !important;
+          overflow-x: hidden;
+        }
+
+        .layout-left > .ivu-card {
+          height: auto !important;
+          min-height: 100% !important;
+          margin-bottom: 0;
+          border-radius: 16px;
+          overflow: hidden !important;
+        }
+
+        .layout-right {
+          min-width: 0;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .layout-right .ai-response-card {
+          flex-shrink: 0;
+        }
+
+        .layout-right #submit-code {
+          flex: 1;
+          min-height: 0;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .layout-right #submit-code > .ivu-card-body {
+          flex: 1;
+          min-height: 0;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+        }
+
+        .layout-right #submit-code > .ivu-card-body > div:first-child {
+          flex: 1;
+          min-height: 0;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          margin-bottom: 0 !important;
+        }
+
+        .layout-right #submit-code > .ivu-card-body > div:first-child .CodeMirror {
+          flex: 1;
+          min-height: 300px;
+          height: auto !important;
+        }
+
+        .layout-right #submit-code > .ivu-card-body > div:first-child .CodeMirror-scroll {
+          min-height: 300px !important;
+          max-height: none !important;
+        }
+      }
+    }
+  }
+
   #submit-code .ivu-card,
   #pieChart .ivu-card,
   #info .ivu-card {
@@ -798,7 +1093,12 @@
     overflow: hidden;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
   }
-  
+
+  .full-width-layout .ai-response-card.ivu-card {
+    border-radius: 20px !important;
+    overflow: hidden;
+  }
+
   #submit-code .ivu-card-body,
   #pieChart .ivu-card-body,
   #info .ivu-card-body {

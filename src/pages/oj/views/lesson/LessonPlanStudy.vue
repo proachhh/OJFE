@@ -251,7 +251,7 @@ export default {
   top: 80px;
   left: 0;
   right: 0;
-  bottom: 0;
+  bottom: 60px;
   display: flex;
   flex-direction: column;
   background: #f5f7fa;

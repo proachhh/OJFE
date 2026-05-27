@@ -5,7 +5,7 @@
         <Icon :type="icon" :color="iconColor" size="20" />
         <span class="header-title">{{ title }}</span>
         <Spin fix v-if="loading"></Spin>
-        <Tag v-else-if="result" class="ai-reply-tag" size="small">AI 已回复</Tag>
+        <Tag v-else-if="result" class="ai-reply-tag" size="small">已回复</Tag>
       </div>
       <div class="header-right">
         <Button

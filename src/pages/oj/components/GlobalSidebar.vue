@@ -7,8 +7,10 @@
       :style="{ top: sidebarPos.y + 'px', left: sidebarPos.x + 'px' }"
       @mousedown="onSidebarMouseDown"
     >
+      <img v-if="isCollapsed" src="@/assets/logo3.png" class="collapsed-logo" @click.stop="toggleSidebarLocal" />
+      <template v-else>
       <div class="sidebar-toggle" :class="{ 'toggle-left': sidebarSnapped === 'right' }" @click.stop="toggleSidebarLocal">
-        <Icon :type="sidebarSnapped === 'left' ? (isCollapsed ? 'ios-arrow-forward' : 'ios-arrow-back') : (isCollapsed ? 'ios-arrow-back' : 'ios-arrow-forward')" size="16" />
+        <Icon :type="sidebarSnapped === 'left' ? 'ios-arrow-back' : 'ios-arrow-forward'" size="16" />
       </div>
       <div class="sidebar-content">
         <div class="menu-item" @click.stop="openAIChat">
@@ -24,6 +26,7 @@
           <span class="menu-text">{{ $t('m.Code_Editor') }}</span>
         </div>
       </div>
+      </template>
     </div>
 
     <!-- AI Chat 面板 -->
@@ -40,7 +43,7 @@
       <div class="panel-header" @mousedown="startDrag($event, 'ai')">
         <h3>{{ aiFullName }}</h3>
         <div class="panel-actions">
-          <Select v-model="aiModel" size="small" class="model-select" @on-change="onModelChange">
+          <Select v-model="chatState.aiModel" size="small" class="model-select" @on-change="onModelChange">
             <Option value="agent">
               <img src="~@/assets/logo3.png" class="model-option-icon" />
               Agent
@@ -64,7 +67,7 @@
       </div>
       <div class="panel-content">
         <div class="message-container" ref="aiMessageList">
-          <div v-if="aiMessages.length === 0" class="welcome-section">
+          <div v-if="chatState.messages.length === 0" class="welcome-section">
             <div class="welcome-icon">
               <img :src="aiAvatar" :alt="aiDisplayName" :key="aiAvatar" />
             </div>
@@ -73,7 +76,7 @@
           </div>
           <template v-else>
               <MessageItem
-                v-for="(msg, idx) in aiMessages"
+                v-for="(msg, idx) in chatState.messages"
                 :key="idx"
                 :role="msg.role"
                 :content="msg.content"
@@ -89,10 +92,17 @@
             </template>
         </div>
         <div class="input-area">
-          <Input v-model="aiInputText" type="textarea" :rows="3" :placeholder="aiMessages.length === 0 ? $t('m.Enter_Your_Question_Start') : $t('m.Enter_Your_Question')" />
-          <Button type="primary" long @click="sendAIMessage" :loading="aiSending" :disabled="!aiInputText.trim()">
-            <Icon type="ios-send" /> {{ $t('m.Send') }}
-          </Button>
+          <Input v-model="chatState.inputText" type="textarea" :rows="3"
+            :placeholder="chatState.messages.length === 0 ? $t('m.Enter_Your_Question_Start') : $t('m.Enter_Your_Question')"
+            @on-keydown="handleAIKeydown" />
+          <div style="display:flex; gap: 6px;">
+            <Button v-if="aiSending" type="warning" size="small" @click="stopAIGeneration">
+              <Icon type="ios-close-circle" /> 停止
+            </Button>
+            <Button type="primary" long @click="sendAIMessage" :loading="aiSending" :disabled="!chatState.inputText.trim()">
+              <Icon type="ios-send" /> {{ $t('m.Send') }}
+            </Button>
+          </div>
         </div>
       </div>
       <div class="resize-handle resize-right" @mousedown="startResize($event, 'ai', 'right')"></div>
@@ -166,6 +176,7 @@ import { mapState, mapActions } from 'vuex'
 import { codemirror } from 'vue-codemirror-lite'
 import MessageItem from '@oj/views/chat/components/MessageItem.vue'
 import { formatAgentResponse, extractAgentDisplay } from '@oj/views/chat/utils.js'
+import chatState from '@oj/views/chat/chatState.js'
 
 import 'codemirror/theme/monokai.css'
 import 'codemirror/theme/solarized.css'
@@ -190,12 +201,11 @@ export default {
       sideDragPending: false,
       sideDragStart: { x: 0, y: 0, barX: 0, barY: 0 },
       sideDragTimer: null,
-      sidebarSnapped: 'left',
+      sidebarSnapped: 'right',
 
-      aiModel: 'agent',
-      aiMessages: [],
-      aiInputText: '',
+      chatState,
       aiSending: false,
+      aiAbortController: null,
       aiPanelPos: { x: 180, y: 80 },
       aiPanelSize: { w: 380, h: 520 },
 
@@ -231,24 +241,24 @@ export default {
       }
     },
     aiAvatar () {
-      if (this.aiModel === 'agent') return require('@/assets/logo3.png')
-      return this.aiModel === 'deepseek' ? '/static/pictures/ds.png' : '/static/pictures/xh.png'
+      if (this.chatState.aiModel === 'agent') return require('@/assets/logo3.png')
+      return this.chatState.aiModel === 'deepseek' ? '/static/pictures/ds.png' : '/static/pictures/xh.png'
     },
     aiDisplayName () {
-      if (this.aiModel === 'agent') return 'OJ Agent'
-      return this.aiModel === 'deepseek' ? 'DeepSeek' : this.$t('m.Spark_AI')
+      if (this.chatState.aiModel === 'agent') return 'OJ Agent'
+      return this.chatState.aiModel === 'deepseek' ? 'DeepSeek' : this.$t('m.Spark_AI')
     },
     aiFullName () {
-      if (this.aiModel === 'agent') return 'OJ 智能助手 (Agent)'
-      return this.aiModel === 'deepseek' ? 'DeepSeek V4 PRO' : this.$t('m.Spark_AI_Assistant')
+      if (this.chatState.aiModel === 'agent') return 'OJ 智能助手 (Agent)'
+      return this.chatState.aiModel === 'deepseek' ? 'DeepSeek V4 PRO' : this.$t('m.Spark_AI_Assistant')
     },
     aiWelcomeTitle () {
-      if (this.aiModel === 'agent') return '你好！我是 OJ 智能助手'
-      return this.aiModel === 'deepseek' ? this.$t('m.Hello_I_Am_DeepSeek') : this.$t('m.Hello_I_Am_Spark_AI')
+      if (this.chatState.aiModel === 'agent') return '你好！我是 OJ 智能助手'
+      return this.chatState.aiModel === 'deepseek' ? this.$t('m.Hello_I_Am_DeepSeek') : this.$t('m.Hello_I_Am_Spark_AI')
     },
     aiWelcomeDesc () {
-      if (this.aiModel === 'agent') return '我可以帮你推荐题目、规划学习路径、生成练习题、提供解题提示、分析提交错误。尽管问我吧！'
-      return this.aiModel === 'deepseek' ? this.$t('m.DeepSeek_Description') : this.$t('m.Spark_AI_Description')
+      if (this.chatState.aiModel === 'agent') return '我可以帮你推荐题目、规划学习路径、生成练习题、提供解题提示、分析提交错误。尽管问我吧！'
+      return this.chatState.aiModel === 'deepseek' ? this.$t('m.DeepSeek_Description') : this.$t('m.Spark_AI_Description')
     },
     editorOptions () {
       const modeMap = {
@@ -275,14 +285,16 @@ export default {
       })
     }
   },
-  beforeDestroy () {
-    this.clearPollingTimer()
-    window.removeEventListener('resize', this.onWindowResize)
-  },
   mounted () {
     this.sidebarPos.y = window.innerHeight * 0.5 - 80
     this.snapToEdge()
     window.addEventListener('resize', this.onWindowResize)
+    this.$root.$on('open-ai-chat', this.openAIChat)
+  },
+  beforeDestroy () {
+    this.clearPollingTimer()
+    window.removeEventListener('resize', this.onWindowResize)
+    this.$root.$off('open-ai-chat', this.openAIChat)
   },
   methods: {
     ...mapActions(['toggleSidebar']),
@@ -428,7 +440,7 @@ export default {
     openFullscreen (type) {
       if (type === 'ai') {
         this.closeAIChat()
-        this.$router.push({ name: 'ai-chat-fullscreen', query: { model: this.aiModel } })
+        this.$router.push({ name: 'ai-chat-fullscreen' })
       } else if (type === 'editor') {
         this.closeCodeEditor()
         this.$router.push({ name: 'code-editor-fullscreen' })
@@ -436,38 +448,57 @@ export default {
     },
 
     onModelChange () {
-      this.aiMessages = []
+      chatState.messages = []
+      chatState.inputText = ''
+    },
+
+    handleAIKeydown (e) {
+      if (e && e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault()
+        this.sendAIMessage()
+      }
+    },
+
+    stopAIGeneration () {
+      if (this.aiAbortController) {
+        this.aiAbortController.abort()
+        this.aiAbortController = null
+      }
+      this.aiSending = false
     },
 
     async sendAIMessage () {
-      const text = this.aiInputText.trim()
+      const text = chatState.inputText.trim()
       if (!text || this.aiSending) return
 
-      this.aiMessages.push({ role: 'user', content: text })
-      this.aiInputText = ''
+      chatState.messages.push({ role: 'user', content: text })
+      chatState.inputText = ''
       this.aiSending = true
 
-      const loadingIdx = this.aiMessages.length
-      this.aiMessages.push({ role: 'loading', content: '' })
+      const loadingIdx = chatState.messages.length
+      chatState.messages.push({ role: 'loading', content: '' })
       this.scrollToBottom()
 
+      this.aiAbortController = new AbortController()
+
       try {
-        const apiUrl = this.aiModel === 'agent' ? '/api/agent/chat/' : '/api/spark/chat/'
+        const apiUrl = chatState.aiModel === 'agent' ? '/api/agent/chat/' : '/api/spark/chat/'
         const response = await fetch(apiUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: text, model: this.aiModel })
+          body: JSON.stringify({ message: text, model: chatState.aiModel }),
+          signal: this.aiAbortController.signal
         })
 
-        this.aiMessages.splice(loadingIdx, 1)
+        chatState.messages.splice(loadingIdx, 1)
 
         if (response.ok) {
           const result = await response.json()
-          if (this.aiModel === 'agent') {
+          if (chatState.aiModel === 'agent') {
             const agentData = result.data || result
             const formatted = formatAgentResponse(agentData)
             const display = extractAgentDisplay(agentData)
-            this.aiMessages.push({
+            chatState.messages.push({
               role: 'assistant',
               content: formatted.content || this.$t('m.No_Reply'),
               agentName: agentData.agent || '',
@@ -478,16 +509,21 @@ export default {
             })
           } else {
             const data = result
-            this.aiMessages.push({ role: 'assistant', content: data.answer || data.reply || data.message || this.$t('m.No_Reply') })
+            chatState.messages.push({ role: 'assistant', content: data.answer || data.reply || data.message || this.$t('m.No_Reply') })
           }
         } else {
-          this.aiMessages.push({ role: 'assistant', content: this.$t('m.Request_Failed') })
+          chatState.messages.push({ role: 'assistant', content: this.$t('m.Request_Failed') })
         }
       } catch (e) {
-        this.aiMessages.splice(loadingIdx, 1)
-        this.aiMessages.push({ role: 'assistant', content: this.$t('m.Network_Error_Text') })
+        if (e && e.name !== 'AbortError') {
+          chatState.messages.splice(loadingIdx, 1)
+          chatState.messages.push({ role: 'assistant', content: this.$t('m.Network_Error_Text') })
+        } else {
+          chatState.messages.splice(loadingIdx, 1)
+        }
       } finally {
         this.aiSending = false
+        this.aiAbortController = null
         this.scrollToBottom()
       }
     },
@@ -797,17 +833,8 @@ pollResult (codeRunId) {
     align-items: center;
     justify-content: center;
     cursor: grab;
-
-    .sidebar-content {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .sidebar-toggle {
-      position: static;
-      transform: none;
-      margin: 0;
-    }
+    background: #1a1a2e;
+    border: 2px solid rgba(255, 255, 255, 0.2);
   }
 }
 
@@ -844,6 +871,16 @@ pollResult (codeRunId) {
 .sidebar-content {
   opacity: 1;
   transition: opacity 0.2s ease;
+}
+
+.collapsed-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #fff;
+  padding: 4px;
+  object-fit: contain;
+  cursor: pointer;
 }
 
 .menu-item {

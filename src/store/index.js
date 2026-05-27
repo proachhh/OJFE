@@ -14,7 +14,7 @@ const rootState = {
     mode: 'login', // or 'register',
     visible: false
   },
-  sidebarCollapsed: false
+  sidebarCollapsed: true
 }
 
 const rootGetters = {

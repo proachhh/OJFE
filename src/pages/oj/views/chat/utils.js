@@ -1,8 +1,13 @@
 export function formatAgentResponse (agentData) {
   const intent = agentData.intent
+  const agent = agentData.agent
 
   if (agentData.error) {
     return { content: `❌ **出错了**：${agentData.error}` }
+  }
+
+  if (agent === 'LLM' && agentData.message) {
+    return { content: agentData.message }
   }
 
   if (intent === 'resource' && agentData.content) {
@@ -16,7 +21,7 @@ export function formatAgentResponse (agentData) {
     let content = '**📋 为您推荐以下题目：**\n\n'
     agentData.recommendations.slice(0, 10).forEach((r, i) => {
       const diffEmoji = r.difficulty === 'High' ? '🔴' : r.difficulty === 'Mid' ? '🟡' : '🟢'
-      content += `**${i + 1}.** [${r.title}](/problem/${r._id}) ${diffEmoji} \`${r.difficulty}\`  \n> ${r.reason}\n\n`
+      content += `> **${i + 1}.** [${r.title}](/problem/${r._id}) ${diffEmoji} \`${r.difficulty}\` — *${r.reason}*\n`
     })
     content += `\n_共 ${agentData.total || agentData.recommendations.length} 条推荐_`
     return { content }
@@ -43,8 +48,12 @@ export function formatAgentResponse (agentData) {
     return { content: `**${agentData.question || '请完成画像引导'}**\n\n*(第 ${agentData.step || '?'}/${agentData.total_steps || '?'} 步)*\n\n你可以在这里继续回答，或者前往 [学习画像](/profile-onboarding) 页面完成引导。` }
   }
 
-  if (intent === 'profile') {
-    return { content: agentData.message || '画像已更新。' }
+  if (intent === 'profile' && agentData.message) {
+    return { content: agentData.message }
+  }
+
+  if (agentData.message && intent !== 'general') {
+    return { content: agentData.message }
   }
 
   if (intent === 'general') {

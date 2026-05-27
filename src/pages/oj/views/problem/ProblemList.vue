@@ -80,7 +80,28 @@
               </div>
               <p class="card-problem-title">{{ problem.title }}</p>
               <div v-if="showTags" class="card-tags">
-                <span v-for="tag in problem.tags" :key="tag" class="card-tag-item">{{ m.tag[tag] || tag }}</span>
+                <span
+                  v-for="tag in problem.tags.slice(0, 2)"
+                  :key="tag"
+                  class="card-tag-item"
+                >{{ m.tag[tag] || tag }}</span>
+                <Poptip
+                  v-if="problem.tags.length > 2"
+                  trigger="hover"
+                  placement="top"
+                  transfer
+                  word-wrap
+                  width="260"
+                >
+                  <span class="card-tag-more">...</span>
+                  <div slot="content" class="card-tag-tooltip">
+                    <span
+                      v-for="tag in problem.tags"
+                      :key="tag"
+                      class="card-tag-item"
+                    >{{ m.tag[tag] || tag }}</span>
+                  </div>
+                </Poptip>
               </div>
               <div class="card-stats">
                 <span class="card-stat">
@@ -314,7 +335,12 @@ export default {
       api.getProblemList(offset, this.limit, this.query).then(res => {
         this.loadings.table = false
         this.total = res.data.data.total
-        this.problemList = res.data.data.results
+        this.problemList = (res.data.data.results || []).slice().sort((a, b) => {
+          const na = parseInt(a._id), nb = parseInt(b._id)
+          if (!isNaN(na) && !isNaN(nb)) return na - nb
+          const sa = String(a._id || ''), sb = String(b._id || '')
+          return sa.localeCompare(sb)
+        })
         if (this.isAuthenticated) {
           this.addStatusColumn(this.problemTableColumns, res.data.data.results)
         }
@@ -353,38 +379,89 @@ export default {
         this.problemTableColumns.push({
           title: this.$i18n.t('m.Tags'),
           align: 'center',
-          width: 300,
+          width: 200,
           render: (h, params) => {
-            let tags = []
-            params.row.tags.forEach(tag => {
-              tags.push(h('span', { 
+            const allTags = params.row.tags || []
+            if (allTags.length === 0) {
+              return h('span', { style: { color: '#94a3b8', fontSize: '12px' } }, this.$t('m.None'))
+            }
+            const visible = allTags.slice(0, 2)
+            const hasMore = allTags.length > 2
+            const tagEls = visible.map(tag => {
+              return h('span', {
                 class: 'problem-tag-item',
                 style: {
                   display: 'inline-block',
-                  padding: '4px 10px',
-                  margin: '0 4px 4px 0',
-                  background: '#fff',
-                  color: '#1e3a8a',
-                  border: '1px solid #1e3a8a',
-                  borderRadius: '4px',
-                  fontSize: '12px',
+                  padding: '2px 8px',
+                  margin: '0 2px',
+                  background: '#f1f5f9',
+                  color: '#475569',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '10px',
+                  fontSize: '13px',
                   whiteSpace: 'nowrap'
                 }
-              }, this.m.tag[tag] || tag))
+              }, this.m.tag[tag] || tag)
             })
-            if (params.row.tags.length === 0) {
-              tags.push(h('span', { style: { color: '#94a3b8', fontSize: '12px' } }, this.$t('m.None')))
+            if (hasMore) {
+              tagEls.push(h('span', {
+                style: {
+                  display: 'inline-block',
+                  padding: '2px 6px',
+                  margin: '0 2px',
+                  color: '#94a3b8',
+                  fontSize: '13px',
+                  cursor: 'default',
+                  fontWeight: 600
+                }
+              }, '...'))
             }
-            return h('div', { 
-              class: 'tags-container',
+            const inner = h('div', {
+              style: {
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexWrap: 'nowrap',
+                gap: '2px'
+              }
+            }, tagEls)
+
+            if (!hasMore) return inner
+
+            const allTagEls = allTags.map(tag => {
+              return h('span', {
+                style: {
+                  display: 'inline-block',
+                  padding: '3px 10px',
+                  margin: '2px',
+                  background: '#f1f5f9',
+                  color: '#475569',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '12px',
+                  fontSize: '13px',
+                  whiteSpace: 'nowrap'
+                }
+              }, this.m.tag[tag] || tag)
+            })
+            const tooltipContent = h('div', {
               style: {
                 display: 'flex',
                 flexWrap: 'wrap',
+                gap: '4px',
                 justifyContent: 'center',
-                alignItems: 'center',
-                gap: '4px'
+                maxWidth: '260px'
               }
-            }, tags)
+            }, allTagEls)
+
+            return h('Poptip', {
+              props: {
+                trigger: 'hover',
+                placement: 'top',
+                transfer: true,
+                wordWrap: true,
+                width: 280
+              }
+            }, [inner, h('div', { slot: 'content' }, [tooltipContent])])
           }
         })
       } else {
@@ -667,7 +744,8 @@ export default {
   // 卡片视图
   .card-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, 280px);
+    justify-content: center;
     gap: 16px;
     padding: 20px 24px;
   }
@@ -712,14 +790,41 @@ export default {
       flex-wrap: wrap;
       gap: 4px;
       margin-bottom: 14px;
+      align-items: center;
 
       .card-tag-item {
         padding: 3px 10px;
         background: #f1f5f9;
         border: 1px solid #e2e8f0;
         border-radius: 14px;
-        font-size: 12px;
+        font-size: 13px;
         color: #475569;
+      }
+
+      .card-tag-more {
+        padding: 3px 6px;
+        color: #94a3b8;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: default;
+        line-height: 1;
+      }
+    }
+
+    .card-tag-tooltip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      justify-content: center;
+
+      .card-tag-item {
+        padding: 4px 12px;
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        font-size: 13px;
+        color: #475569;
+        white-space: nowrap;
       }
     }
 

@@ -320,12 +320,20 @@ export default {
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
 .flex-container {
-  max-width: 1200px;
+  max-width: 1250px;
+  width: 100%;
   margin: 0 auto;
-  padding: 20px 20px 60px;
+  padding: 24px 20px 60px;
 }
 
 #problem-main {
+  width: 100%;
+  min-width: 0;
+
+  /deep/ .ivu-panel,
+  /deep/ .ivu-card {
+    width: 100%;
+  }
   .panel-title-row {
     display: flex;
     align-items: center;

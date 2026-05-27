@@ -31,7 +31,10 @@
         <el-row :gutter="20">
           <el-col :span="24">
             <el-form-item prop="description" :label="$t('m.Description')" required>
-              <Simditor v-model="problem.description"></Simditor>
+              <div class="editor-toolbar-row">
+                <el-button size="mini" icon="el-icon-edit-outline" type="text" @click="$refs.simDesc.parseLatex()" title="自动解析LaTeX公式">解析公式</el-button>
+              </div>
+              <Simditor v-model="problem.description" ref="simDesc"></Simditor>
             </el-form-item>
           </el-col>
         </el-row>
@@ -39,12 +42,18 @@
         <el-row :gutter="20">
           <el-col :span="24">
             <el-form-item prop="input_description" :label="$t('m.Input_Description')" required>
-              <Simditor v-model="problem.input_description"></Simditor>
+              <div class="editor-toolbar-row">
+                <el-button size="mini" icon="el-icon-edit-outline" type="text" @click="$refs.simInDesc.parseLatex()" title="自动解析LaTeX公式">解析公式</el-button>
+              </div>
+              <Simditor v-model="problem.input_description" ref="simInDesc"></Simditor>
             </el-form-item>
           </el-col>
           <el-col :span="24">
             <el-form-item prop="output_description" :label="$t('m.Output_Description')" required>
-              <Simditor v-model="problem.output_description"></Simditor>
+              <div class="editor-toolbar-row">
+                <el-button size="mini" icon="el-icon-edit-outline" type="text" @click="$refs.simOutDesc.parseLatex()" title="自动解析LaTeX公式">解析公式</el-button>
+              </div>
+              <Simditor v-model="problem.output_description" ref="simOutDesc"></Simditor>
             </el-form-item>
           </el-col>
         </el-row>
@@ -140,6 +149,9 @@
               <el-row :gutter="20">
                 <el-col :span="12">
                   <el-form-item :label="$t('m.Input_Samples')" required>
+                    <div class="editor-toolbar-row">
+                      <el-button size="mini" icon="el-icon-edit-outline" type="text" @click="parseLatexInSample(sample, 'input')" title="自动解析LaTeX公式">解析公式</el-button>
+                    </div>
                     <el-input
                       :rows="5"
                       type="textarea"
@@ -150,6 +162,9 @@
                 </el-col>
                 <el-col :span="12">
                   <el-form-item :label="$t('m.Output_Samples')" required>
+                    <div class="editor-toolbar-row">
+                      <el-button size="mini" icon="el-icon-edit-outline" type="text" @click="parseLatexInSample(sample, 'output')" title="自动解析LaTeX公式">解析公式</el-button>
+                    </div>
                     <el-input
                       :rows="5"
                       type="textarea"
@@ -169,7 +184,10 @@
         </div>
 
         <el-form-item style="margin-top: 20px" :label="$t('m.Hint')">
-          <Simditor v-model="problem.hint" placeholder=""></Simditor>
+          <div class="editor-toolbar-row">
+            <el-button size="mini" icon="el-icon-edit-outline" type="text" @click="$refs.simHint.parseLatex()" title="自动解析LaTeX公式">解析公式</el-button>
+          </div>
+          <Simditor v-model="problem.hint" ref="simHint" placeholder=""></Simditor>
         </el-form-item>
 
         <el-form-item :label="$t('m.Code_Template')">
@@ -546,6 +564,70 @@
       }
     },
     methods: {
+      parseLatexInSample (sample, key) {
+        const text = sample[key] || ''
+        if (!text.trim()) {
+          this.$message.info('文本框内容为空')
+          return
+        }
+        const processed = this.processLatex(text)
+        if (processed !== text) {
+          sample[key] = processed
+          this.$message.success('LaTeX 公式解析完成')
+        } else {
+          this.$message.info('未检测到 LaTeX 公式')
+        }
+      },
+      processLatex (text) {
+        const placeholders = []
+        text = text.replace(/\$\$([\s\S]*?)\$\$/g, (match, inner) => {
+          placeholders.push(inner)
+          return '@@LPH' + (placeholders.length - 1) + '@@'
+        })
+        text = text.replace(/\\\[([\s\S]*?)\\\]/g, '$$$1$$')
+        text = text.replace(/\\\(([\s\S]*?)\\\)/g, '$$$1$$')
+        text = text.replace(/(^|[^$@])\$(?!\$)([^$\n]+?)\$(?!\$|$|[0-9])/g, '$1$$$2$$')
+
+        const knownCmds = 'times|cdot|frac|sum|int|sqrt|leq|geq|le|ge|alpha|beta|gamma|delta|pi|sigma|omega|lambda|mu|pm|to|rightarrow|Rightarrow|leftarrow|Leftarrow|leftrightarrow|Leftrightarrow|forall|exists|in|notin|subset|subseteq|supset|supseteq|cup|cap|infty|partial|nabla|approx|equiv|neq|propto|sim|ldots|cdots|vdots|ddots|angle|triangle|oplus|otimes|odot|circ|text|mathbf|mathit|mathrm|dfrac|tfrac|binom|bmod|pmod|overline|underline|overrightarrow|overleftarrow|hat|tilde|bar|vec|dot|ddot|not|neg|land|lor|vdash|models|mid|parallel|perp|ast|star|diamond|bullet|div|mod|wedge|vee|bigcirc|bigtriangleup|bigtriangledown|triangleright|triangleleft|sqcap|sqcup|doublecup|doublecap|displaystyle|textstyle|lim|max|min|sup|inf|limsup|liminf|arg|deg|dim|hom|ker|Pr|det|gcd|lcm|log|ln|lg|exp|sin|cos|tan|cot|sec|csc|arcsin|arccos|arctan|sinh|cosh|tanh|coth'
+        const cmdRe = new RegExp('\\\\(' + knownCmds + ')(?![a-zA-Z])', 'g')
+        const mathChars = /^[a-zA-Z0-9_\{\}\^\\,\s\.\-\+\=\<\>\|\(\)\[\]\/\'\*]+$/
+        const ranges = []
+        let m
+        while ((m = cmdRe.exec(text)) !== null) {
+          let start = m.index
+          let end = m.index + m[0].length
+          while (start > 0 && mathChars.test(text[start - 1]) && text.substring(start - 4, start) !== '@@LP') start--
+          while (end < text.length && mathChars.test(text[end]) && text.substring(end, end + 3) !== '@@') end++
+          let merged = false
+          for (let i = ranges.length - 1; i >= 0; i--) {
+            const r = ranges[i]
+            if (start <= r.end && end >= r.start) {
+              r.start = Math.min(r.start, start)
+              r.end = Math.max(r.end, end)
+              merged = true
+              break
+            }
+          }
+          if (!merged) ranges.push({ start, end })
+        }
+        if (ranges.length === 0) {
+          text = text.replace(/@@LPH(\d+)@@/g, (m, idx) => '$$' + placeholders[parseInt(idx)] + '$$')
+          return text
+        }
+        ranges.sort((a, b) => a.start - b.start)
+        let rst = ''
+        let pos = 0
+        for (const r of ranges) {
+          if (r.start > pos) rst += text.substring(pos, r.start)
+          const fragment = text.substring(r.start, r.end).trim()
+          if (fragment) rst += '$$' + fragment + '$$'
+          pos = r.end
+        }
+        if (pos < text.length) rst += text.substring(pos)
+        text = rst
+        text = text.replace(/@@LPH(\d+)@@/g, (m, idx) => '$$' + placeholders[parseInt(idx)] + '$$')
+        return text
+      },
       switchSpj () {
         if (this.testCaseUploaded) {
           this.$confirm('If you change problem judge method, you need to re-upload test cases', 'Warning', {
@@ -1037,6 +1119,17 @@
 </style>
 
 <style>
+  .editor-toolbar-row {
+    text-align: right;
+    margin-bottom: 2px;
+
+    .el-button--mini.el-button--text {
+      font-size: 12px;
+      color: #409EFF;
+      padding: 0 4px;
+    }
+  }
+
   .dialog-compile-error {
     width: auto;
     max-width: 80%;

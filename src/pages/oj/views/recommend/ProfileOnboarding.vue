@@ -58,10 +58,10 @@
           <p>暂无画像数据，完成引导对话即可生成。</p>
         </div>
         <div class="complete-actions">
-          <Button type="primary" @click="$router.push({name: 'ai-chat-fullscreen'})">
+          <Button type="primary" @click="openChatFloat">
             {{ $t('m.Smart_Chat_Nav') }}
           </Button>
-          <Button @click="$router.push({name: 'learning-path'})">
+          <Button @click="$router.push({name: 'LearningPath'})">
             规划学习路径
           </Button>
           <Button type="text" @click="resetAndStart" size="small">
@@ -72,7 +72,7 @@
 
       <div v-else class="question-card">
         <div class="progress-bar">
-          <div class="progress-fill" :style="{width: (step / totalSteps * 100) + '%'}"></div>
+          <div class="progress-fill" :style="{width: ((step - 1) / totalSteps * 100) + '%'}"></div>
         </div>
         <div class="step-indicator">
           第 {{ step }} / {{ totalSteps }} 步 — {{ currentDisplay }}
@@ -194,15 +194,20 @@ export default {
       }
     },
     resetAndStart () {
-      this.started = false
-      this.complete = false
-      this.profile = null
-      this.completeMessage = ''
-      this.answer = ''
-      this.step = 1
-      this.$nextTick(() => {
-        this.startOnboarding()
+      this.$http.post('/agent/profile/init/', { action: 'reset' }).finally(() => {
+        this.started = false
+        this.complete = false
+        this.profile = null
+        this.completeMessage = ''
+        this.answer = ''
+        this.step = 1
+        this.$nextTick(() => {
+          this.startOnboarding()
+        })
       })
+    },
+    openChatFloat () {
+      this.$root.$emit('open-ai-chat')
     },
     async submitAnswer () {
       if (!this.answer.trim()) return
@@ -405,7 +410,7 @@ export default {
 
     .progress-fill {
       height: 100%;
-      background: linear-gradient(90deg, #2d8cf0, #19be6b);
+      background: linear-gradient(90deg, #4a90d9, #2d8cf0);
       border-radius: 3px;
       transition: width 0.5s ease;
     }

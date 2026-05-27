@@ -160,6 +160,7 @@
         if (path === '/' || path.startsWith('/home')) return '/'
         if (path.startsWith('/problem')) return '/problem'
         if (path.startsWith('/contest')) return '/contest'
+        if (path.startsWith('/status') && this.$route.query.problemID) return '/problem'
         if (path.startsWith('/learning-report') || path.startsWith('/status')) return '/learning-report'
         if (path.startsWith('/learning-path')) return '/learning-path'
         if (path.startsWith('/lesson-plan')) return '/lesson-plan'

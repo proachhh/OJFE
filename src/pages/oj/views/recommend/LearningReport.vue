@@ -519,7 +519,7 @@ export default {
       return this.$t('m.Weakness_Advice_Excellent')
     },
     gotoGuideChat () {
-      this.$router.push({ name: 'ai-chat-fullscreen', query: { prompt: '请帮我完善学习画像' } })
+      this.$router.push({ name: 'profile-onboarding' })
     },
     startOnboarding () {
       this.onboardingLoading = true

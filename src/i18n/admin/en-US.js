@@ -167,6 +167,8 @@ export const m = {
   Smart_Match_Tag: 'Smart Match Tags',
    // ProblemList.vue
   Contest_Problem_List: 'Contest Problem List',
+  Sort_By_ID: 'Sort by ID',
+  Sort_By_Time: 'Sort by Time',
   // Contest.vue
   ContestTitle: 'Title',
   ContestDescription: 'Description',

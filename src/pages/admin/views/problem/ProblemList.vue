@@ -5,8 +5,13 @@
         <el-input
           v-model="keyword"
           prefix-icon="el-icon-search"
-          placeholder="Keywords">
+          placeholder="Keywords"
+          style="width: 240px; margin-right: 12px">
         </el-input>
+        <el-select v-model="sortOrder" @change="onSortChange" style="width: 150px">
+          <el-option :label="$t('m.Sort_By_ID')" value="id"></el-option>
+          <el-option :label="$t('m.Sort_By_Time')" value="create_time"></el-option>
+        </el-select>
       </div>
       <el-table
         v-loading="loading"
@@ -145,7 +150,8 @@
         currentRow: {},
         InlineEditDialogVisible: false,
         makePublicDialogVisible: false,
-        addProblemDialogVisible: false
+        addProblemDialogVisible: false,
+        sortOrder: 'create_time'
       }
     },
     mounted () {
@@ -192,6 +198,7 @@
             problem.isEditing = false
           }
           this.problemList = res.data.data.results
+          this.sortCurrentList()
         }, res => {
           this.loading = false
         })
@@ -240,6 +247,24 @@
       },
       getPublicProblem () {
         api.getProblemList()
+      },
+      sortCurrentList () {
+        if (!this.problemList || this.problemList.length === 0) return
+        if (this.sortOrder === 'id') {
+          this.problemList = this.problemList.slice().sort((a, b) => {
+            const na = parseInt(a._id), nb = parseInt(b._id)
+            if (!isNaN(na) && !isNaN(nb)) return na - nb
+            const sa = String(a._id || ''), sb = String(b._id || '')
+            return sa.localeCompare(sb)
+          })
+        } else {
+          this.problemList = this.problemList.slice().sort((a, b) => {
+            return new Date(b.create_time) - new Date(a.create_time)
+          })
+        }
+      },
+      onSortChange () {
+        this.sortCurrentList()
       }
     },
     watch: {

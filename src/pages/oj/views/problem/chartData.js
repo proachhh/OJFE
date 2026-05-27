@@ -13,6 +13,10 @@ function getItemColor (obj) {
 }
 
 const pie = {
+  tooltip: {
+    trigger: 'item',
+    formatter: '{b}: {c} ({d}%)'
+  },
   legend: {
     left: 'center',
     top: '10',
@@ -29,8 +33,8 @@ const pie = {
         color: getItemColor
       },
       data: [
-        {value: 0, name: 'WA'},
-        {value: 0, name: 'AC'}
+        {value: 1, name: 'WA'},
+        {value: 1, name: 'AC'}
       ],
       label: {
         position: 'inner',
@@ -45,6 +49,10 @@ const pie = {
 }
 
 const largePie = {
+  tooltip: {
+    trigger: 'item',
+    formatter: '{b}: {c} ({d}%)'
+  },
   legend: {
     left: 'center',
     top: '10',

@@ -1,97 +1,96 @@
 <template>
-  <div class="ai-chat-overlay" @click.self="goBack">
-    <div class="ai-chat-fullscreen">
-      <div class="chat-header">
-        <div class="header-left">
-          <Button type="text" @click="goBack" class="back-btn">
-            <Icon type="ios-arrow-back" size="20" />
-            <span>{{ $t('m.Back') }}</span>
-          </Button>
-          <img :src="aiAvatar" :alt="aiDisplayName" class="header-avatar" :key="aiAvatar" />
-          <span class="header-title">{{ aiFullName }}</span>
-        </div>
-        <div class="header-right">
-          <Select v-model="aiModel" size="small" class="model-select" @on-change="onModelChange">
-            <Option value="agent">
-              <img src="~@/assets/logo3.png" class="model-option-icon" />
-              Agent
-            </Option>
-            <Option value="spark">
-              <img src="/static/pictures/xh.png" class="model-option-icon" />
-              Spark
-            </Option>
-            <Option value="deepseek">
-              <img src="/static/pictures/ds.png" class="model-option-icon" />
-              DeepSeek
-            </Option>
-          </Select>
-        </div>
+  <div class="ai-chat-page">
+    <div class="chat-header">
+      <div class="header-left">
+        <Button type="text" @click="goBack" class="back-btn">
+          <Icon type="ios-arrow-back" size="20" />
+          <span>{{ $t('m.Back') }}</span>
+        </Button>
+        <img :src="aiAvatar" :alt="aiDisplayName" class="header-avatar" :key="aiAvatar" />
+        <span class="header-title">{{ aiFullName }}</span>
       </div>
+      <div class="header-right">
+        <Select v-model="chatState.aiModel" size="small" class="model-select" @on-change="onModelChange">
+          <Option value="agent">
+            <img src="~@/assets/logo3.png" class="model-option-icon" />
+            Agent
+          </Option>
+          <Option value="spark">
+            <img src="/static/pictures/xh.png" class="model-option-icon" />
+            Spark
+          </Option>
+          <Option value="deepseek">
+            <img src="/static/pictures/ds.png" class="model-option-icon" />
+            DeepSeek
+          </Option>
+        </Select>
+      </div>
+    </div>
 
-      <div class="chat-body">
-        <div class="message-container" ref="messageList">
-          <div v-if="messages.length === 0" class="welcome-section">
-            <div class="welcome-icon">
-              <img :src="aiAvatar" :alt="aiDisplayName" :key="'welcome-' + aiAvatar" />
-            </div>
-            <h3>{{ aiWelcomeTitle }}</h3>
-            <p>{{ aiWelcomeDesc }}</p>
-            <div class="quick-commands">
-              <Button v-for="cmd in quickCommands" :key="cmd.text" size="small" type="dashed" @click="sendQuickCommand(cmd)">
-                <Icon :type="cmd.icon" size="14" />
-                {{ cmd.text }}
-              </Button>
-            </div>
-            <div class="quick-questions">
-              <div v-for="(question, idx) in quickQuestions" :key="idx" class="question-tag" @click.stop="sendQuickQuestion(question)">
-                {{ question }}
-              </div>
-            </div>
+    <div class="chat-body">
+      <div class="message-container" ref="messageList">
+        <div v-if="messages.length === 0" class="welcome-section">
+          <div class="welcome-icon">
+            <img :src="aiAvatar" :alt="aiDisplayName" :key="'welcome-' + aiAvatar" />
           </div>
-
-          <template v-else>
-            <MessageItem
-              v-for="(msg, idx) in messages"
-              :key="idx"
-              :role="msg.role"
-              :content="msg.content"
-              :agent-name="msg.agentName"
-              :thinking-steps="msg.thinkingSteps"
-              :all-steps-done="msg.allStepsDone"
-              :current-step-index="msg.currentStepIndex"
-              :msg-time="msg.time"
-              :ai-avatar="aiAvatar"
-              :ai-name="aiDisplayName"
-              :display-type="msg.displayType"
-              :display-data="msg.displayData"
-            />
-          </template>
-        </div>
-
-        <div class="input-section">
-          <div class="quick-commands-row" v-if="messages.length > 0">
-            <Button v-for="cmd in quickCommands" :key="cmd.text" size="small" type="text" @click="sendQuickCommand(cmd)" class="qc-chip">
-              <Icon :type="cmd.icon" size="13" /> {{ cmd.text }}
+          <h3>{{ aiWelcomeTitle }}</h3>
+          <p>{{ aiWelcomeDesc }}</p>
+          <div class="quick-commands">
+            <Button v-for="cmd in quickCommands" :key="cmd.text" size="small" type="dashed" @click="sendQuickCommand(cmd)">
+              <Icon :type="cmd.icon" size="14" />
+              {{ cmd.text }}
+            </Button>
+            <Button v-for="q in quickQuestions" :key="q" size="small" type="dashed" @click="sendQuickQuestion(q)">
+              {{ q }}
             </Button>
           </div>
-          <div class="input-container">
-            <Input
-              v-model="inputText"
-              type="textarea"
-              :rows="3"
-              :placeholder="placeholderText"
-              @on-keydown="handleKeydown"
-              class="message-input"
-            />
-            <div class="input-actions">
-              <Button type="text" @click="clearMessages" class="clear-btn" v-if="messages.length > 0">
-                {{ $t('m.Clear_Chat') }}
-              </Button>
-              <span class="hint">Ctrl + Enter {{ $t('m.Send') }}</span>
-              <Button type="primary" @click="sendMessage" :loading="sending" :disabled="!inputText.trim()" class="send-btn">
-                <Icon type="ios-send" /> {{ $t('m.Send') }}
-              </Button>
-            </div>
+        </div>
+
+        <template v-else>
+          <MessageItem
+            v-for="(msg, idx) in messages"
+            :key="idx"
+            :role="msg.role"
+            :content="msg.content"
+            :agent-name="msg.agentName"
+            :thinking-steps="msg.thinkingSteps"
+            :all-steps-done="msg.allStepsDone"
+            :current-step-index="msg.currentStepIndex"
+            :msg-time="msg.time"
+            :ai-avatar="aiAvatar"
+            :ai-name="aiDisplayName"
+            :display-type="msg.displayType"
+            :display-data="msg.displayData"
+          />
+        </template>
+      </div>
+
+      <div class="input-section">
+        <div class="quick-commands-row" v-if="messages.length > 0">
+          <Button v-for="cmd in quickCommands" :key="cmd.text" size="small" type="text" @click="sendQuickCommand(cmd)" class="qc-chip">
+            <Icon :type="cmd.icon" size="13" /> {{ cmd.text }}
+          </Button>
+        </div>
+        <div class="input-container">
+          <Input
+            v-model="chatState.inputText"
+            type="textarea"
+            :rows="3"
+            :placeholder="placeholderText"
+            @on-keydown="handleKeydown"
+            class="message-input"
+          />
+          <div class="input-actions">
+            <Button type="text" @click="clearMessages" class="clear-btn" v-if="messages.length > 0">
+              {{ $t('m.Clear_Chat') }}
+            </Button>
+            <span class="hint">Enter 发送 / Shift+Enter 换行</span>
+            <Button type="warning" size="small" @click="stopGeneration" v-if="sending" class="stop-btn">
+              <Icon type="ios-close-circle" /> 停止
+            </Button>
+            <Button type="primary" @click="sendMessage" :loading="sending" :disabled="!chatState.inputText.trim()" class="send-btn">
+              <Icon type="ios-send" /> {{ $t('m.Send') }}
+            </Button>
           </div>
         </div>
       </div>
@@ -102,17 +101,16 @@
 <script>
 import MessageItem from './components/MessageItem.vue'
 import { formatAgentResponse, extractAgentDisplay } from './utils.js'
+import chatState from './chatState.js'
 
 export default {
   name: 'AIChatFullscreen',
   components: { MessageItem },
   data () {
     return {
-      aiModel: 'agent',
-      messages: [],
-      inputText: '',
+      chatState,
       sending: false,
-      streamAborter: null,
+      abortController: null,
       quickCommands: [
         { text: '规划学习路径', icon: 'ios-git-branch', message: '帮我规划学习路径' },
         { text: '分析最近错误', icon: 'ios-alert', message: '帮我分析最近为什么提交错了' },
@@ -129,6 +127,12 @@ export default {
     }
   },
   computed: {
+    messages () {
+      return this.chatState.messages
+    },
+    aiModel () {
+      return this.chatState.aiModel
+    },
     placeholderText () {
       return this.messages.length === 0
         ? this.$t('m.Enter_Your_Question_Start')
@@ -158,56 +162,81 @@ export default {
       return this.aiModel === 'deepseek' ? this.$t('m.DeepSeek_Description') : this.$t('m.Spark_AI_Description')
     }
   },
+  watch: {
+    messages: {
+      handler () { this.$nextTick(() => { this.scrollToBottom() }) },
+      deep: true
+    }
+  },
+  mounted () {
+    this.$nextTick(() => { this.scrollToBottom() })
+  },
   methods: {
     goBack () {
       this.$router.go(-1)
     },
     onModelChange () {
-      this.messages = []
+      chatState.messages = []
+      chatState.inputText = ''
     },
     sendQuickQuestion (question) {
-      this.inputText = question
+      chatState.inputText = question
       this.sendMessage()
     },
     sendQuickCommand (cmd) {
-      this.inputText = cmd.message
+      chatState.inputText = cmd.message
       this.sendMessage()
     },
     handleKeydown (e) {
-      if (e.ctrlKey && e.key === 'Enter') {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault()
         this.sendMessage()
       }
     },
+    stopGeneration () {
+      if (this.abortController) {
+        this.abortController.abort()
+        this.abortController = null
+      }
+      this.sending = false
+    },
     clearMessages () {
-      this.messages = []
+      chatState.messages = []
     },
     async sendMessage () {
-      const text = this.inputText.trim()
+      const text = chatState.inputText.trim()
       if (!text || this.sending) return
 
-      this.messages.push({ role: 'user', content: text, time: this.getCurrentTime() })
-      this.inputText = ''
+      chatState.messages.push({ role: 'user', content: text, time: this.getCurrentTime() })
+      chatState.inputText = ''
       this.sending = true
 
-      const loadingIdx = this.messages.length
-      this.messages.push({ role: 'loading', content: '' })
+      const loadingIdx = chatState.messages.length
+      chatState.messages.push({ role: 'loading', content: '' })
       this.scrollToBottom()
 
+      this.abortController = new AbortController()
+
       try {
-        if (this.aiModel === 'agent') {
+        if (chatState.aiModel === 'agent') {
           await this._sendAgentMessage(text, loadingIdx)
         } else {
           await this._sendLLMMessage(text, loadingIdx)
         }
       } catch (e) {
-        this.messages.splice(loadingIdx, 1)
-        this.messages.push({
-          role: 'assistant',
-          content: this.$t('m.Network_Error_Text'),
-          time: this.getCurrentTime()
-        })
+        if (e && e.name === 'AbortError') {
+          chatState.messages.splice(loadingIdx, 1)
+        } else {
+          chatState.messages.splice(loadingIdx, 1)
+          chatState.messages.push({
+            role: 'assistant',
+            content: this.$t('m.Network_Error_Text'),
+            time: this.getCurrentTime()
+          })
+        }
       } finally {
         this.sending = false
+        this.abortController = null
         this.scrollToBottom()
       }
     },
@@ -216,28 +245,29 @@ export default {
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text })
+        body: JSON.stringify({ message: text }),
+        signal: this.abortController ? this.abortController.signal : undefined
       })
 
       if (!response.ok) {
-        this.messages.splice(loadingIdx, 1)
-        this.messages.push({ role: 'assistant', content: this.$t('m.Request_Failed'), time: this.getCurrentTime() })
+        chatState.messages.splice(loadingIdx, 1)
+        chatState.messages.push({ role: 'assistant', content: this.$t('m.Request_Failed'), time: this.getCurrentTime() })
         return
       }
 
       const contentType = response.headers.get('content-type') || ''
 
       if (contentType.includes('text/event-stream')) {
-        this.messages[loadingIdx].streaming = true
+        chatState.messages[loadingIdx].streaming = true
         await this._handleSSE(response, loadingIdx)
       } else {
         const result = await response.json()
-        this.messages.splice(loadingIdx, 1)
+        chatState.messages.splice(loadingIdx, 1)
         if (result.success && result.data) {
           const agentData = result.data
           const formatted = formatAgentResponse(agentData)
           const display = extractAgentDisplay(agentData)
-          this.messages.push({
+          chatState.messages.push({
             role: 'assistant',
             content: formatted.content,
             agentName: agentData.agent || '',
@@ -248,7 +278,7 @@ export default {
             time: this.getCurrentTime()
           })
         } else {
-          this.messages.push({
+          chatState.messages.push({
             role: 'assistant',
             content: (result.data && result.data.error) || result.error || '抱歉，暂时无法回答。',
             time: this.getCurrentTime()
@@ -260,7 +290,6 @@ export default {
       const reader = response.body.getReader()
       const decoder = new TextDecoder()
       let buffer = ''
-      let agentData = {}
 
       try {
         while (true) {
@@ -275,18 +304,18 @@ export default {
             if (line.startsWith('data: ')) {
               const data = JSON.parse(line.slice(6))
               if (data.event === 'step') {
-                const steps = this.messages[loadingIdx].thinkingSteps || []
+                const steps = chatState.messages[loadingIdx].thinkingSteps || []
                 steps.push(data.text)
-                this.$set(this.messages[loadingIdx], 'thinkingSteps', steps)
-                this.$set(this.messages[loadingIdx], 'currentStepIndex', steps.length)
+                this.$set(chatState.messages[loadingIdx], 'thinkingSteps', steps)
+                this.$set(chatState.messages[loadingIdx], 'currentStepIndex', steps.length)
               } else if (data.event === 'done') {
-                this.messages[loadingIdx].allStepsDone = true
+                chatState.messages[loadingIdx].allStepsDone = true
               } else if (data.event === 'result') {
-                agentData = data.data || data
+                const agentData = data.data || data
                 const formatted = formatAgentResponse(agentData)
                 const display = extractAgentDisplay(agentData)
-                this.messages.splice(loadingIdx, 1)
-                this.messages.push({
+                chatState.messages.splice(loadingIdx, 1)
+                chatState.messages.push({
                   role: 'assistant',
                   content: formatted.content,
                   agentName: agentData.agent || '',
@@ -297,9 +326,9 @@ export default {
                   time: this.getCurrentTime()
                 })
               } else if (data.event === 'chunk') {
-                if (this.messages[loadingIdx].role === 'loading') {
-                  const steps = this.messages[loadingIdx].thinkingSteps || []
-                  this.messages[loadingIdx] = {
+                if (chatState.messages[loadingIdx].role === 'loading') {
+                  const steps = chatState.messages[loadingIdx].thinkingSteps || []
+                  chatState.messages[loadingIdx] = {
                     role: 'assistant',
                     content: data.text,
                     agentName: '',
@@ -310,7 +339,7 @@ export default {
                     time: this.getCurrentTime()
                   }
                 } else {
-                  this.messages[loadingIdx].content += data.text
+                  chatState.messages[loadingIdx].content += data.text
                 }
               }
               this.scrollToBottom()
@@ -318,9 +347,9 @@ export default {
           }
         }
       } finally {
-        if (this.messages[loadingIdx]) {
-          this.messages[loadingIdx].streamDone = true
-          this.messages[loadingIdx].streaming = false
+        if (chatState.messages[loadingIdx]) {
+          chatState.messages[loadingIdx].streamDone = true
+          chatState.messages[loadingIdx].streaming = false
         }
         reader.releaseLock()
       }
@@ -330,18 +359,19 @@ export default {
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, model: this.aiModel })
+        body: JSON.stringify({ message: text, model: chatState.aiModel }),
+        signal: this.abortController ? this.abortController.signal : undefined
       })
-      this.messages.splice(loadingIdx, 1)
+      chatState.messages.splice(loadingIdx, 1)
       if (response.ok) {
         const data = await response.json()
-        this.messages.push({
+        chatState.messages.push({
           role: 'assistant',
           content: data.answer || data.reply || data.message || this.$t('m.No_Reply'),
           time: this.getCurrentTime()
         })
       } else {
-        this.messages.push({ role: 'assistant', content: this.$t('m.Request_Failed'), time: this.getCurrentTime() })
+        chatState.messages.push({ role: 'assistant', content: this.$t('m.Request_Failed'), time: this.getCurrentTime() })
       }
     },
     scrollToBottom () {
@@ -356,40 +386,34 @@ export default {
       const now = new Date()
       return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
     }
-  },
-  created () {
-    if (this.$route.query.model) {
-      this.aiModel = this.$route.query.model
-    }
   }
 }
 </script>
 
 <style lang="less" scoped>
-.ai-chat-overlay {
-  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-  background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px);
-  z-index: 9998; display: flex; align-items: flex-start; justify-content: center;
-}
-
-.ai-chat-fullscreen {
-  position: relative; width: 90%; max-width: 800px;
-  height: calc(100vh - 140px); max-height: 700px; margin-top: 80px;
-  background: #f5f7fa; display: flex; flex-direction: column;
-  border-radius: 16px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25); overflow: hidden;
+.ai-chat-page {
+  position: fixed;
+  top: 80px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  background: #f5f7fa;
+  z-index: 100;
 }
 
 .chat-header {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 24px; background: linear-gradient(135deg, #2d8cf0 0%, #1a6fc4 100%);
-  color: white; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 10px 24px; background: linear-gradient(135deg, #2d8cf0 0%, #1a6fc4 100%);
+  color: white; flex-shrink: 0;
 
   .header-left { display: flex; align-items: center; gap: 12px;
     .back-btn { color: white; padding: 0 8px; font-size: 14px;
       &:hover { background: rgba(255, 255, 255, 0.2); }
       span { margin-left: 4px; }
     }
-    .header-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: contain; background: #fff; padding: 2px; }
+    .header-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: contain; background: #fff; padding: 2px; }
     .header-title { font-size: 18px; font-weight: 600; }
   }
 
@@ -414,11 +438,8 @@ export default {
   .welcome-icon img { width: 64px; height: 64px; border-radius: 50%; background: #fff; padding: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 16px; }
   h3 { font-size: 22px; color: #17233d; margin: 0 0 8px; }
   p { font-size: 14px; color: #808695; margin: 0 0 24px; }
-  .quick-commands { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 20px; }
-  .quick-questions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
-    .question-tag { padding: 8px 16px; background: #e8f4ff; border-radius: 20px; color: #2d8cf0; font-size: 13px; cursor: pointer; transition: all 0.2s;
-      &:hover { background: #2d8cf0; color: #fff; }
-    }
+  .quick-commands { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 24px;
+    /deep/ .ivu-btn { font-size: 15px; padding: 10px 22px; border-radius: 12px; }
   }
 }
 
@@ -436,7 +457,4 @@ export default {
 }
 
 .model-option-icon { width: 18px; height: 18px; margin-right: 6px; vertical-align: middle; border-radius: 3px; }
-
-// message-item overrides for this page
-.msg-item { margin-bottom: 20px; }
 </style>

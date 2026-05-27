@@ -1,6 +1,6 @@
 <template>
   <div class="home-container">
-    <section class="content-section">
+    <section class="content-section" :style="{ opacity: heroOpacity }">
       <KnowledgeGraphSection />
       <div class="hero-text">
         <h1 class="hero-title">{{ $t('m.Home_Hero_Title') }}</h1>
@@ -31,6 +31,14 @@
           </div>
           <h3 class="feature-title">{{ feature.title }}</h3>
           <p class="feature-desc">{{ feature.desc }}</p>
+          <Button
+            v-if="feature.btnText"
+            type="primary"
+            class="feature-action-btn"
+            @click="handleFeatureAction(feature.key)"
+          >
+            <Icon :type="feature.btnIcon" /> {{ feature.btnText }}
+          </Button>
         </div>
         <div class="feature-screenshot">
           <img :src="feature.screenshot" :alt="feature.title" />
@@ -52,11 +60,8 @@
         <h2 class="cta-title">{{ $t('m.Home_CTA_Title') }}</h2>
         <p class="cta-subtitle">{{ $t('m.Home_CTA_Subtitle') }}</p>
         <div class="cta-buttons">
-          <Button type="primary" size="large" class="cta-btn" @click="goToProblems">
-            <Icon type="ios-rocket" /> {{ $t('m.Home_CTA_Button') }}
-          </Button>
-          <Button size="large" class="cta-btn-outline" @click="goToLearningPath">
-            <Icon type="ios-map" /> {{ $t('m.Home_CTA_Button_Outline') }}
+          <Button type="primary" size="large" class="cta-btn" @click="goToProfileOnboarding">
+            <Icon type="ios-rocket" /> 开始
           </Button>
         </div>
       </div>
@@ -73,47 +78,63 @@ export default {
   components: { KnowledgeGraphSection, Announcements },
   data() {
     return {
+      heroOpacity: 1,
       featureKeys: [
         {
           icon: 'ios-analytics',
           titleKey: 'm.Feature_Knowledge_Graph',
           descKey: 'm.Feature_Knowledge_Graph_Desc',
-          color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          key: 'knowledge-graph',
+          btnText: '查看知识路径',
+          btnIcon: 'ios-navigate',
+          color: '#1e3a8a',
           screenshot: '/static/pictures/graph.png'
         },
         {
-          icon: 'ios-trending-up',
+          icon: 'flash',
           titleKey: 'm.Feature_Recommendation',
           descKey: 'm.Feature_Recommendation_Desc',
-          color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+          key: 'recommendation',
+          btnText: '去刷题',
+          btnIcon: 'ios-keypad',
+          color: '#1e3a8a',
           screenshot: '/static/pictures/recommend.png'
         },
         {
           icon: 'ios-speedometer',
           titleKey: 'm.Feature_Evaluation',
           descKey: 'm.Feature_Evaluation_Desc',
-          color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+          key: 'evaluation',
+          btnText: '查看题目',
+          btnIcon: 'ios-list',
+          color: '#1e3a8a',
           screenshot: '/static/pictures/languages.png'
         },
         {
-          icon: 'ios-robot',
+          icon: 'ios-cog',
           titleKey: 'm.Feature_AI_Gen',
           descKey: 'm.Feature_AI_Gen_Desc',
-          color: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+          color: '#1e3a8a',
           screenshot: '/static/pictures/AI4problem.png'
         },
         {
-          icon: 'ios-chatbubbles',
+          icon: 'ios-people',
           titleKey: 'm.Feature_AI_Agent',
           descKey: 'm.Feature_AI_Agent_Desc',
-          color: 'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
-          screenshot: '/static/pictures/chat.png'
+          key: 'agent',
+          btnText: '构建画像',
+          btnIcon: 'ios-person',
+          color: '#1e3a8a',
+          screenshot: '/static/pictures/agents.png'
         },
         {
           icon: 'ios-book',
           titleKey: 'm.Feature_Lesson',
           descKey: 'm.Feature_Lesson_Desc',
-          color: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+          key: 'lesson',
+          btnText: '查看教案',
+          btnIcon: 'ios-paper',
+          color: '#1e3a8a',
           screenshot: '/static/pictures/lesson.png'
         }
       ],
@@ -147,6 +168,25 @@ export default {
     goToLearningPath() {
       this.$router.push({ name: 'learning-path' })
     },
+    goToProfileOnboarding() {
+      this.$router.push({ name: 'profile-onboarding' })
+    },
+    goToLessonPlan() {
+      this.$router.push({ name: 'lesson-plan-list' })
+    },
+    handleFeatureAction(key) {
+      const routeMap = {
+        'knowledge-graph': 'learning-path',
+        'recommendation': 'problem-list',
+        'evaluation': 'problem-list',
+        'agent': 'profile-onboarding',
+        'lesson': 'lesson-plan-list'
+      }
+      const routeName = routeMap[key]
+      if (routeName) {
+        this.$router.push({ name: routeName })
+      }
+    },
     initScrollAnimations() {
       const observer = new IntersectionObserver(
         (entries) => {
@@ -165,10 +205,23 @@ export default {
           observer.observe(el)
         })
       })
+    },
+    onHeroScroll() {
+      const scrollY = window.scrollY || window.pageYOffset
+      const vh = window.innerHeight
+      if (scrollY >= vh) {
+        this.heroOpacity = 0
+      } else {
+        this.heroOpacity = Math.max(0, 1 - scrollY / (vh * 0.7))
+      }
     }
   },
   mounted() {
     this.initScrollAnimations()
+    window.addEventListener('scroll', this.onHeroScroll, { passive: true })
+  },
+  beforeDestroy() {
+    window.removeEventListener('scroll', this.onHeroScroll)
   }
 }
 </script>
@@ -336,6 +389,14 @@ html, body {
         color: #64748b;
         line-height: 1.8;
         margin: 0;
+      }
+
+      .feature-action-btn {
+        margin-top: 18px;
+        padding: 0 24px;
+        height: 40px;
+        border-radius: 10px;
+        font-size: 0.95rem;
       }
     }
 

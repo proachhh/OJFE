@@ -23,6 +23,51 @@
             </div>
           </div>
         </div>
+        <div class="user-analytics-panel">
+          <div class="ua-header">
+            <span class="stat-emoji">📊</span>
+            <span>用户分析 — {{ selectedUser ? selectedUserLabel : '请选择用户' }}</span>
+            <el-select
+              v-model="selectedUserId"
+              filterable
+              size="mini"
+              placeholder="选择或搜索用户名"
+              :loading="userSearchLoading"
+              @change="onUserSelect"
+              @visible-change="onUserDropdownVisible"
+              class="ua-user-select"
+            >
+              <el-option
+                v-for="u in userSearchOptions"
+                :key="u.id"
+                :label="u.username"
+                :value="u.id"
+              />
+            </el-select>
+          </div>
+          <div v-if="!selectedUserId" class="ua-placeholder">
+            <Icon type="ios-people" size="24" color="#556080" />
+            <p>选择用户以查看其专属数据图表</p>
+          </div>
+          <div v-else v-loading="userStatsLoading" class="ua-charts-grid">
+            <div class="ua-chart-card">
+              <div class="ua-chart-title"><span class="panel-dot c-cyan"></span>学习画像雷达</div>
+              <div id="im-user-profile-radar" class="chart-inner-ua"></div>
+            </div>
+            <div class="ua-chart-card">
+              <div class="ua-chart-title"><span class="panel-dot c-pink"></span>知识点掌握雷达</div>
+              <div id="im-user-tag-radar" class="chart-inner-ua"></div>
+            </div>
+            <div class="ua-chart-card">
+              <div class="ua-chart-title"><span class="panel-dot c-purple"></span>语言掌握</div>
+              <div id="im-user-language-bar" class="chart-inner-ua"></div>
+            </div>
+            <div class="ua-chart-card">
+              <div class="ua-chart-title"><span class="panel-dot c-green"></span>学习趋势（7天）</div>
+              <div id="im-user-trend-line" class="chart-inner-ua"></div>
+            </div>
+          </div>
+        </div>
         <div class="judge-panel">
           <div class="judge-header">
             <span class="stat-emoji" style="font-size:14px">🖥️</span>
@@ -94,11 +139,27 @@
             <span class="panel-dot" :class="'c-'+dotColors[ti]"></span>
             <span>{{ tg.title }}</span>
           </div>
-          <div class="table-fixed-wrap">
+          <div class="table-fixed-wrap" :ref="'tableWrap-'+ti">
             <el-table :data="tg.data" :key="'st-'+ti+'-'+tableKey" size="mini" class="dark-table"
-              header-row-class-name="dark-th" row-class-name="dark-tr"
-              :id="'table-'+ti">
-              <el-table-column v-for="col in tg.columns" :key="col.prop || col.label" v-bind="col"></el-table-column>
+              header-row-class-name="dark-th" row-class-name="dark-tr">
+              <template v-for="col in tg.columns">
+                <el-table-column
+                  v-if="!col._html"
+                  :key="col._key"
+                  v-bind="col"
+                />
+                <el-table-column
+                  v-else
+                  :key="col._key"
+                  :label="col.label"
+                  :width="col.width"
+                  :min-width="col.minWidth"
+                >
+                  <template slot-scope="scope">
+                    <span v-html="col._html(scope.row)" class="nowrap-cell"></span>
+                  </template>
+                </el-table-column>
+              </template>
             </el-table>
           </div>
           <div v-if="!tg.data.length" class="no-data">暂无数据</div>
@@ -111,6 +172,7 @@
 <script>
 import * as echarts from 'echarts'
 import api from '@admin/api'
+import { mapGetters } from 'vuex'
 
 export default {
   name: 'immersion-dashboard',
@@ -135,10 +197,17 @@ export default {
       topSubmittersAllTime: [],
       topSubmittersWeek: [],
       judgeServers: [],
-      dotColors: ['cyan', 'pink', 'purple', 'orange', 'green']
+      dotColors: ['cyan', 'pink', 'purple', 'orange', 'green'],
+      selectedUserId: null,
+      selectedUser: null,
+      userSearchLoading: false,
+      userSearchOptions: [],
+      userStatsLoading: false,
+      userStats: null,
     }
   },
   computed: {
+    ...mapGetters(['user']),
     statCards () {
       return [
         { iconHtml: '👥', value: this.overview.total_users || 0, label: '用户', iconColor: '#00f0ff', textColor: '#fff', borderColor: 'rgba(0,240,255,0.4)', glowClass: 'glow-cyan' },
@@ -164,67 +233,80 @@ export default {
           title: '完成率最高 Top 10',
           data: this.mostCompleted,
           columns: [
-            { prop: '_id', label: 'ID', width: '50' },
-            { prop: 'title', label: '题目', showOverflowTooltip: true, minWidth: '100' },
-            { label: '难度', width: '40', render: (h, { row }) => h('span', { style: { color: this.diffColor(row.difficulty) } }, this.diffChar(row.difficulty)) },
-            { label: '通过率', width: '60', render: (h, { row }) => h('span', (row.pass_rate || 0).toFixed(1) + '%') }
+            { _key: 'id', prop: '_id', label: 'ID', width: '55' },
+            { _key: 'title', prop: 'title', label: '题目', showOverflowTooltip: true, minWidth: '120' },
+            { _key: 'diff', label: '难度', width: '55', _html: (row) => `<span class="nowrap-cell" style="color:${this.diffColor(row.difficulty)}">${this.diffChar(row.difficulty)}</span>` },
+            { _key: 'rate', label: '通过率', width: '72', _html: (row) => `<span class="nowrap-cell">${(row.pass_rate || 0).toFixed(1)}%</span>` }
           ]
         },
         {
           title: '完成率最低 Top 10',
           data: this.leastCompleted,
           columns: [
-            { prop: '_id', label: 'ID', width: '50' },
-            { prop: 'title', label: '题目', showOverflowTooltip: true, minWidth: '100' },
-            { label: '难度', width: '40', render: (h, { row }) => h('span', { style: { color: this.diffColor(row.difficulty) } }, this.diffChar(row.difficulty)) },
-            { label: '通过率', width: '60', render: (h, { row }) => h('span', (row.pass_rate || 0).toFixed(1) + '%') }
+            { _key: 'id', prop: '_id', label: 'ID', width: '55' },
+            { _key: 'title', prop: 'title', label: '题目', showOverflowTooltip: true, minWidth: '120' },
+            { _key: 'diff', label: '难度', width: '55', _html: (row) => `<span class="nowrap-cell" style="color:${this.diffColor(row.difficulty)}">${this.diffChar(row.difficulty)}</span>` },
+            { _key: 'rate', label: '通过率', width: '72', _html: (row) => `<span class="nowrap-cell">${(row.pass_rate || 0).toFixed(1)}%</span>` }
           ]
         },
         {
           title: '用户排名 Top 20',
           data: this.userRanking,
           columns: [
-            { prop: 'rank', label: '#', width: '35' },
-            { prop: 'username', label: '用户', minWidth: '80' },
-            { prop: 'accepted_count', label: '通过', width: '48' },
-            { prop: 'submission_count', label: '提交', width: '48' },
-            { label: 'AC率', width: '55', render: (h, { row }) => h('span', this.fmRate(row.ac_rate)) },
-            { prop: 'total_score', label: '分', width: '40' }
+            { _key: 'rank', prop: 'rank', label: '#', width: '45' },
+            { _key: 'name', prop: 'username', label: '用户', minWidth: '80' },
+            { _key: 'ac', prop: 'accepted_count', label: '通过', width: '55' },
+            { _key: 'sub', prop: 'submission_count', label: '提交', width: '55' },
+            { _key: 'rate', label: 'AC率', width: '65', _html: (row) => `<span class="nowrap-cell">${this.fmRate(row.ac_rate)}</span>` },
+            { _key: 'score', prop: 'total_score', label: '分', width: '50' }
           ]
         },
         {
           title: '历史提交最多',
           data: this.topSubmittersAllTime,
           columns: [
-            { prop: 'username', label: '用户', minWidth: '80' },
-            { prop: 'submission_count', label: '提交', width: '55' },
-            { prop: 'accepted_count', label: '通过', width: '55' },
-            { prop: 'total_score', label: '分', width: '40' }
+            { _key: 'name', prop: 'username', label: '用户', minWidth: '80' },
+            { _key: 'sub', prop: 'submission_count', label: '提交', width: '60' },
+            { _key: 'ac', prop: 'accepted_count', label: '通过', width: '60' },
+            { _key: 'score', prop: 'total_score', label: '分', width: '50' }
           ]
         },
         {
           title: '本周提交最多',
           data: this.topSubmittersWeek,
           columns: [
-            { prop: 'username', label: '用户', minWidth: '80' },
-            { prop: 'submission_count', label: '提交', width: '60' },
-            { prop: 'accepted_count', label: '通过', width: '60' }
+            { _key: 'name', prop: 'username', label: '用户', minWidth: '80' },
+            { _key: 'sub', prop: 'submission_count', label: '提交', width: '65' },
+            { _key: 'ac', prop: 'accepted_count', label: '通过', width: '65' }
           ]
         }
       ]
-    }
+    },
+    selectedUserLabel () {
+      return this.selectedUser ? this.selectedUser.username : ''
+    },
   },
   mounted () {
     this.updateTime()
     this.timeTimer = setInterval(this.updateTime, 1000)
     this.fetchData()
+    this.$nextTick(() => {
+      setTimeout(() => { this.initDefaultUser() }, 100)
+    })
+  },
+  watch: {
+    user: {
+      handler (val) {
+        if (val && val.id && !this.selectedUserId) {
+          this.initDefaultUser()
+        }
+      },
+      immediate: true
+    }
   },
   beforeDestroy () {
     clearInterval(this.timeTimer)
-    this.scrollTimers.forEach(t => {
-      if (typeof t === 'object' && t.cancel) t.cancel()
-      else clearInterval(t)
-    })
+    this.stopAllScrollTimers()
     this.animTimers.forEach(t => clearInterval(t))
     this.disposeAllCharts()
   },
@@ -259,19 +341,25 @@ export default {
       return key ? this.$t('m.' + key) : status
     },
     startScroll () {
+      this.stopAllScrollTimers()
+      const tryStart = () => {
+        this.stopAllScrollTimers()
+        this._startJudgeScroll()
+        this._startTableScrolls()
+      }
+      this.$nextTick(() => {
+        setTimeout(tryStart, 300)
+        setTimeout(tryStart, 800)
+        setTimeout(tryStart, 1600)
+        setTimeout(tryStart, 3000)
+      })
+    },
+    stopAllScrollTimers () {
       this.scrollTimers.forEach(t => {
         if (typeof t === 'object' && t.cancel) t.cancel()
         else clearInterval(t)
       })
       this.scrollTimers = []
-      const tryStart = () => {
-        this._startJudgeScroll()
-        this._startTableScrolls()
-      }
-      this.$nextTick(() => {
-        setTimeout(tryStart, 500)
-        setTimeout(tryStart, 1200)
-      })
     },
     _startJudgeScroll () {
       const box = this.$refs.judgeScrollBox
@@ -293,24 +381,25 @@ export default {
       this.scrollTimers.push({ cancel: () => cancelAnimationFrame(rafId) })
     },
     _startTableScrolls () {
-      const ids = ['table-0', 'table-1', 'table-2', 'table-3', 'table-4']
-      ids.forEach(id => {
-        const table = document.getElementById(id)
-        if (!table) return
-        const tbody = table.querySelector('.el-table__body-wrapper')
-        if (!tbody) return
+      for (let ti = 0; ti < 5; ti++) {
+        const refKey = 'tableWrap-' + ti
+        const wrap = this.$refs[refKey]
+        if (!wrap) continue
+        const tbody = Array.isArray(wrap) ? wrap[0] : wrap
+        const bodyEl = tbody.querySelector('.el-table__body-wrapper')
+        if (!bodyEl) continue
         const timer = setInterval(() => {
-          if (!tbody.isConnected) { clearInterval(timer); return }
-          const maxScroll = tbody.scrollHeight - tbody.clientHeight
-          if (maxScroll <= 2) return
-          if (tbody.scrollTop >= maxScroll) {
-            tbody.scrollTop = 0
+          if (!bodyEl.isConnected) { clearInterval(timer); return }
+          const maxScroll = bodyEl.scrollHeight - bodyEl.clientHeight
+          if (maxScroll <= 0) return
+          if (bodyEl.scrollTop >= maxScroll) {
+            bodyEl.scrollTop = 0
           } else {
-            tbody.scrollTop += 1
+            bodyEl.scrollTop += 1
           }
         }, 80)
         this.scrollTimers.push(timer)
-      })
+      }
     },
     updateTime () {
       this.currentTime = new Date().toLocaleString('zh-CN', { hour12: false })
@@ -480,9 +569,208 @@ export default {
       if (existing) existing.dispose()
     },
     disposeAllCharts () {
-      const ids = ['im-difficulty-chart', 'im-result-chart', 'im-language-chart', 'im-tag-chart', 'im-daily-chart']
+      const ids = ['im-difficulty-chart', 'im-result-chart', 'im-language-chart', 'im-tag-chart', 'im-daily-chart',
+                   'im-user-profile-radar', 'im-user-tag-radar', 'im-user-language-bar', 'im-user-trend-line']
       ids.forEach(id => { const dom = document.getElementById(id); if (dom) this.disposeChart(dom) })
-    }
+    },
+    initDefaultUser () {
+      if (!this.user || !this.user.id) return
+      const uid = this.user.id
+      const uname = this.user.username || ''
+      this.userSearchOptions = [{ id: uid, username: uname }]
+      this.selectedUserId = uid
+      this.selectedUser = { id: uid, username: uname }
+      this.fetchUserStats(uid)
+    },
+    onUserDropdownVisible (visible) {
+      if (visible && this.userSearchOptions.length === 0) {
+        this.loadAllUsers()
+      }
+    },
+    loadAllUsers () {
+      this.userSearchLoading = true
+      api.getUserList(0, 200, '').then(res => {
+        const list = (res.data.data && res.data.data.results) || []
+        this.userSearchOptions = list.map(u => ({ id: u.id, username: u.username }))
+      }).catch(() => {
+        this.userSearchOptions = []
+      }).finally(() => {
+        this.userSearchLoading = false
+      })
+    },
+    searchUsers (query) {
+      if (!query) {
+        this.loadAllUsers()
+        return
+      }
+      this.userSearchLoading = true
+      api.getUserList(0, 50, query).then(res => {
+        const list = (res.data.data && res.data.data.results) || []
+        this.userSearchOptions = list.map(u => ({ id: u.id, username: u.username }))
+      }).catch(() => {
+        this.userSearchOptions = []
+      }).finally(() => {
+        this.userSearchLoading = false
+      })
+    },
+    onUserSelect (userId) {
+      if (!userId) {
+        this.selectedUser = null
+        this.userStats = null
+        return
+      }
+      const found = this.userSearchOptions.find(u => u.id === userId)
+      this.selectedUser = found || null
+      if (userId) {
+        this.fetchUserStats(userId)
+      }
+    },
+    fetchUserStats (userId) {
+      this.userStatsLoading = true
+      api.getUserStats(userId).then(res => {
+        this.userStats = res.data.data || res.data
+        this.$nextTick(() => {
+          setTimeout(() => { this.drawUserCharts() }, 100)
+        })
+      }).catch(() => {
+        this.userStats = null
+      }).finally(() => {
+        this.userStatsLoading = false
+      })
+    },
+    drawUserCharts () {
+      this.drawUserProfileRadar()
+      this.drawUserTagRadar()
+      this.drawUserLanguageBar()
+      this.drawUserTrendLine()
+    },
+    drawUserProfileRadar () {
+      const dom = document.getElementById('im-user-profile-radar')
+      if (!dom || !this.userStats) return
+      this.disposeChart(dom)
+      const chart = echarts.init(dom, null, { devicePixelRatio: 2 })
+      const radar = this.userStats.profile_radar || {}
+      const indicators = radar.indicators && radar.indicators.length
+        ? radar.indicators
+        : [
+            { name: '知识掌握', max: 5 },
+            { name: '编码风格', max: 5 },
+            { name: '学习节奏', max: 5 },
+            { name: '强项覆盖', max: 5 },
+            { name: '薄弱识别', max: 5 },
+            { name: '方向明确', max: 5 }
+          ]
+      const values = radar.values && radar.values.length ? radar.values : [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+      chart.setOption({
+        backgroundColor: 'transparent',
+        radar: {
+          indicator: indicators,
+          shape: 'polygon',
+          name: { textStyle: { color: '#c8d0e8', fontSize: 12, fontWeight: 'bold' } },
+          center: ['50%', '54%'],
+          radius: '72%',
+          splitNumber: 5,
+          axisName: { color: '#8892b0', fontSize: 11 },
+          splitArea: { areaStyle: { color: ['rgba(0,240,255,0.02)', 'rgba(0,240,255,0.02)', 'rgba(0,240,255,0.02)', 'rgba(0,240,255,0.02)', 'rgba(0,240,255,0.04)'] } },
+          splitLine: { lineStyle: { color: 'rgba(0,240,255,0.12)' } },
+          axisLine: { lineStyle: { color: 'rgba(0,240,255,0.18)' } }
+        },
+        series: [{
+          type: 'radar',
+          data: [{ value: values, name: '学习画像', areaStyle: { color: 'rgba(45, 140, 240, 0.18)' }, lineStyle: { color: '#2d8cf0', width: 2.5 }, itemStyle: { color: '#2d8cf0' } }],
+          symbol: 'circle',
+          symbolSize: 8
+        }]
+      })
+      setTimeout(() => chart.resize(), 100)
+    },
+    drawUserTagRadar () {
+      const dom = document.getElementById('im-user-tag-radar')
+      if (!dom || !this.userStats) return
+      this.disposeChart(dom)
+      const chart = echarts.init(dom, null, { devicePixelRatio: 2 })
+      const data = (this.userStats.tag_mastery || []).slice(0, 6)
+      const indicators = data.map(d => ({ name: d.name, max: 100 }))
+      const values = data.map(d => d.accuracy)
+      if (!indicators.length) {
+        chart.setOption({
+          backgroundColor: 'transparent',
+          title: { text: '暂无数据', left: 'center', top: 'center', textStyle: { color: '#556080', fontSize: 12 } }
+        })
+        return
+      }
+      chart.setOption({
+        backgroundColor: 'transparent',
+        radar: {
+          indicator: indicators,
+          shape: 'polygon',
+          name: { textStyle: { color: '#c8d0e8', fontSize: 12, fontWeight: 'bold' } },
+          center: ['50%', '54%'],
+          radius: '72%',
+          splitNumber: 5,
+          axisName: { color: '#8892b0', fontSize: 11 },
+          splitArea: { areaStyle: { color: ['rgba(255,45,149,0.02)', 'rgba(255,45,149,0.02)', 'rgba(255,45,149,0.02)', 'rgba(255,45,149,0.02)', 'rgba(255,45,149,0.04)'] } },
+          splitLine: { lineStyle: { color: 'rgba(255,45,149,0.12)' } },
+          axisLine: { lineStyle: { color: 'rgba(255,45,149,0.18)' } }
+        },
+        series: [{
+          type: 'radar',
+          data: [{ value: values, name: '正确率%', areaStyle: { color: 'rgba(255, 45, 149, 0.16)' }, lineStyle: { color: '#ff2d95', width: 2.5 }, itemStyle: { color: '#ff2d95' } }],
+          symbol: 'circle',
+          symbolSize: 8
+        }]
+      })
+      setTimeout(() => chart.resize(), 100)
+    },
+    drawUserLanguageBar () {
+      const dom = document.getElementById('im-user-language-bar')
+      if (!dom || !this.userStats) return
+      this.disposeChart(dom)
+      const chart = echarts.init(dom, null, { devicePixelRatio: 2 })
+      const data = (this.userStats.language_mastery || []).reverse()
+      if (!data.length) {
+        chart.setOption({
+          backgroundColor: 'transparent',
+          title: { text: '暂无数据', left: 'center', top: 'center', textStyle: { color: '#556080', fontSize: 12 } }
+        })
+        return
+      }
+      chart.setOption({
+        backgroundColor: 'transparent',
+        tooltip: { trigger: 'axis', formatter: '{b}: {c}%正确率' },
+        grid: { left: '12%', right: '8%', bottom: '5%', top: '5%', containLabel: true },
+        xAxis: { type: 'value', max: 100, axisLine: { lineStyle: { color: '#4a5070' } }, axisTick: { show: false }, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.04)' } }, axisLabel: { color: '#8892b0', fontSize: 11, formatter: '{value}%' } },
+        yAxis: { type: 'category', data: data.map(item => item.language), axisLine: { lineStyle: { color: '#4a5070' } }, axisTick: { show: false }, axisLabel: { color: '#c8d0e8', fontSize: 12 } },
+        series: [{
+          type: 'bar', data: data.map(item => item.accuracy),
+          itemStyle: { borderRadius: [0, 4, 4, 0], color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [{ offset: 0, color: 'rgba(184,41,240,0.3)' }, { offset: 0.5, color: '#b829f0' }, { offset: 1, color: '#7c3aed' }]) },
+          barWidth: '55%'
+        }]
+      })
+      setTimeout(() => chart.resize(), 200)
+    },
+    drawUserTrendLine () {
+      const dom = document.getElementById('im-user-trend-line')
+      if (!dom || !this.userStats) return
+      this.disposeChart(dom)
+      const chart = echarts.init(dom, null, { devicePixelRatio: 2 })
+      const data = this.userStats.learning_trend || []
+      chart.setOption({
+        backgroundColor: 'transparent',
+        tooltip: { trigger: 'axis', formatter: '{b}<br/>正确率: {c}%' },
+        grid: { left: '12%', right: '8%', bottom: '12%', top: '12%', containLabel: true },
+        xAxis: { type: 'category', boundaryGap: false, data: data.map(item => item.date), axisLine: { lineStyle: { color: '#4a5070' } }, axisLabel: { color: '#8892b0', fontSize: 11, interval: 0 }, axisTick: { show: false } },
+        yAxis: { type: 'value', max: 100, axisLine: { lineStyle: { color: '#4a5070' } }, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.04)' } }, axisLabel: { color: '#8892b0', fontSize: 11, formatter: '{value}%' } },
+        series: [{
+          name: '正确率', type: 'line', smooth: true, symbol: 'circle', symbolSize: 6,
+          data: data.map(item => item.accuracy),
+          lineStyle: { color: '#50b878', width: 2 },
+          areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(80,184,120,0.15)' }, { offset: 1, color: 'rgba(80,184,120,0)' }]) },
+          itemStyle: { color: '#50b878', borderColor: '#101525', borderWidth: 2 }
+        }]
+      })
+      setTimeout(() => chart.resize(), 200)
+    },
   }
 }
 </script>
@@ -527,7 +815,7 @@ export default {
 .grid-row { display: grid; gap: 12px; }
 
 .grid-row--top {
-  grid-template-columns: 220px 1fr;
+  grid-template-columns: 220px 1fr 350px;
 }
 
 .stats-vert {
@@ -541,25 +829,26 @@ export default {
   background: @bg-panel;
   border: 1px solid @border-color;
   border-radius: 8px;
-  padding: 8px 14px;
+  padding: 14px 16px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   transition: background 0.2s ease;
+  flex: 1;
 
   &:hover { background: rgba(30, 35, 60, 0.95); }
 
   .stat-icon-wrap {
-    width: 34px; height: 34px; border-radius: 7px;
+    width: 44px; height: 44px; border-radius: 8px;
     display: flex; align-items: center; justify-content: center;
     border: 1px solid @border-color; flex-shrink: 0; background: rgba(0, 0, 0, 0.25);
-    .stat-emoji { font-size: 17px; line-height: 1; }
+    .stat-emoji { font-size: 22px; line-height: 1; }
   }
 
   .stat-info {
     display: flex; align-items: baseline; gap: 7px;
-    .stat-number { font-size: 24px; font-weight: 700; line-height: 1; color: #fff; }
-    .stat-label-text { font-size: 14px; color: #c8d0e8; font-weight: 500; }
+    .stat-number { font-size: 28px; font-weight: 700; line-height: 1; color: #fff; }
+    .stat-label-text { font-size: 16px; color: #c8d0e8; font-weight: 500; }
   }
 }
 
@@ -637,6 +926,74 @@ export default {
           code { color: #a0b0d0; background: rgba(255,255,255,0.06); padding: 0 3px; border-radius: 2px; }
         }
       }
+    }
+  }
+}
+
+.user-analytics-panel {
+  background: @bg-panel;
+  border: 1px solid @border-color;
+  border-radius: 8px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+  .ua-header {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 15px; font-weight: 600; color: #c8d0e8;
+    margin-bottom: 8px; padding-bottom: 8px;
+    border-bottom: 1px solid @border-color;
+    flex-shrink: 0;
+    flex-wrap: nowrap;
+
+    .stat-emoji { font-size: 16px; line-height: 1; flex-shrink: 0; }
+    .ua-user-select { margin-left: auto; width: 160px; flex-shrink: 0;
+      /deep/ .el-input__inner {
+        background: rgba(16, 21, 37, 0.9); color: #e5eaf5;
+        border-color: rgba(100, 120, 160, 0.3);
+      }
+    }
+  }
+
+  .ua-placeholder {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 8px; color: #556080; font-size: 13px;
+    min-height: 100px;
+    p { margin: 0; }
+  }
+
+  .ua-charts-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .ua-chart-card {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid @border-color;
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+
+    .ua-chart-title {
+      font-size: 13px; font-weight: 600; color: #a0a8c0;
+      margin-bottom: 4px; padding-bottom: 4px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      display: flex; align-items: center; gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .chart-inner-ua {
+      flex: 1; min-height: 160px;
     }
   }
 }
@@ -720,6 +1077,7 @@ export default {
     font-weight: 600;
     font-size: 13px;
     padding: 6px 4px;
+    white-space: nowrap;
   }
 
   /deep/ .dark-table .el-table__body-wrapper td,
@@ -740,5 +1098,26 @@ export default {
   text-align: center; padding: 18px 0; color: @text-secondary; font-size: 13px;
 }
 
+.nowrap-cell {
+  white-space: nowrap;
+}
+
 /deep/ .el-loading-mask { background: rgba(16, 21, 37, 0.85); }
+</style>
+
+<style lang="less">
+.el-select-dropdown {
+  background: rgba(20, 25, 45, 0.97) !important;
+  border: 1px solid rgba(100, 120, 160, 0.2) !important;
+}
+.el-select-dropdown__item {
+  color: #d0d8f0 !important;
+  &.hover, &:hover {
+    background: rgba(45, 140, 240, 0.15) !important;
+  }
+  &.selected {
+    color: #2d8cf0 !important;
+    font-weight: 600;
+  }
+}
 </style>

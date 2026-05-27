@@ -278,6 +278,8 @@ export default {
   height: 100vh;
   overflow: hidden;
   z-index: 1;
+  padding-bottom: 60px;
+  background: #0a1929;
 }
 
 // 全屏知识图谱

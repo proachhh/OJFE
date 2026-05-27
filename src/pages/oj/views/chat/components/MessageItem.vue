@@ -243,7 +243,7 @@ function renderMarkdown (text) {
     /deep/ em { font-style: italic; }
     /deep/ del { text-decoration: line-through; opacity: 0.6; }
     /deep/ blockquote {
-      border-left: 3px solid #2d8cf0; padding: 4px 12px; margin: 8px 0;
+      border-left: 3px solid #2d8cf0; padding: 3px 10px; margin: 2px 0;
       color: #515a6e; background: rgba(45,140,240,0.04); border-radius: 0 6px 6px 0;
     }
     /deep/ hr { border: none; border-top: 1px solid #e8eaec; margin: 10px 0; }

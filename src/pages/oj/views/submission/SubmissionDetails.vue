@@ -50,24 +50,24 @@
         </Button>
       </div>
 
-      <!-- AI 错误分析 -->
+      <!-- 智能错误分析 -->
       <AICard
         v-if="isFailed"
-        title="AI 错误分析"
+        title="智能错误分析"
         icon="ios-bug"
         iconColor="#ed4014"
-        btnText="AI 分析错误"
+        btnText="智能分析错误"
         btnType="error"
         :fetchFn="fetchErrorAnalysis"
       />
 
-      <!-- AI 代码审查 -->
+      <!-- 智能代码审查 -->
       <AICard
         v-if="isAccepted"
-        title="AI 代码审查"
+        title="智能代码审查"
         icon="ios-code-working"
         iconColor="#19be6b"
-        btnText="AI 审查代码"
+        btnText="智能审查代码"
         btnType="success"
         :fetchFn="fetchCodeReview"
       />
